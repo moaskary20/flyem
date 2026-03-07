@@ -2,4 +2,5 @@
 <resources>
     <!-- لون شاشة البداية (Splash) - رمادي داكن -->
     <color name="splash_background">#FF2C2C2E</color>
+	<color name="ic_launcher_background">#FDB913</color>
 </resources>
