@@ -4,7 +4,6 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/screens/shipment_payment_screen.dart';
 import 'package:flyem_app/services/shipments_service.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ShipmentDetailsScreen extends StatelessWidget {
   const ShipmentDetailsScreen({super.key, required this.shipmentId});
@@ -54,15 +53,6 @@ class _DetailsContent extends StatelessWidget {
   const _DetailsContent({required this.shipment});
 
   final ShipmentDetails shipment;
-
-  Future<void> _openLink(BuildContext context, String? url) async {
-    if (url == null || url.isEmpty) return;
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -267,38 +257,6 @@ class _DetailsContent extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          if (shipment.productLink != null && shipment.productLink!.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    shipment.productLink!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: () => _openLink(context, shipment.productLink),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryYellow,
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(AppStrings.visitLink),
-                ),
-              ],
-            ),
-          ],
           const SizedBox(height: 16),
           _buildDetailRow(
             label: AppStrings.productQuantity,

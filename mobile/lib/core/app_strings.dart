@@ -190,9 +190,9 @@ class AppStrings {
   static const String emailLabel = 'البريد الإلكتروني';
   static const String phoneLabel = 'رقم الهاتف';
   static const String noPhoneEntered = 'No phone entered';
-  static const String phoneNumbersLabel = 'أرقام الهواتف:';
-  static const String phoneForHomeland = 'رقم للموطن';
-  static const String phoneForTravel = 'رقم للسفر';
+  static const String phoneNumbersLabel = 'أرقام الهواتف (مرتبطة بالحساب والملف الشخصي)';
+  static const String phoneForHomeland = 'رقم الهاتف (الدولة الأم)';
+  static const String phoneForTravel = 'رقم الهاتف (الدولة السفر)';
   static const String ratingsSection = 'تقييم';
   static const String travelerRating = 'تقييم المسافر';
   static const String shipperRating = 'تقييم الشاحن';

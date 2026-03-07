@@ -393,7 +393,8 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   Widget _buildBasicInfoSection() {
     final email = _user?.email ?? '';
     final phone = _user?.phone ?? '';
-    final hasPhone = phone.isNotEmpty;
+    final homePhone = _user?.homePhone ?? '';
+    final travelPhone = _user?.travelPhone ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -423,15 +424,21 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         ),
         const SizedBox(height: 8),
         _InfoRow(
+          label: AppStrings.phoneLabel,
+          value: phone.isNotEmpty ? phone : 'غير محدد',
+          verified: phone.isNotEmpty,
+        ),
+        const SizedBox(height: 10),
+        _InfoRow(
           label: AppStrings.phoneForHomeland,
-          value: hasPhone ? phone : AppStrings.noPhoneEntered,
-          verified: hasPhone,
+          value: homePhone.isNotEmpty ? homePhone : 'غير محدد',
+          verified: homePhone.isNotEmpty,
         ),
         const SizedBox(height: 10),
         _InfoRow(
           label: AppStrings.phoneForTravel,
-          value: hasPhone ? phone : AppStrings.noPhoneEntered,
-          verified: hasPhone,
+          value: travelPhone.isNotEmpty ? travelPhone : 'غير محدد',
+          verified: travelPhone.isNotEmpty,
         ),
       ],
     );
