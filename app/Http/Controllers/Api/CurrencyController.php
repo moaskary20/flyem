@@ -9,11 +9,12 @@ use Illuminate\Http\JsonResponse;
 class CurrencyController extends Controller
 {
     /**
-     * قائمة العملات النشطة (لاختيار العملة في إعدادات التطبيق).
+     * قائمة العملات (لاختيار العملة في إعدادات التطبيق).
+     * تُرجع كل العملات لضمان ظهورها في التطبيق مثل لوحة الإدارة.
      */
     public function index(): JsonResponse
     {
-        $currencies = Currency::where('is_active', true)
+        $currencies = Currency::query()
             ->orderBy('name')
             ->get(['id', 'name', 'symbol', 'code']);
 

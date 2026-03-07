@@ -20,6 +20,7 @@ class _LanguageCurrencyScreenState extends State<LanguageCurrencyScreen> {
   int? _selectedCurrencyId;
   bool _loading = true;
   bool _saving = false;
+  String? _errorMessage;
 
   static const String _titleAr = 'اختر اللغة والعملة';
   static const String _titleEn = 'Choose language and currency';
@@ -41,20 +42,31 @@ class _LanguageCurrencyScreenState extends State<LanguageCurrencyScreen> {
   }
 
   Future<void> _loadCurrencies() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
     try {
       final list = await CurrenciesService.getCurrencies();
       if (mounted) {
         setState(() {
           _currencies = list;
           _loading = false;
+          _errorMessage = null;
           if (list.isNotEmpty && _selectedCurrencyId == null) {
             _selectedCurrencyId = list.first.id;
           }
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e, st) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _errorMessage = e.toString();
+        });
+      }
+      debugPrint('Currencies load error: $e');
+      debugPrint('$st');
     }
   }
 
@@ -140,6 +152,36 @@ class _LanguageCurrencyScreenState extends State<LanguageCurrencyScreen> {
                   const Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _isAr ? 'فشل تحميل العملات' : 'Failed to load currencies',
+                          style: TextStyle(
+                            color: Colors.grey[800],
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: _loadCurrencies,
+                          icon: const Icon(Icons.refresh, size: 20),
+                          label: Text(_isAr ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    ),
                   )
                 else if (_currencies.isEmpty)
                   Padding(

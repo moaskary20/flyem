@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flyem_app/core/api_config.dart';
+import 'package:flyem_app/core/api_http_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -32,15 +33,27 @@ class CurrenciesService {
 
   static Future<List<CurrencyItem>> getCurrencies() async {
     final uri = Uri.parse('$kApiBaseUrl/api/currencies');
-    final response = await http.get(uri);
-    if (response.statusCode != 200) {
-      throw Exception('API error: ${response.statusCode}');
+    final client = getApiClient();
+    try {
+      final response = await client.get(uri);
+      if (response.statusCode != 200) {
+        throw Exception('API error: ${response.statusCode}');
+      }
+      final decoded = jsonDecode(response.body);
+      List<dynamic> data;
+      if (decoded is List) {
+        data = decoded;
+      } else if (decoded is Map<String, dynamic>) {
+        data = (decoded['data'] as List<dynamic>?) ?? [];
+      } else {
+        data = [];
+      }
+      return data
+          .map((e) => CurrencyItem.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } finally {
+      client.close();
     }
-    final map = jsonDecode(response.body) as Map<String, dynamic>;
-    final data = (map['data'] as List<dynamic>?) ?? [];
-    return data
-        .map((e) => CurrencyItem.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   /// معرف العملة المختارة في الإعدادات (null = عرض الكل).
