@@ -20,10 +20,19 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'phone',
+        'home_phone',
+        'travel_phone',
         'api_token',
         'profile_photo',
         'country_id',
         'city_id',
+        'home_country_id',
+        'home_city_id',
+        'travel_country_id',
+        'travel_city_id',
+        'bank_iban',
+        'bank_name',
+        'bank_account_holder',
         'role',
         'status',
         'verification_status',
@@ -62,6 +71,26 @@ class User extends Authenticatable implements FilamentUser
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function homeCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'home_country_id');
+    }
+
+    public function homeCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'home_city_id');
+    }
+
+    public function travelCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'travel_country_id');
+    }
+
+    public function travelCity(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'travel_city_id');
     }
 
     public function shipments(): HasMany

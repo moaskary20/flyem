@@ -18,6 +18,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _homePhoneController = TextEditingController();
+  final _travelPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
   bool _loading = false;
@@ -35,6 +37,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   static const String _emailEn = 'Email';
   static const String _phoneAr = 'رقم الهاتف';
   static const String _phoneEn = 'Phone number';
+  static const String _homePhoneAr = 'رقم الهاتف (الدولة الأم)';
+  static const String _homePhoneEn = 'Phone (home country)';
+  static const String _travelPhoneAr = 'رقم الهاتف (الدولة السفر)';
+  static const String _travelPhoneEn = 'Phone (travel country)';
   static const String _passwordAr = 'كلمة المرور';
   static const String _passwordEn = 'Password';
   static const String _passwordConfirmAr = 'تأكيد كلمة المرور';
@@ -58,6 +64,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _homePhoneController.dispose();
+    _travelPhoneController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
@@ -68,6 +76,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final lastName = _lastNameController.text.trim();
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
+    final homePhone = _homePhoneController.text.trim();
+    final travelPhone = _travelPhoneController.text.trim();
     final password = _passwordController.text;
     final confirm = _passwordConfirmController.text;
 
@@ -94,6 +104,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         lastName: lastName,
         email: email,
         phone: phone,
+        homePhone: homePhone.isEmpty ? null : homePhone,
+        travelPhone: travelPhone.isEmpty ? null : travelPhone,
         password: password,
         passwordConfirmation: confirm,
       );
@@ -187,6 +199,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: _inputDecoration(_isAr ? _phoneAr : _phoneEn),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _homePhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration(_isAr ? _homePhoneAr : _homePhoneEn),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _travelPhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration(_isAr ? _travelPhoneAr : _travelPhoneEn),
                 ),
                 const SizedBox(height: 14),
                 TextField(

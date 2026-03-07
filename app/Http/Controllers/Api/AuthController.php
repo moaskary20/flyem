@@ -50,6 +50,8 @@ class AuthController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:50',
+            'home_phone' => ['nullable', 'string', 'max:50'],
+            'travel_phone' => ['nullable', 'string', 'max:50'],
             'password' => 'required|string|min:8|confirmed',
         ], [], [
             'first_name' => __('First name'),
@@ -63,6 +65,8 @@ class AuthController extends Controller
             'name' => $request->first_name . ' ' . $request->last_name,
             'email' => $request->email,
             'phone' => $request->phone,
+            'home_phone' => $request->home_phone,
+            'travel_phone' => $request->travel_phone,
             'password' => Hash::make($request->password),
             'api_token' => hash('sha256', $token = Str::random(80)),
         ]);
@@ -84,6 +88,7 @@ class AuthController extends Controller
         }
 
         $user->loadCount(['shipments', 'trips']);
+        $user->load(['homeCountry:id,name_ar,name_en', 'homeCity:id,name_ar,name_en', 'travelCountry:id,name_ar,name_en', 'travelCity:id,name_ar,name_en']);
 
         return response()->json([
             'data' => [
@@ -96,8 +101,58 @@ class AuthController extends Controller
                 'rating' => $user->rating ? (float) $user->rating : null,
                 'shipments_count' => $user->shipments_count ?? 0,
                 'trips_count' => $user->trips_count ?? 0,
+                'home_country_id' => $user->home_country_id,
+                'home_city_id' => $user->home_city_id,
+                'home_country_name' => $user->homeCountry?->name_ar ?? $user->homeCountry?->name_en ?? null,
+                'home_city_name' => $user->homeCity?->name_ar ?? $user->homeCity?->name_en ?? null,
+                'travel_country_id' => $user->travel_country_id,
+                'travel_city_id' => $user->travel_city_id,
+                'travel_country_name' => $user->travelCountry?->name_ar ?? $user->travelCountry?->name_en ?? null,
+                'travel_city_name' => $user->travelCity?->name_ar ?? $user->travelCity?->name_en ?? null,
+                'bank_iban' => $user->bank_iban,
+                'bank_name' => $user->bank_name,
+                'bank_account_holder' => $user->bank_account_holder,
+                'home_phone' => $user->home_phone,
+                'travel_phone' => $user->travel_phone,
             ],
         ]);
+    }
+
+    /**
+     * تحديث بيانات الملف الشخصي (الدولة/المدينة الأم والسفر).
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $validated = $request->validate([
+            'home_country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'home_city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'travel_country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'travel_city_id' => ['nullable', 'integer', 'exists:cities,id'],
+            'bank_iban' => ['nullable', 'string', 'max:50'],
+            'bank_name' => ['nullable', 'string', 'max:255'],
+            'bank_account_holder' => ['nullable', 'string', 'max:255'],
+            'home_phone' => ['nullable', 'string', 'max:50'],
+            'travel_phone' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $user->update([
+            'home_country_id' => $validated['home_country_id'] ?? null,
+            'home_city_id' => $validated['home_city_id'] ?? null,
+            'travel_country_id' => $validated['travel_country_id'] ?? null,
+            'travel_city_id' => $validated['travel_city_id'] ?? null,
+            'bank_iban' => $validated['bank_iban'] ?? null,
+            'bank_name' => $validated['bank_name'] ?? null,
+            'bank_account_holder' => $validated['bank_account_holder'] ?? null,
+            'home_phone' => $validated['home_phone'] ?? null,
+            'travel_phone' => $validated['travel_phone'] ?? null,
+        ]);
+
+        return response()->json(['message' => 'updated', 'data' => ['id' => $user->id]]);
     }
 
     /**

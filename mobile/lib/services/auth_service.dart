@@ -31,20 +31,25 @@ class AuthService {
     required String lastName,
     required String email,
     required String phone,
+    String? homePhone,
+    String? travelPhone,
     required String password,
     required String passwordConfirmation,
   }) async {
+    final body = <String, dynamic>{
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'phone': phone,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    };
+    if (homePhone != null && homePhone.trim().isNotEmpty) body['home_phone'] = homePhone.trim();
+    if (travelPhone != null && travelPhone.trim().isNotEmpty) body['travel_phone'] = travelPhone.trim();
     final response = await ApiClient.post(
       '/api/register',
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({
-        'first_name': firstName,
-        'last_name': lastName,
-        'email': email,
-        'phone': phone,
-        'password': password,
-        'password_confirmation': passwordConfirmation,
-      }),
+      body: jsonEncode(body),
     );
     final map = jsonDecode(response.body) as Map<String, dynamic>?;
     if (response.statusCode != 201 && response.statusCode != 200) {
@@ -103,6 +108,45 @@ class AuthService {
     if (data == null) return null;
     return UserProfile.fromJson(data);
   }
+
+  /// تحديث الملف الشخصي (الدولة/المدينة و/أو بيانات السحاب البنكي).
+  static Future<void> updateProfile({
+    int? homeCountryId,
+    int? homeCityId,
+    int? travelCountryId,
+    int? travelCityId,
+    String? bankIban,
+    String? bankName,
+    String? bankAccountHolder,
+    String? homePhone,
+    String? travelPhone,
+  }) async {
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) throw AuthException('يجب تسجيل الدخول');
+    final body = <String, dynamic>{};
+    if (homeCountryId != null) body['home_country_id'] = homeCountryId;
+    if (homeCityId != null) body['home_city_id'] = homeCityId;
+    if (travelCountryId != null) body['travel_country_id'] = travelCountryId;
+    if (travelCityId != null) body['travel_city_id'] = travelCityId;
+    if (bankIban != null) body['bank_iban'] = bankIban;
+    if (bankName != null) body['bank_name'] = bankName;
+    if (bankAccountHolder != null) body['bank_account_holder'] = bankAccountHolder;
+    if (homePhone != null) body['home_phone'] = homePhone;
+    if (travelPhone != null) body['travel_phone'] = travelPhone;
+    final response = await ApiClient.put(
+      '/api/user',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      final map = jsonDecode(response.body) as Map<String, dynamic>?;
+      throw AuthException(map?['message'] as String? ?? 'فشل التحديث');
+    }
+  }
 }
 
 class UserProfile {
@@ -115,6 +159,19 @@ class UserProfile {
   final double? rating;
   final int shipmentsCount;
   final int tripsCount;
+  final int? homeCountryId;
+  final int? homeCityId;
+  final String? homeCountryName;
+  final String? homeCityName;
+  final int? travelCountryId;
+  final int? travelCityId;
+  final String? travelCountryName;
+  final String? travelCityName;
+  final String? bankIban;
+  final String? bankName;
+  final String? bankAccountHolder;
+  final String? homePhone;
+  final String? travelPhone;
 
   UserProfile({
     required this.id,
@@ -126,6 +183,19 @@ class UserProfile {
     this.rating,
     this.shipmentsCount = 0,
     this.tripsCount = 0,
+    this.homeCountryId,
+    this.homeCityId,
+    this.homeCountryName,
+    this.homeCityName,
+    this.travelCountryId,
+    this.travelCityId,
+    this.travelCountryName,
+    this.travelCityName,
+    this.bankIban,
+    this.bankName,
+    this.bankAccountHolder,
+    this.homePhone,
+    this.travelPhone,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -139,6 +209,19 @@ class UserProfile {
       rating: (json['rating'] as num?)?.toDouble(),
       shipmentsCount: (json['shipments_count'] as num?)?.toInt() ?? 0,
       tripsCount: (json['trips_count'] as num?)?.toInt() ?? 0,
+      homeCountryId: (json['home_country_id'] as num?)?.toInt(),
+      homeCityId: (json['home_city_id'] as num?)?.toInt(),
+      homeCountryName: json['home_country_name'] as String?,
+      homeCityName: json['home_city_name'] as String?,
+      travelCountryId: (json['travel_country_id'] as num?)?.toInt(),
+      travelCityId: (json['travel_city_id'] as num?)?.toInt(),
+      travelCountryName: json['travel_country_name'] as String?,
+      travelCityName: json['travel_city_name'] as String?,
+      bankIban: json['bank_iban'] as String?,
+      bankName: json['bank_name'] as String?,
+      bankAccountHolder: json['bank_account_holder'] as String?,
+      homePhone: json['home_phone'] as String?,
+      travelPhone: json['travel_phone'] as String?,
     );
   }
 }

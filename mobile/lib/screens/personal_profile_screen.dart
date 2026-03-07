@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/models/city.dart';
+import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/services/auth_service.dart';
+import 'package:flyem_app/services/shipments_service.dart';
+import 'package:flyem_app/widgets/city_picker_sheet.dart';
 
 /// شاشة الصفحة الشخصية: بيانات المستخدم من قاعدة البيانات (API).
 class PersonalProfileScreen extends StatefulWidget {
@@ -74,6 +78,8 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                             children: [
                               const SizedBox(height: 24),
                               _buildBasicInfoSection(),
+                              const SizedBox(height: 24),
+                              _buildLocationSection(),
                               const SizedBox(height: 24),
                               _buildRatingsSection(),
                               const SizedBox(height: 32),
@@ -196,6 +202,194 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     );
   }
 
+  Widget _buildLocationSection() {
+    final homeText = _user != null && (_user!.homeCountryName != null || _user!.homeCityName != null)
+        ? '${_user!.homeCountryName ?? ''} - ${_user!.homeCityName ?? ''}'.replaceAll(RegExp(r'^\s*-\s*|-\s*$'), '').trim()
+        : null;
+    final travelText = _user != null && (_user!.travelCountryName != null || _user!.travelCityName != null)
+        ? '${_user!.travelCountryName ?? ''} - ${_user!.travelCityName ?? ''}'.replaceAll(RegExp(r'^\s*-\s*|-\s*$'), '').trim()
+        : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'الدولة والمدينة',
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _LocationRow(
+          label: 'الدولة - المدينة (الأم)',
+          value: homeText ?? 'غير محدد',
+          onEdit: () => _showLocationPicker(isHome: true),
+        ),
+        const SizedBox(height: 12),
+        _LocationRow(
+          label: 'الدولة - المدينة (السفر)',
+          value: travelText ?? 'غير محدد',
+          onEdit: () => _showLocationPicker(isHome: false),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showLocationPicker({required bool isHome}) async {
+    List<Country>? countries;
+    try {
+      countries = await ShipmentsService.getCountries();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('فشل تحميل الدول')));
+      return;
+    }
+    if (!mounted || countries.isEmpty) return;
+    final currentCountryId = isHome ? _user?.homeCountryId : _user?.travelCountryId;
+    final currentCityId = isHome ? _user?.homeCityId : _user?.travelCityId;
+    Country? selectedCountry;
+    if (currentCountryId != null) {
+      try {
+        selectedCountry = countries.firstWhere((c) => c.id == currentCountryId);
+      } catch (_) {}
+    }
+    List<City> cities = [];
+    City? selectedCity;
+    if (selectedCountry != null) {
+      try {
+        cities = await ShipmentsService.getCities(selectedCountry.id);
+        if (currentCityId != null) {
+          try {
+            selectedCity = cities.firstWhere((c) => c.id == currentCityId);
+          } catch (_) {}
+        }
+        if (selectedCity == null && cities.isNotEmpty) selectedCity = cities.first;
+      } catch (_) {}
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(ctx).padding.bottom + 20,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    isHome ? 'الدولة - المدينة (الأم)' : 'الدولة - المدينة (السفر)',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<Country>(
+                    value: selectedCountry,
+                    decoration: const InputDecoration(
+                      labelText: 'الدولة',
+                      border: OutlineInputBorder(),
+                      filled: true,
+                    ),
+                    items: (countries ?? <Country>[])
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
+                        .toList(),
+                    onChanged: (c) async {
+                      setModalState(() {
+                        selectedCountry = c;
+                        selectedCity = null;
+                        cities = [];
+                      });
+                      if (c != null) {
+                        final list = await ShipmentsService.getCities(c.id);
+                        if (ctx.mounted) setModalState(() => cities = list);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  if (selectedCountry != null)
+                    DropdownButtonFormField<City>(
+                      value: selectedCity,
+                      decoration: const InputDecoration(
+                        labelText: 'المدينة',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                      ),
+                      items: cities
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
+                          .toList(),
+                      onChanged: (c) => setModalState(() => selectedCity = c),
+                    ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('إلغاء'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: selectedCountry != null && selectedCity != null
+                              ? () async {
+                                  Navigator.of(ctx).pop();
+                                  try {
+                                    if (isHome) {
+                                      await AuthService.updateProfile(
+                                        homeCountryId: selectedCountry!.id,
+                                        homeCityId: selectedCity!.id,
+                                        travelCountryId: _user?.travelCountryId,
+                                        travelCityId: _user?.travelCityId,
+                                      );
+                                    } else {
+                                      await AuthService.updateProfile(
+                                        homeCountryId: _user?.homeCountryId,
+                                        homeCityId: _user?.homeCityId,
+                                        travelCountryId: selectedCountry!.id,
+                                        travelCityId: selectedCity!.id,
+                                      );
+                                    }
+                                    if (mounted) {
+                                      _loadUser();
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم الحفظ')));
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('فشل: $e')));
+                                    }
+                                  }
+                                }
+                              : null,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.primaryYellow,
+                            foregroundColor: Colors.black87,
+                          ),
+                          child: const Text('حفظ'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildBasicInfoSection() {
     final email = _user?.email ?? '';
     final phone = _user?.phone ?? '';
@@ -314,6 +508,58 @@ class _StatChip extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LocationRow extends StatelessWidget {
+  const _LocationRow({
+    required this.label,
+    required this.value,
+    required this.onEdit,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+        TextButton(
+          onPressed: onEdit,
+          child: const Text(
+            AppStrings.edit,
+            style: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
           ),
         ),
       ],
