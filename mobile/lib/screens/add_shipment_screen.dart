@@ -457,14 +457,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              AppStrings.costInfoText,
-              style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-            ),
-          ),
-          const SizedBox(height: 20),
           InkWell(
             onTap: () => setState(() => _insuranceChecked = !_insuranceChecked),
             borderRadius: BorderRadius.circular(10),

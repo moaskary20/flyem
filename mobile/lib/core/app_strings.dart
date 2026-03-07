@@ -75,6 +75,7 @@ class AppStrings {
   static const String availableWeightHint = 'الوزن المتاح';
   static const String departureHint = 'المغادرة (التاريخ والوقت)';
   static const String pricePerKgHint = 'السعر للكيلو (اختياري)';
+  static const String priceHintOptional = 'السعر (اختياري)';
   static const String airlineHint = 'خط الطيران';
   static const String bookingRefHint = 'مرجع الحجز';
   static const String firstNameBookingHint = 'الاسم الأول (على بطاقة الحجز)';
@@ -131,7 +132,7 @@ class AppStrings {
   static const String costInfoText =
       'تعتمد التكلفة على رسوم السوق، نحن أرخص بنسبة ٥٠٪–٧٠٪';
   static const String insuranceDisclaimer =
-      'أقر بأن جميع تفاصيل هذه الشحنة صحيحة وأن أي تفاصيل غير صحيحة أو غير واضحة أو مفقودة ستؤدي إلى الإلغاء الكامل للتأمين المطبق على هذه الشحنة.';
+      'أقر بأن جميع تفاصيل هذه الشحنة صحيحة وأن أي تفاصيل غير صحيحة أو غير واضحة أو مفقودة قد تؤدي إلى أخطاء في عملية التسليم ولا نتحمل نتيجة ذلك.';
   static const String totalOrdersLabel = 'مجموع الطلبات';
   static const String totalWeightLabel = 'الوزن الكلي';
   static const String travelerRewardLabel = 'مكافأة المسافر';

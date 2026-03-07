@@ -5,6 +5,7 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/services/auth_service.dart';
+import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
@@ -35,6 +36,8 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   DateTime? _departureDate;
   final _priceController = TextEditingController();
   final _notesController = TextEditingController();
+  /// الحد الأدنى لسعر الرحلة من لوحة التحكم (إن وُجد)
+  double? _minTripPrice;
 
   /// القيم المقبولة في الـ API: flight, car, train, bus, ship, other
   static const List<String> _travelMethods = ['car', 'train', 'flight'];
@@ -43,6 +46,19 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   void initState() {
     super.initState();
     _loadCountries();
+    _loadMinTripPrice();
+  }
+
+  Future<void> _loadMinTripPrice() async {
+    try {
+      final settings = await ContentService.getSettings();
+      final v = settings['min_trip_price'];
+      if (v != null) {
+        final s = v is String ? v : v.toString();
+        final d = double.tryParse(s.trim());
+        if (mounted && d != null && d >= 0) setState(() => _minTripPrice = d);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -142,6 +158,8 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
                     _buildToField(),
                     const SizedBox(height: 12),
                     _buildDepartureField(),
+                    const SizedBox(height: 12),
+                    _buildPriceField(),
                     const SizedBox(height: 24),
                     _buildSectionTitle(AppStrings.travelTypeSection),
                     const SizedBox(height: 12),
@@ -261,6 +279,18 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
       final pricePerKg = priceStr.isEmpty
           ? null
           : double.tryParse(priceStr.replaceFirst(',', '.'));
+      if (pricePerKg != null && _minTripPrice != null && pricePerKg < _minTripPrice!) {
+        setState(() => _submitting = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('السعر لا يمكن أن يكون أقل من الحد الأدنى ($_minTripPrice)'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
       final departureStr = _departureDate!.toIso8601String();
       await TripsService.createTrip(
         userId: userId,
@@ -502,6 +532,26 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPriceField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInput(
+          hint: AppStrings.priceHintOptional,
+          controller: _priceController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        if (_minTripPrice != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'الحد الأدنى من لوحة التحكم: $_minTripPrice',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+        ],
+      ],
     );
   }
 

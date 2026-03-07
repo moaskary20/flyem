@@ -751,10 +751,12 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _onContinue,
+                onPressed: _passportImageBytes != null ? _onContinue : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryYellow,
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  disabledForegroundColor: Colors.grey.shade600,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
