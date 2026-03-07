@@ -4,7 +4,6 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/screens/personal_profile_screen.dart';
 import 'package:flyem_app/screens/payment_details_screen.dart';
-import 'package:flyem_app/screens/coupons_screen.dart';
 import 'package:flyem_app/screens/settings_screen.dart';
 import 'package:flyem_app/screens/technical_support_screen.dart';
 import 'package:flyem_app/screens/faq_screen.dart';
@@ -111,8 +110,6 @@ class _MoreScreenState extends State<MoreScreen> {
     final options = [
       (AppStrings.settings, Icons.settings),
       (AppStrings.paymentDetails, Icons.account_balance_outlined),
-      (AppStrings.coupons, Icons.card_giftcard_outlined),
-      (AppStrings.wishlist, Icons.star_border),
       (AppStrings.faq, Icons.chat_bubble_outline),
       (AppStrings.privacyAndTerms, Icons.description_outlined),
       (AppStrings.technicalSupport, Icons.help_outline),
@@ -144,12 +141,6 @@ class _MoreScreenState extends State<MoreScreen> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const PaymentDetailsScreen(),
-                    ),
-                  );
-                } else if (options[i].$1 == AppStrings.coupons) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const CouponsScreen(),
                     ),
                   );
                 } else if (options[i].$1 == AppStrings.settings) {

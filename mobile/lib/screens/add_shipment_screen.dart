@@ -5,7 +5,6 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/services/shipments_service.dart';
-import 'package:flyem_app/screens/add_shopping_shipment_screen.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
 
 class AddShipmentScreen extends StatefulWidget {
@@ -37,8 +36,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
   /// 0 = إضافة التفاصيل، 1 = مراجعة
   int _currentStep = 0;
   bool _insuranceChecked = false;
-  /// صور الشحنة المرفقة من شاشة إضافة شحنة تسوق
-  List<String> _shoppingPhotoPaths = [];
 
   @override
   void initState() {
@@ -83,22 +80,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
         _toCities = list;
         _toCity = null;
       });
-    }
-  }
-
-  /// فتح شاشة إضافة شحنة تسوق؛ عند الضغط على "تم" يُملأ اسم المنتج وتُرفق صور الشحنة.
-  Future<void> _openAddShoppingShipment() async {
-    final result = await Navigator.of(context).push<Map<String, dynamic>>(
-      MaterialPageRoute(
-        builder: (_) => const AddShoppingShipmentScreen(),
-      ),
-    );
-    if (!mounted || result == null) return;
-    final name = result['productName'] as String?;
-    if (name != null && name.isNotEmpty) _titleController.text = name;
-    final paths = result['photoPaths'] as List<dynamic>?;
-    if (paths != null) {
-      setState(() => _shoppingPhotoPaths = paths.map((e) => e.toString()).toList());
     }
   }
 
@@ -363,25 +344,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                                         ),
                                         maxLines: 3,
                                       ),
-                                      const SizedBox(height: 24),
-                                      Text(
-                                        AppStrings.shoppingItems,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _outlinedButton(
-                                        AppStrings.addNewShipment,
-                                        Icons.add,
-                                        onPressed: _openAddShoppingShipment,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      _outlinedButton(
-                                        AppStrings.chooseFromWishlist,
-                                        Icons.list,
-                                      ),
                                     ],
                                   ),
                                 )
@@ -455,7 +417,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
 
   Widget _buildReviewStep() {
     const totalOrders = 1;
-    const totalWeightKg = 0.0;
     final travelerReward = double.tryParse(_rewardController.text.trim().replaceFirst(',', '.')) ?? 0.0;
     const companyFees = 0.0;
 
@@ -480,11 +441,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
             child: Column(
               children: [
                 _reviewSummaryRow(AppStrings.totalOrdersLabel, '$totalOrders'),
-                const SizedBox(height: 12),
-                _reviewSummaryRow(
-                  AppStrings.totalWeightLabel,
-                  totalWeightKg == 0 ? '0 kg' : '${totalWeightKg.toStringAsFixed(1)} kg',
-                ),
                 const SizedBox(height: 12),
                 _reviewSummaryRow(
                   AppStrings.travelerRewardLabel,
@@ -739,26 +695,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
             color: _deadlineDate != null ? Colors.black87 : Colors.grey[600],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _outlinedButton(String label, IconData icon, {VoidCallback? onPressed}) {
-    return OutlinedButton(
-      onPressed: onPressed ?? () {},
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primaryYellow,
-        side: const BorderSide(color: AppColors.primaryYellow),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 22),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
       ),
     );
   }

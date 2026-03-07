@@ -72,8 +72,6 @@ class TripController extends Controller
                 'to_city' => $t->toCity?->name_ar ?? '',
                 'departure_date' => $t->departure_date?->format('Y-m-d H:i'),
                 'departure_formatted' => $t->departure_date ? $t->departure_date->locale('ar')->translatedFormat('D, d M g:i A') : null,
-                'available_weight' => (float) ($t->available_weight ?? 0),
-                'weight_unit' => $t->weight_unit ?? 'kg',
                 'price_per_kg' => (float) ($t->price_per_kg ?? 0),
                 'currency_symbol' => $t->currency?->symbol ?? '$',
                 'notes' => $t->notes,
@@ -119,8 +117,6 @@ class TripController extends Controller
             'to_city' => $trip->toCity?->name_ar ?? '',
             'departure_date' => $trip->departure_date?->format('Y-m-d H:i'),
             'return_date' => $trip->return_date?->format('Y-m-d H:i'),
-            'available_weight' => (float) ($trip->available_weight ?? 0),
-            'weight_unit' => $trip->weight_unit ?? 'kg',
             'price_per_kg' => (float) ($trip->price_per_kg ?? 0),
             'currency_id' => $trip->currency_id,
             'currency_symbol' => $trip->currency?->symbol ?? '$',
@@ -143,8 +139,6 @@ class TripController extends Controller
             'to_city_id' => ['required', 'integer', 'exists:cities,id'],
             'departure_date' => ['required', 'date'],
             'return_date' => ['nullable', 'date'],
-            'available_weight' => ['nullable', 'numeric', 'min:0'],
-            'weight_unit' => ['nullable', 'string', 'in:kg,lb'],
             'price_per_kg' => ['nullable', 'numeric', 'min:0'],
             'currency_id' => ['nullable', 'integer', 'exists:currencies,id'],
             'notes' => ['nullable', 'string'],
@@ -159,8 +153,6 @@ class TripController extends Controller
             'to_city_id' => $validated['to_city_id'],
             'departure_date' => $validated['departure_date'],
             'return_date' => $validated['return_date'] ?? null,
-            'available_weight' => $validated['available_weight'] ?? null,
-            'weight_unit' => $validated['weight_unit'] ?? 'kg',
             'price_per_kg' => $validated['price_per_kg'] ?? null,
             'currency_id' => $validated['currency_id'] ?? null,
             'notes' => $validated['notes'] ?? null,
@@ -206,7 +198,7 @@ class TripController extends Controller
             return response()->json(['message' => 'وسيلة الدفع غير متاحة.'], 422);
         }
 
-        $amount = (float) ($trip->price_per_kg * ($trip->available_weight ?? 1));
+        $amount = (float) ($trip->price_per_kg ?? 1);
         if ($amount <= 0) {
             $amount = 1;
         }

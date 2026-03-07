@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flyem_app/core/api_config.dart';
+import 'package:flyem_app/core/api_client.dart';
 import 'package:http/http.dart' as http;
 
 class PaymentMethodItem {
@@ -28,8 +28,7 @@ class PaymentMethodItem {
 
 class PaymentMethodsService {
   static Future<List<PaymentMethodItem>> getPaymentMethods() async {
-    final uri = Uri.parse('$kApiBaseUrl/api/payment-methods');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/payment-methods');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }

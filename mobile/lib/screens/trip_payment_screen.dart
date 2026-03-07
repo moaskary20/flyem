@@ -87,7 +87,7 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final t = widget.trip;
-    final amount = t.pricePerKg * (t.availableWeight > 0 ? t.availableWeight : 1);
+    final amount = t.pricePerKg > 0 ? t.pricePerKg : 1.0;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

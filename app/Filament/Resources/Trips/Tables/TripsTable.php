@@ -32,8 +32,7 @@ class TripsTable
                 TextColumn::make('toCountry.name_ar')->label('إلى'),
                 TextColumn::make('departure_date')->label('المغادرة')->dateTime('d/m/Y H:i')->sortable(),
                 TextColumn::make('return_date')->label('العودة')->dateTime('d/m/Y H:i')->toggleable(),
-                TextColumn::make('available_weight')->label('الوزن المتاح')->suffix(' كجم'),
-                TextColumn::make('price_per_kg')->label('السعر/كجم')->money(),
+                TextColumn::make('price_per_kg')->label('السعر')->money(),
                 BadgeColumn::make('status')
                     ->label('الحالة')
                     ->colors([

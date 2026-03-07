@@ -33,7 +33,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   Country? _toCountry;
   City? _toCity;
   DateTime? _departureDate;
-  final _weightController = TextEditingController();
   final _priceController = TextEditingController();
   final _notesController = TextEditingController();
 
@@ -48,7 +47,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
 
   @override
   void dispose() {
-    _weightController.dispose();
     _priceController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -142,20 +140,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
                     _buildFromField(),
                     const SizedBox(height: 12),
                     _buildToField(),
-                    const SizedBox(height: 12),
-                    _buildInput(
-                      controller: _weightController,
-                      hint: AppStrings.availableWeightHint,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.luggage_outlined, size: 22, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text('KG', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 12),
                     _buildDepartureField(),
                     const SizedBox(height: 24),
@@ -273,10 +257,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
     }
     setState(() => _submitting = true);
     try {
-      final weightStr = _weightController.text.trim();
-      final availableWeight = weightStr.isEmpty
-          ? null
-          : double.tryParse(weightStr.replaceFirst(',', '.'));
       final priceStr = _priceController.text.trim();
       final pricePerKg = priceStr.isEmpty
           ? null
@@ -290,7 +270,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
         toCountryId: _toCountry!.id,
         toCityId: _toCity!.id,
         departureDate: departureStr,
-        availableWeight: availableWeight,
         pricePerKg: pricePerKg,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );

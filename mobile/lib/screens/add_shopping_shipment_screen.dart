@@ -18,8 +18,6 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
   final _productLinkController = TextEditingController();
   final _productNameController = TextEditingController();
   final _unitPriceController = TextEditingController();
-  final _unitWeightController = TextEditingController();
-
   int _quantity = 1;
   String? _selectedCategory;
   final List<String> _photoPaths = [];
@@ -30,12 +28,10 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
     _productLinkController.dispose();
     _productNameController.dispose();
     _unitPriceController.dispose();
-    _unitWeightController.dispose();
     super.dispose();
   }
 
   double? get _unitPrice => double.tryParse(_unitPriceController.text.trim().replaceFirst(',', '.'));
-  double? get _unitWeight => double.tryParse(_unitWeightController.text.trim().replaceFirst(',', '.'));
 
   Future<void> _pickPhotoFromCamera() async {
     try {
@@ -165,19 +161,6 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
                     _unitPrice != null ? (_unitPrice! * _quantity).round() : 0,
                   ),
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _unitWeightController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  hintText: AppStrings.weightPerItem,
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  suffixIcon: Icon(Icons.shopping_bag_outlined, color: Colors.grey),
-                  prefixIcon: Icon(Icons.arrow_drop_down, color: Colors.grey, size: 20),
-                  prefixIconConstraints: BoxConstraints(minWidth: 32),
                 ),
               ),
               const SizedBox(height: 20),

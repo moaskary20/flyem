@@ -7,7 +7,6 @@ use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\CountryController;
-use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\SettingController;
@@ -46,6 +45,5 @@ Route::get('/trips/{trip}', [TripController::class, 'show']);
 Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
 
 Route::get('/faqs', [FaqController::class, 'index']);
-Route::get('/coupons', [CouponController::class, 'index']);
 Route::get('/settings', [SettingController::class, 'index']);
 Route::get('/payment-methods', [PaymentMethodController::class, 'index']);

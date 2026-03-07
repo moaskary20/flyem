@@ -1,14 +1,14 @@
 import 'dart:convert';
 
+import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
   static Future<AuthResult> login(String email, String password) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/login');
-    final response = await http.post(
-      uri,
+    final response = await ApiClient.post(
+      '/api/login',
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
@@ -34,9 +34,8 @@ class AuthService {
     required String password,
     required String passwordConfirmation,
   }) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/register');
-    final response = await http.post(
-      uri,
+    final response = await ApiClient.post(
+      '/api/register',
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       body: jsonEncode({
         'first_name': firstName,
@@ -70,9 +69,8 @@ class AuthService {
     final token = await AppPreferences.getAuthToken();
     if (token != null && token.isNotEmpty) {
       try {
-        final uri = Uri.parse('$kApiBaseUrl/api/logout');
-        await http.post(
-          uri,
+        await ApiClient.post(
+          '/api/logout',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -92,9 +90,8 @@ class AuthService {
   static Future<UserProfile?> getCurrentUser() async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) return null;
-    final uri = Uri.parse('$kApiBaseUrl/api/user');
-    final response = await http.get(
-      uri,
+    final response = await ApiClient.get(
+      '/api/user',
       headers: {
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',

@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/models/city.dart';
-import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/models/shipment_list_item.dart';
+import 'package:flyem_app/services/trips_service.dart';
 import 'package:http/http.dart' as http;
 
 class ShipmentsService {
@@ -19,24 +20,20 @@ class ShipmentsService {
     int? fromCityId,
     int? toCityId,
     String? deadlineAfter,
-    double? maxWeight,
     int? currencyId,
   }) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/shipments').replace(
-      queryParameters: <String, String>{
-        'page': '$page',
-        'per_page': '$perPage',
-        if (userId != null) 'user_id': '$userId',
-        if (fromCountryId != null) 'from_country_id': '$fromCountryId',
-        if (toCountryId != null) 'to_country_id': '$toCountryId',
-        if (fromCityId != null) 'from_city_id': '$fromCityId',
-        if (toCityId != null) 'to_city_id': '$toCityId',
-        if (deadlineAfter != null) 'deadline_after': deadlineAfter,
-        if (maxWeight != null) 'max_weight': '$maxWeight',
-        if (currencyId != null) 'currency_id': '$currencyId',
-      },
-    );
-    final response = await http.get(uri);
+    final queryParams = <String, String>{
+      'page': '$page',
+      'per_page': '$perPage',
+      if (userId != null) 'user_id': '$userId',
+      if (fromCountryId != null) 'from_country_id': '$fromCountryId',
+      if (toCountryId != null) 'to_country_id': '$toCountryId',
+      if (fromCityId != null) 'from_city_id': '$fromCityId',
+      if (toCityId != null) 'to_city_id': '$toCityId',
+      if (deadlineAfter != null) 'deadline_after': deadlineAfter,
+      if (currencyId != null) 'currency_id': '$currencyId',
+    };
+    final response = await ApiClient.get('/api/shipments', queryParams: queryParams);
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -55,8 +52,7 @@ class ShipmentsService {
   }
 
   static Future<ShipmentDetails> getShipment(int id) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/shipments/$id');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/shipments/$id');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -72,7 +68,6 @@ class ShipmentsService {
     int? fromCityId,
     int? toCityId,
     String? deadlineAfter,
-    double? maxWeight,
     int? currencyId,
   }) async {
     final id = userId ?? kCurrentUserId;
@@ -84,7 +79,6 @@ class ShipmentsService {
       fromCityId: fromCityId,
       toCityId: toCityId,
       deadlineAfter: deadlineAfter,
-      maxWeight: maxWeight,
       currencyId: currencyId,
     );
   }
@@ -97,19 +91,16 @@ class ShipmentsService {
   }) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
-    final uri = Uri.parse('$kApiBaseUrl/api/shipments/$shipmentId/send-request');
-    final body = <String, dynamic>{
-      'payment_method_id': paymentMethodId,
-    };
-    if (message != null && message.isNotEmpty) body['message'] = message;
-    final response = await http.post(
-      uri,
+    final bodyMap = <String, dynamic>{'payment_method_id': paymentMethodId};
+    if (message != null && message.isNotEmpty) bodyMap['message'] = message;
+    final response = await ApiClient.post(
+      '/api/shipments/$shipmentId/send-request',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(body),
+      body: jsonEncode(bodyMap),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       final map = jsonDecode(response.body) as Map<String, dynamic>?;
@@ -126,8 +117,7 @@ class ShipmentsService {
   }
 
   static Future<void> deleteShipment(int id) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/shipments/$id');
-    final response = await http.delete(uri);
+    final response = await ApiClient.delete('/api/shipments/$id');
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -142,13 +132,11 @@ class ShipmentsService {
     required int toCountryId,
     required int toCityId,
     String? deadlineDate,
-    double? weight,
     int? quantity,
     String? productLink,
     String? type,
     double? priceMin,
   }) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/shipments');
     final body = <String, dynamic>{
       'user_id': userId,
       'title': title,
@@ -159,13 +147,12 @@ class ShipmentsService {
     };
     if (description != null && description.isNotEmpty) body['description'] = description;
     if (deadlineDate != null && deadlineDate.isNotEmpty) body['deadline_date'] = deadlineDate;
-    if (weight != null) body['weight'] = weight;
     if (quantity != null) body['quantity'] = quantity;
     if (productLink != null && productLink.isNotEmpty) body['product_link'] = productLink;
     if (type != null && type.isNotEmpty) body['type'] = type;
     if (priceMin != null) body['price_min'] = priceMin;
-    final response = await http.post(
-      uri,
+    final response = await ApiClient.post(
+      '/api/shipments',
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       body: jsonEncode(body),
     );
@@ -178,10 +165,10 @@ class ShipmentsService {
   }
 
   static Future<List<Country>> getCountries({String? search}) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/countries').replace(
-      queryParameters: search != null && search.isNotEmpty ? {'search': search} : null,
+    final response = await ApiClient.get(
+      '/api/countries',
+      queryParams: search != null && search.isNotEmpty ? {'search': search} : null,
     );
-    final response = await http.get(uri);
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -193,8 +180,7 @@ class ShipmentsService {
   static Future<List<City>> getCities(int countryId, {String? search}) async {
     final params = <String, String>{'country_id': '$countryId'};
     if (search != null && search.isNotEmpty) params['search'] = search;
-    final uri = Uri.parse('$kApiBaseUrl/api/cities').replace(queryParameters: params);
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/cities', queryParams: params);
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }

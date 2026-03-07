@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/models/trip_item.dart';
@@ -23,8 +24,7 @@ class TripsService {
     if (toCityId != null) params['to_city_id'] = '$toCityId';
     if (departureAfter != null && departureAfter.isNotEmpty) params['departure_after'] = departureAfter;
     if (currencyId != null) params['currency_id'] = '$currencyId';
-    final uri = Uri.parse('$kApiBaseUrl/api/trips').replace(queryParameters: params);
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/trips', queryParams: params);
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -63,8 +63,7 @@ class TripsService {
     if (toCityId != null) params['to_city_id'] = '$toCityId';
     if (departureAfter != null && departureAfter.isNotEmpty) params['departure_after'] = departureAfter;
     if (currencyId != null) params['currency_id'] = '$currencyId';
-    final uri = Uri.parse('$kApiBaseUrl/api/trips').replace(queryParameters: params);
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/trips', queryParams: params);
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -83,8 +82,7 @@ class TripsService {
 
   /// تفاصيل رحلة واحدة (شاشة تفاصيل الرحلة)
   static Future<TripDetails> getTrip(int tripId) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/trips/$tripId');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/trips/$tripId');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -93,8 +91,7 @@ class TripsService {
   }
 
   static Future<void> deleteTrip(int id) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/trips/$id');
-    final response = await http.delete(uri);
+    final response = await ApiClient.delete('/api/trips/$id');
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -108,19 +105,16 @@ class TripsService {
   }) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
-    final uri = Uri.parse('$kApiBaseUrl/api/trips/$tripId/send-request');
-    final body = <String, dynamic>{
-      'payment_method_id': paymentMethodId,
-    };
-    if (message != null && message.isNotEmpty) body['message'] = message;
-    final response = await http.post(
-      uri,
+    final bodyMap = <String, dynamic>{'payment_method_id': paymentMethodId};
+    if (message != null && message.isNotEmpty) bodyMap['message'] = message;
+    final response = await ApiClient.post(
+      '/api/trips/$tripId/send-request',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(body),
+      body: jsonEncode(bodyMap),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       final map = jsonDecode(response.body) as Map<String, dynamic>?;
@@ -145,13 +139,10 @@ class TripsService {
     required int toCityId,
     required String departureDate,
     String? returnDate,
-    double? availableWeight,
-    String weightUnit = 'kg',
     double? pricePerKg,
     int? currencyId,
     String? notes,
   }) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/trips');
     final body = <String, dynamic>{
       'user_id': userId,
       'travel_method': travelMethod,
@@ -162,8 +153,6 @@ class TripsService {
       'departure_date': departureDate,
     };
     if (returnDate != null && returnDate.isNotEmpty) body['return_date'] = returnDate;
-    if (availableWeight != null) body['available_weight'] = availableWeight;
-    body['weight_unit'] = weightUnit;
     if (pricePerKg != null) body['price_per_kg'] = pricePerKg;
     if (currencyId != null) body['currency_id'] = currencyId;
     if (notes != null && notes.isNotEmpty) body['notes'] = notes;
@@ -176,8 +165,8 @@ class TripsService {
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }
-    final response = await http.post(
-      uri,
+    final response = await ApiClient.post(
+      '/api/trips',
       headers: headers,
       body: jsonEncode(body),
     );

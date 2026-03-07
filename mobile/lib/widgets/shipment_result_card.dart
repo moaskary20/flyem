@@ -4,7 +4,6 @@ import 'package:flyem_app/core/app_strings.dart';
 
 class ShipmentResultCard extends StatelessWidget {
   final String productName;
-  final String weight;
   final String fromCode;
   final String toCode;
   final String date;
@@ -19,7 +18,6 @@ class ShipmentResultCard extends StatelessWidget {
   const ShipmentResultCard({
     super.key,
     required this.productName,
-    required this.weight,
     required this.fromCode,
     required this.toCode,
     required this.date,
@@ -65,15 +63,6 @@ class ShipmentResultCard extends StatelessWidget {
                                 errorBuilder: (context, error, stackTrace) => Icon(Icons.inventory_2, size: 28, color: Colors.grey[500]),
                               )
                             : Icon(Icons.inventory_2, size: 28, color: Colors.grey[500]),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$weight ${AppStrings.kg}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

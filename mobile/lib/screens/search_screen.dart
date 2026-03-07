@@ -26,7 +26,6 @@ class _SearchScreenState extends State<SearchScreen> {
   Place? _fromPlace;
   Place? _toPlace;
   DateTime? _selectedDate;
-  double? _maxWeight;
 
   bool _loading = true;
   String? _error;
@@ -59,7 +58,6 @@ class _SearchScreenState extends State<SearchScreen> {
         fromCityId: _fromPlace?.cityId,
         toCityId: _toPlace?.cityId,
         deadlineAfter: dateStr,
-        maxWeight: _maxWeight,
         currencyId: currencyId,
       ).then((res) {
         if (mounted) {
@@ -149,18 +147,16 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: SearchFormSection(
+              child:               SearchFormSection(
                 searchType: _searchType,
                 onSearchTypeChanged: _onSearchTypeChanged,
                 onSearchPressed: _onSearchPressed,
                 fromPlace: _fromPlace,
                 toPlace: _toPlace,
                 selectedDate: _selectedDate,
-                maxWeight: _maxWeight,
                 onFromPlaceSelected: (p) => setState(() => _fromPlace = p),
                 onToPlaceSelected: (p) => setState(() => _toPlace = p),
                 onDateSelected: (d) => setState(() => _selectedDate = d),
-                onMaxWeightChanged: (w) => setState(() => _maxWeight = w),
               ),
             ),
             if (_loading)
@@ -233,7 +229,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 final item = list[index];
                 return ShipmentResultCard(
                   productName: item.title,
-                  weight: _formatWeight(item.weight),
                   fromCode: item.fromCode,
                   toCode: item.toCode,
                   date: item.deadlineFormatted ?? '',
@@ -308,8 +303,4 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  String _formatWeight(double w) {
-    if (w == w.truncateToDouble()) return w.toInt().toString();
-    return w.toStringAsFixed(1);
-  }
 }

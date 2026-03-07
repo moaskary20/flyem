@@ -434,7 +434,6 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
           final item = list[index];
           return ShipmentResultCard(
             productName: item.title,
-            weight: _formatWeight(item.weight),
             fromCode: item.fromCode,
             toCode: item.toCode,
             date: item.deadlineFormatted ?? '',
@@ -457,10 +456,6 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
     );
   }
 
-  String _formatWeight(double w) {
-    if (w == w.truncateToDouble()) return w.toInt().toString();
-    return w.toStringAsFixed(1);
-  }
 }
 
 class _DealsTab extends StatelessWidget {

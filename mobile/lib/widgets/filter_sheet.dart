@@ -23,12 +23,10 @@ class ShipmentsFilterResult {
   final Place? fromPlace;
   final Place? toPlace;
   final DateTime? deadlineAfter;
-  final double? maxWeight;
   const ShipmentsFilterResult({
     this.fromPlace,
     this.toPlace,
     this.deadlineAfter,
-    this.maxWeight,
   });
   String? get deadlineAfterStr {
     if (deadlineAfter == null) return null;
@@ -214,7 +212,6 @@ class _ShipmentsFilterSheetState extends State<_ShipmentsFilterSheet> {
   Place? _from;
   Place? _to;
   DateTime? _deadlineAfter;
-  final TextEditingController _weightController = TextEditingController();
 
   @override
   void initState() {
@@ -222,26 +219,13 @@ class _ShipmentsFilterSheetState extends State<_ShipmentsFilterSheet> {
     _from = widget.initial?.fromPlace;
     _to = widget.initial?.toPlace;
     _deadlineAfter = widget.initial?.deadlineAfter;
-    if (widget.initial?.maxWeight != null) {
-      _weightController.text = widget.initial!.maxWeight!.truncateToDouble() == widget.initial!.maxWeight
-          ? widget.initial!.maxWeight!.toInt().toString()
-          : widget.initial!.maxWeight.toString();
-    }
-  }
-
-  @override
-  void dispose() {
-    _weightController.dispose();
-    super.dispose();
   }
 
   void _apply() {
-    final w = double.tryParse(_weightController.text.trim().replaceFirst(',', '.'));
     widget.onApply(ShipmentsFilterResult(
       fromPlace: _from,
       toPlace: _to,
       deadlineAfter: _deadlineAfter,
-      maxWeight: w,
     ));
     Navigator.of(context).pop();
   }
@@ -307,23 +291,6 @@ class _ShipmentsFilterSheetState extends State<_ShipmentsFilterSheet> {
               },
               onClear: () => setState(() => _deadlineAfter = null),
               showClear: _deadlineAfter != null,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _weightController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                hintText: AppStrings.allWeights,
-                prefixIcon: Icon(Icons.scale, size: 20, color: Colors.grey[700]),
-                filled: true,
-                fillColor: Colors.grey[100],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              ),
-              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 24),
             Row(

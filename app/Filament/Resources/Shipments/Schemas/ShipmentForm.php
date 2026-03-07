@@ -57,7 +57,6 @@ class ShipmentForm
                     ->schema([
                         Grid::make(3)
                             ->schema([
-                                TextInput::make('weight')->label('الوزن (كجم)')->numeric()->step(0.01),
                                 Select::make('type')
                                     ->label('نوع الشحنة')
                                     ->options([

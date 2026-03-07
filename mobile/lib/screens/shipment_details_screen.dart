@@ -301,12 +301,6 @@ class _DetailsContent extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           _buildDetailRow(
-            label: AppStrings.weightOfSingleItem,
-            value: '${shipment.weight} ${shipment.weightUnit}',
-            icon: Icons.shopping_bag_outlined,
-          ),
-          const SizedBox(height: 12),
-          _buildDetailRow(
             label: AppStrings.productQuantity,
             value: '${shipment.quantity}',
             icon: Icons.inventory_2_outlined,

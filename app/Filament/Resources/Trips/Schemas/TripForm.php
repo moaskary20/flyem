@@ -73,8 +73,6 @@ class TripForm
                                     ->label('تاريخ المغادرة')->required(),
                                 DateTimePicker::make('return_date')
                                     ->label('تاريخ العودة'),
-                                TextInput::make('available_weight')
-                                    ->label('الوزن المتاح (كجم)')->numeric()->step(0.01),
                                 TextInput::make('price_per_kg')
                                     ->label('السعر/كجم')->numeric()->step(0.01),
                                 Select::make('currency_id')

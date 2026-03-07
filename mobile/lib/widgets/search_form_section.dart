@@ -17,11 +17,9 @@ class SearchFormSection extends StatefulWidget {
     this.fromPlace,
     this.toPlace,
     this.selectedDate,
-    this.maxWeight,
     this.onFromPlaceSelected,
     this.onToPlaceSelected,
     this.onDateSelected,
-    this.onMaxWeightChanged,
   });
 
   final SearchType searchType;
@@ -30,11 +28,9 @@ class SearchFormSection extends StatefulWidget {
   final Place? fromPlace;
   final Place? toPlace;
   final DateTime? selectedDate;
-  final double? maxWeight;
   final ValueChanged<Place?>? onFromPlaceSelected;
   final ValueChanged<Place?>? onToPlaceSelected;
   final ValueChanged<DateTime?>? onDateSelected;
-  final ValueChanged<double?>? onMaxWeightChanged;
 
   @override
   State<SearchFormSection> createState() => _SearchFormSectionState();
@@ -69,17 +65,7 @@ class _SearchFormSectionState extends State<SearchFormSection> {
               onSelected: widget.onToPlaceSelected,
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDateChip(),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildWeightField(),
-                ),
-              ],
-            ),
+            _buildDateChip(),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -138,19 +124,6 @@ class _SearchFormSectionState extends State<SearchFormSection> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildWeightField() {
-    final initial = widget.maxWeight != null
-        ? (widget.maxWeight == widget.maxWeight!.truncateToDouble()
-            ? widget.maxWeight!.toInt().toString()
-            : widget.maxWeight.toString())
-        : '';
-    return _WeightField(
-      hint: AppStrings.allWeights,
-      initialValue: initial,
-      onChanged: (v) => widget.onMaxWeightChanged?.call(v),
     );
   }
 
@@ -342,77 +315,6 @@ class _PlaceAutocompleteState extends State<_PlaceAutocomplete> {
           child: SizedBox(height: 24, child: Center(child: LinearProgressIndicator())),
         ),
       ],
-    );
-  }
-}
-
-class _WeightField extends StatefulWidget {
-  const _WeightField({
-    required this.hint,
-    this.initialValue = '',
-    this.onChanged,
-  });
-
-  final String hint;
-  final String initialValue;
-  final ValueChanged<double?>? onChanged;
-
-  @override
-  State<_WeightField> createState() => _WeightFieldState();
-}
-
-class _WeightFieldState extends State<_WeightField> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
-    _controller.addListener(_parseAndNotify);
-  }
-
-  @override
-  void didUpdateWidget(covariant _WeightField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialValue != oldWidget.initialValue && widget.initialValue != _controller.text) {
-      _controller.text = widget.initialValue;
-    }
-  }
-
-  void _parseAndNotify() {
-    final t = _controller.text.trim();
-    if (t.isEmpty) {
-      widget.onChanged?.call(null);
-      return;
-    }
-    final v = double.tryParse(t.replaceFirst(',', '.'));
-    widget.onChanged?.call(v);
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_parseAndNotify);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        hintStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
-        prefixIcon: Icon(Icons.scale, size: 20, color: Colors.black87),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      ),
     );
   }
 }

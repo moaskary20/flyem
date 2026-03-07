@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,8 +16,7 @@ String _fullImageUrl(String? url) {
 class ContentService {
   /// البنرات الإعلانية (للسلايدر في شاشة البحث - من لوحة التحكم)
   static Future<List<BannerItem>> getBanners() async {
-    final uri = Uri.parse('$kApiBaseUrl/api/banners');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/banners');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -28,8 +28,7 @@ class ContentService {
   }
   /// الأسئلة الشائعة (من لوحة التحكم - إدارة المحتوى > FAQs)
   static Future<List<FaqItem>> getFaqs() async {
-    final uri = Uri.parse('$kApiBaseUrl/api/faqs');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/faqs');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -42,8 +41,7 @@ class ContentService {
 
   /// الكوبونات المتاحة (من لوحة التحكم - إدارة المعاملات > الكوبونات)
   static Future<List<CouponItem>> getCoupons() async {
-    final uri = Uri.parse('$kApiBaseUrl/api/coupons');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/coupons');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }
@@ -56,8 +54,7 @@ class ContentService {
 
   /// إعدادات التطبيق (من لوحة التحكم - الإعدادات)
   static Future<Map<String, dynamic>> getSettings() async {
-    final uri = Uri.parse('$kApiBaseUrl/api/settings');
-    final response = await http.get(uri);
+    final response = await ApiClient.get('/api/settings');
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }

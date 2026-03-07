@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flyem_app/core/api_config.dart';
+import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,10 +16,11 @@ class ConversationsService {
 
   /// قائمة محادثات المستخدم الحالي
   static Future<ConversationsListResponse> getConversations({int page = 1, int perPage = 20}) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/conversations').replace(
-      queryParameters: {'page': '$page', 'per_page': '$perPage'},
+    final response = await ApiClient.get(
+      '/api/conversations',
+      headers: await _authHeaders(),
+      queryParams: {'page': '$page', 'per_page': '$perPage'},
     );
-    final response = await http.get(uri, headers: await _authHeaders());
     if (response.statusCode == 401) throw ConversationsException('يجب تسجيل الدخول');
     if (response.statusCode != 200) throw ConversationsException('فشل تحميل المحادثات');
     final map = jsonDecode(response.body) as Map<String, dynamic>;
@@ -35,10 +36,11 @@ class ConversationsService {
 
   /// رسائل محادثة واحدة (صفحة)
   static Future<ConversationDetailResponse> getConversation(int conversationId, {int page = 1, int perPage = 50}) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/conversations/$conversationId').replace(
-      queryParameters: {'page': '$page', 'per_page': '$perPage'},
+    final response = await ApiClient.get(
+      '/api/conversations/$conversationId',
+      headers: await _authHeaders(),
+      queryParams: {'page': '$page', 'per_page': '$perPage'},
     );
-    final response = await http.get(uri, headers: await _authHeaders());
     if (response.statusCode == 401) throw ConversationsException('يجب تسجيل الدخول');
     if (response.statusCode == 403) throw ConversationsException('غير مسموح');
     if (response.statusCode != 200) throw ConversationsException('فشل تحميل المحادثة');
@@ -60,9 +62,8 @@ class ConversationsService {
 
   /// إرسال رسالة نصية
   static Future<ChatMessage> sendMessage(int conversationId, String text) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/conversations/$conversationId/messages');
-    final response = await http.post(
-      uri,
+    final response = await ApiClient.post(
+      '/api/conversations/$conversationId/messages',
       headers: await _authHeaders(),
       body: jsonEncode({'message': text, 'type': 'text'}),
     );
@@ -76,9 +77,8 @@ class ConversationsService {
 
   /// إنشاء محادثة جديدة مع مستخدم
   static Future<ConversationListItem> createConversation(int receiverId) async {
-    final uri = Uri.parse('$kApiBaseUrl/api/conversations');
-    final response = await http.post(
-      uri,
+    final response = await ApiClient.post(
+      '/api/conversations',
       headers: await _authHeaders(),
       body: jsonEncode({'receiver_id': receiverId}),
     );

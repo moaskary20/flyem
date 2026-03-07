@@ -42,9 +42,6 @@ class ShipmentController extends Controller
         if ($request->filled('to_city_id')) {
             $query->where('to_city_id', $request->to_city_id);
         }
-        if ($request->filled('max_weight')) {
-            $query->where('weight', '<=', $request->max_weight);
-        }
         if ($request->filled('deadline_after')) {
             $query->whereDate('deadline_date', '>=', $request->deadline_after);
         }
@@ -71,8 +68,6 @@ class ShipmentController extends Controller
             return [
                 'id' => $s->id,
                 'title' => $s->title,
-                'weight' => (float) $s->weight,
-                'weight_unit' => $s->weight_unit ?? 'kg',
                 'from_code' => $s->fromCountry?->code ?? '',
                 'from_name' => $s->fromCountry?->name_ar ?? '',
                 'to_code' => $s->toCountry?->code ?? '',
@@ -142,8 +137,6 @@ class ShipmentController extends Controller
             'title' => $shipment->title,
             'description' => $shipment->description,
             'product_link' => $shipment->product_link,
-            'weight' => (float) $shipment->weight,
-            'weight_unit' => $shipment->weight_unit ?? 'kg',
             'quantity' => (int) ($shipment->quantity ?? 1),
             'type' => $shipment->type ?? 'other',
             'type_label' => $typeLabels[$shipment->type ?? 'other'] ?? 'أخرى',
@@ -182,7 +175,6 @@ class ShipmentController extends Controller
             'to_country_id' => ['required', 'integer', 'exists:countries,id'],
             'to_city_id' => ['required', 'integer', 'exists:cities,id'],
             'deadline_date' => ['nullable', 'date'],
-            'weight' => ['nullable', 'numeric', 'min:0'],
             'quantity' => ['nullable', 'integer', 'min:1'],
             'product_link' => ['nullable', 'string', 'max:500'],
             'type' => ['nullable', Rule::in(['documents', 'fragile', 'electronics', 'clothing', 'food', 'other'])],
@@ -199,7 +191,6 @@ class ShipmentController extends Controller
             'to_country_id' => $validated['to_country_id'],
             'to_city_id' => $validated['to_city_id'],
             'deadline_date' => $validated['deadline_date'] ?? null,
-            'weight' => $validated['weight'] ?? null,
             'quantity' => $validated['quantity'] ?? 1,
             'product_link' => $validated['product_link'] ?? null,
             'type' => $validated['type'] ?? 'other',

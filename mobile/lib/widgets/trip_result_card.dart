@@ -69,16 +69,6 @@ class TripResultCard extends StatelessWidget {
                       item.userName!,
                       style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                     ),
-                  Row(
-                    children: [
-                      Text(
-                        '${item.availableWeight} ${item.weightUnit}',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.luggage, size: 16, color: AppColors.primaryYellow),
-                    ],
-                  ),
                 ],
               ),
               const SizedBox(height: 6),

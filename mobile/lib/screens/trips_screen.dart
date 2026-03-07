@@ -501,13 +501,6 @@ class _TripCard extends StatelessWidget {
                                 item.departureFormatted ?? item.departureDate ?? '',
                                 style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                               ),
-                              const SizedBox(width: 16),
-                              Icon(Icons.luggage_rounded, size: 16, color: AppColors.primaryYellow),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${item.availableWeight} ${item.weightUnit}',
-                                style: TextStyle(fontSize: 13, color: Colors.grey[700], fontWeight: FontWeight.w500),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 12),

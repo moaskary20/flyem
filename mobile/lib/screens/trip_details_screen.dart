@@ -140,22 +140,10 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                         ),
                                         const SizedBox(height: 16),
                                         _buildInfoCard(
-                                          title: 'الوزن والتسعير',
+                                          title: 'التسعير',
                                           children: [
                                             _buildDetailRow(
-                                              label: 'الوزن المتاح',
-                                              value: '${_trip!.availableWeight} ${_trip!.weightUnit}',
-                                              icon: Icons.luggage,
-                                            ),
-                                            const SizedBox(height: 12),
-                                            _buildDetailRow(
-                                              label: 'الوزن الكلي',
-                                              value: '${_trip!.availableWeight} ${_trip!.weightUnit}',
-                                              icon: Icons.scale,
-                                            ),
-                                            const SizedBox(height: 12),
-                                            _buildDetailRow(
-                                              label: 'سعر الكيلو',
+                                              label: 'السعر',
                                               value: '${_trip!.currencySymbol}${_trip!.pricePerKg.toStringAsFixed(1)}',
                                               icon: Icons.paid,
                                             ),
