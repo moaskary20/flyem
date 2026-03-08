@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
-import 'package:flyem_app/screens/shipment_payment_screen.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 
 class ShipmentDetailsScreen extends StatelessWidget {
@@ -313,15 +312,24 @@ class _DetailsContent extends StatelessWidget {
           children: [
             Expanded(
               child: FilledButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ShipmentPaymentScreen(
-                        shipmentId: shipment.id,
-                        shipment: shipment,
-                      ),
-                    ),
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text(AppStrings.sendingRequest)),
                   );
+                  try {
+                    await ShipmentsService.createShipmentRequest(shipment.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text(AppStrings.requestSentMatches)),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                      );
+                    }
+                  }
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primaryYellow,

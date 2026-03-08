@@ -83,6 +83,34 @@ class ShipmentsService {
     );
   }
 
+  /// إنشاء طلب على شحنة فقط (بدون دفع). يظهر في تطابقات حتى يقبل صاحب الشحنة.
+  static Future<CreateRequestResult> createShipmentRequest(int shipmentId, {String? message}) async {
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
+    final bodyMap = <String, dynamic>{};
+    if (message != null && message.isNotEmpty) bodyMap['message'] = message;
+    final response = await ApiClient.post(
+      '/api/shipments/$shipmentId/request',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(bodyMap.isNotEmpty ? bodyMap : {}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final map = jsonDecode(response.body) as Map<String, dynamic>?;
+      final msg = map?['message'] as String? ?? response.body;
+      throw Exception(msg);
+    }
+    final map = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = map['data'] as Map<String, dynamic>? ?? map;
+    return CreateRequestResult(
+      requestId: (data['request_id'] as num).toInt(),
+      message: data['message'] as String? ?? 'تم إرسال الطلب.',
+    );
+  }
+
   /// إرسال طلب على شحنة (دفع): ينشئ الطلب والدفعة والمحادثة ويرجع conversationId و otherUserName.
   static Future<SendRequestResult> sendRequest({
     required int shipmentId,
@@ -202,4 +230,11 @@ class ShipmentsListResponse {
     required this.currentPage,
     required this.perPage,
   });
+}
+
+class CreateRequestResult {
+  final int requestId;
+  final String message;
+
+  CreateRequestResult({required this.requestId, required this.message});
 }

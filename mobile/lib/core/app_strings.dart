@@ -28,6 +28,9 @@ class AppStrings {
   static const String shipmentsFoundCount = 'شحنة موجودة'; // سيتم استبدال العدد
   static String shipmentsFoundWithCount(int n) => '$n شحنة موجودة';
   static const String sendRequest = 'إرسال طلب';
+  static const String sendingRequest = 'جاري إرسال الطلب...';
+  static const String requestSentMatches =
+      'تم إرسال الطلب. ستظهر في تطابقات حتى يقبل صاحب الشحنة.';
   static const String reward = 'المكافأة';
   static const String before = 'قبل';
   static const String deliveryBefore = 'الاستلام قبل';
@@ -48,6 +51,15 @@ class AppStrings {
       'مع العلم أن الحد الأدنى ($minValue) وزيادة التكلفة عنه تزيد من فرصة إنجاز العملية.';
   static const String minRewardDisclaimerNoMin =
       'مع العلم أن زيادة التكلفة تزيد من فرصة إنجاز العملية.';
+
+  // Requests (تطابقات)
+  static const String requestStatusPending = 'قيد الانتظار';
+  static const String requestStatusAccepted = 'مقبول';
+  static const String requestStatusRejected = 'مرفوض';
+  static const String payNow = 'ادفع الآن';
+  static const String accept = 'قبول';
+  static const String reject = 'رفض';
+  static const String noRequests = 'لا توجد طلبات';
 
   // Filter
   static const String filterTitle = 'فلتر';

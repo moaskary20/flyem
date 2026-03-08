@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/main_nav_screen.dart';
+import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/payment_methods_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 
@@ -24,10 +25,26 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
   String? _error;
   int? _selectedMethodId;
 
+  /// الحد الأدنى لسعر الرحلة من لوحة التحكم — يُعرض ويُطبّق في الدفع.
+  double? _minTripPrice;
+
   @override
   void initState() {
     super.initState();
     _loadMethods();
+    _loadMinTripPrice();
+  }
+
+  Future<void> _loadMinTripPrice() async {
+    try {
+      final settings = await ContentService.getSettings();
+      final v = settings['min_trip_price'];
+      if (v != null) {
+        final s = v is String ? v : v.toString();
+        final d = double.tryParse(s.trim());
+        if (mounted && d != null && d >= 0) setState(() => _minTripPrice = d);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadMethods() async {
@@ -87,7 +104,9 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final t = widget.trip;
-    final amount = t.pricePerKg > 0 ? t.pricePerKg : 1.0;
+    final amount = (_minTripPrice != null && _minTripPrice! > 0)
+        ? _minTripPrice!
+        : (t.pricePerKg > 0 ? t.pricePerKg : 1.0);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

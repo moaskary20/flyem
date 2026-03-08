@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Request as RequestModel;
+use App\Models\Setting;
 use App\Models\Trip;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -198,7 +199,15 @@ class TripController extends Controller
             return response()->json(['message' => 'وسيلة الدفع غير متاحة.'], 422);
         }
 
-        $amount = (float) ($trip->price_per_kg ?? 1);
+        $minTripPriceSetting = Setting::where('key', 'min_trip_price')->first();
+        $minTripPrice = $minTripPriceSetting && filled($minTripPriceSetting->value)
+            ? (float) $minTripPriceSetting->value
+            : null;
+
+        $amount = (float) ($trip->price_per_kg ?? 0);
+        if ($minTripPrice !== null && $minTripPrice > 0) {
+            $amount = $amount > 0 ? max($amount, $minTripPrice) : $minTripPrice;
+        }
         if ($amount <= 0) {
             $amount = 1;
         }

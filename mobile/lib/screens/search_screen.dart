@@ -32,11 +32,27 @@ class _SearchScreenState extends State<SearchScreen> {
   ShipmentsListResponse? _shipmentsResult;
   TripsListResponse? _tripsResult;
 
+  /// الحد الأدنى لسعر الرحلة من لوحة التحكم (للعرض على كروت الرحلات).
+  double? _minTripPrice;
+
   @override
   void initState() {
     super.initState();
     _bannersFuture = ContentService.getBanners();
+    _loadMinTripPrice();
     _load();
+  }
+
+  Future<void> _loadMinTripPrice() async {
+    try {
+      final settings = await ContentService.getSettings();
+      final v = settings['min_trip_price'];
+      if (v != null) {
+        final s = v is String ? v : v.toString();
+        final d = double.tryParse(s.trim());
+        if (mounted && d != null && d >= 0) setState(() => _minTripPrice = d);
+      }
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -286,6 +302,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 final item = list[index];
                 return TripResultCard(
                   item: item,
+                  minTripPrice: _minTripPrice,
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(

@@ -3,15 +3,23 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/screens/main_nav_screen.dart';
 import 'package:flyem_app/services/payment_methods_service.dart';
+import 'package:flyem_app/services/requests_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 
-/// شاشة الدفع لإرسال طلب على شحنة: اختيار وسيلة الدفع ثم إتمام الدفع.
+/// شاشة الدفع لإرسال طلب على شحنة أو دفع لطلب مقبول (من تطابقات).
 /// بعد النجاح يتم التوجيه إلى شاشة الرسائل وفتح المحادثة مع صاحب الشحنة.
 class ShipmentPaymentScreen extends StatefulWidget {
-  const ShipmentPaymentScreen({super.key, required this.shipmentId, required this.shipment});
+  const ShipmentPaymentScreen({
+    super.key,
+    required this.shipmentId,
+    required this.shipment,
+    this.requestId,
+  });
 
   final int shipmentId;
   final ShipmentDetails shipment;
+  /// إن وُجد: دفع لطلب مقبول (من تطابقات) بدل إنشاء طلب جديد.
+  final int? requestId;
 
   @override
   State<ShipmentPaymentScreen> createState() => _ShipmentPaymentScreenState();
@@ -60,10 +68,12 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
       _error = null;
     });
     try {
-      final result = await ShipmentsService.sendRequest(
-        shipmentId: widget.shipmentId,
-        paymentMethodId: _selectedMethodId!,
-      );
+      final result = widget.requestId != null
+          ? await RequestsService.payRequest(widget.requestId!, _selectedMethodId!)
+          : await ShipmentsService.sendRequest(
+              shipmentId: widget.shipmentId,
+              paymentMethodId: _selectedMethodId!,
+            );
       if (!mounted) return;
       setState(() => _paying = false);
       Navigator.of(context).pushAndRemoveUntil(

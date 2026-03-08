@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\FaqController;
+use App\Http\Controllers\Api\AppRequestController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\ShipmentController;
@@ -25,7 +26,12 @@ Route::middleware('auth.api_token')->group(function () {
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
     Route::post('/trips/{trip}/send-request', [TripController::class, 'sendRequest']);
+    Route::post('/shipments/{shipment}/request', [ShipmentController::class, 'createRequest']);
     Route::post('/shipments/{shipment}/send-request', [ShipmentController::class, 'sendRequest']);
+    Route::get('/requests', [AppRequestController::class, 'index']);
+    Route::patch('/requests/{req}/accept', [AppRequestController::class, 'accept']);
+    Route::patch('/requests/{req}/reject', [AppRequestController::class, 'reject']);
+    Route::post('/requests/{req}/pay', [AppRequestController::class, 'payRequest']);
 });
 
 Route::get('/banners', [BannerController::class, 'index']);

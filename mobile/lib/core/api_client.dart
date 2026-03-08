@@ -42,6 +42,8 @@ class ApiClient {
           return await client.put(uri, headers: headers, body: body);
         case 'DELETE':
           return await client.delete(uri, headers: headers);
+        case 'PATCH':
+          return await client.patch(uri, headers: headers, body: body);
         default:
           return await client.get(uri, headers: headers);
       }
@@ -75,6 +77,8 @@ class ApiClient {
               return await client.put(fallbackUri, headers: headers, body: body);
             case 'DELETE':
               return await client.delete(fallbackUri, headers: headers);
+            case 'PATCH':
+              return await client.patch(fallbackUri, headers: headers, body: body);
             default:
               return await client.get(fallbackUri, headers: headers);
           }
@@ -115,4 +119,12 @@ class ApiClient {
     Map<String, String>? queryParams,
   }) =>
       request('DELETE', path, headers: headers, queryParams: queryParams);
+
+  static Future<http.Response> patch(
+    String path, {
+    Map<String, String>? headers,
+    String? body,
+    Map<String, String>? queryParams,
+  }) =>
+      request('PATCH', path, headers: headers, body: body, queryParams: queryParams);
 }

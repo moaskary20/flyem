@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/screens/chat_screen.dart';
+import 'package:flyem_app/screens/shipment_payment_screen.dart';
 import 'package:flyem_app/services/conversations_service.dart';
+import 'package:flyem_app/services/requests_service.dart';
+import 'package:flyem_app/services/shipments_service.dart';
 
 /// شاشة الرسائل: أربعة تبويبات (الاخبار - تطابقات - اتفاقات - المحادثات).
 /// تبويب المحادثات مربوط بالـ API ولوحة التحكم (Conversations / Messages).
@@ -74,9 +77,299 @@ class _MessagesScreenState extends State<MessagesScreen>
           controller: _tabController,
           children: [
             _EmptyTabContent(),
-            _EmptyTabContent(),
+            _MatchesTabContent(),
             _EmptyTabContent(),
             _ConversationsTabContent(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// تبويب تطابقات: قائمة الطلبات (مرسلة/واردة) مع قبول/رفض أو ادفع الآن.
+class _MatchesTabContent extends StatefulWidget {
+  @override
+  State<_MatchesTabContent> createState() => _MatchesTabContentState();
+}
+
+class _MatchesTabContentState extends State<_MatchesTabContent> {
+  List<RequestListItem> _list = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await RequestsService.getRequests();
+      if (mounted) {
+        setState(() {
+          _list = res.data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'pending':
+        return AppStrings.requestStatusPending;
+      case 'accepted':
+        return AppStrings.requestStatusAccepted;
+      case 'rejected':
+        return AppStrings.requestStatusRejected;
+      default:
+        return status;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              FilledButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_list.isEmpty) {
+      return Container(
+        color: const Color(0xFFF8F7F4),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle_outline, size: 80, color: Colors.grey[400]),
+                const SizedBox(height: 24),
+                Text(
+                  AppStrings.noRequests,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey[700], height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return Container(
+      color: const Color(0xFFF8F7F4),
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          itemCount: _list.length,
+          itemBuilder: (context, index) {
+            final item = _list[index];
+            return _RequestTile(
+              item: item,
+              statusLabel: _statusLabel(item.status),
+              onAccept: item.status == 'pending' && !item.isRequester
+                  ? () async {
+                      try {
+                        await RequestsService.acceptRequest(item.id);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('تم قبول الطلب')),
+                          );
+                          _load();
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                          );
+                        }
+                      }
+                    }
+                  : null,
+              onReject: item.status == 'pending' && !item.isRequester
+                  ? () async {
+                      try {
+                        await RequestsService.rejectRequest(item.id);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('تم رفض الطلب')),
+                          );
+                          _load();
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                          );
+                        }
+                      }
+                    }
+                  : null,
+              onPayNow: item.status == 'accepted' && item.isRequester
+                  ? () async {
+                      try {
+                        final shipment = await ShipmentsService.getShipment(item.shipmentId);
+                        if (!mounted) return;
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ShipmentPaymentScreen(
+                              shipmentId: item.shipmentId,
+                              shipment: shipment,
+                              requestId: item.id,
+                            ),
+                          ),
+                        );
+                        if (mounted) _load();
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                          );
+                        }
+                      }
+                    }
+                  : null,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _RequestTile extends StatelessWidget {
+  const _RequestTile({
+    required this.item,
+    required this.statusLabel,
+    this.onAccept,
+    this.onReject,
+    this.onPayNow,
+  });
+
+  final RequestListItem item;
+  final String statusLabel;
+  final VoidCallback? onAccept;
+  final VoidCallback? onReject;
+  final VoidCallback? onPayNow;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item.shipmentTitle.isNotEmpty ? item.shipmentTitle : 'شحنة',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  item.otherUserName.isNotEmpty ? item.otherUserName : '—',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  '${item.currencySymbol}${item.price.toStringAsFixed(1)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFDB913),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: item.status == 'pending'
+                        ? Colors.orange.shade100
+                        : item.status == 'accepted'
+                            ? Colors.green.shade100
+                            : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: item.status == 'accepted'
+                          ? Colors.green.shade800
+                          : item.status == 'pending'
+                              ? Colors.orange.shade800
+                              : Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (onAccept != null || onReject != null || onPayNow != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (onAccept != null)
+                    TextButton(
+                      onPressed: onAccept,
+                      child: Text(AppStrings.accept, style: TextStyle(color: Colors.green.shade700)),
+                    ),
+                  if (onReject != null)
+                    TextButton(
+                      onPressed: onReject,
+                      child: Text(AppStrings.reject, style: TextStyle(color: Colors.red.shade700)),
+                    ),
+                  if (onPayNow != null)
+                    FilledButton(
+                      onPressed: onPayNow,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primaryYellow,
+                        foregroundColor: Colors.black87,
+                      ),
+                      child: const Text(AppStrings.payNow),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

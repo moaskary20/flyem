@@ -4,15 +4,25 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
 
 /// بطاقة رحلة في نتائج البحث (تبويب رحلات).
+/// يعرض الحد الأدنى لسعر الرحلة (من لوحة التحكم) إن وُجد، وإلا سعر الرحلة.
 class TripResultCard extends StatelessWidget {
   const TripResultCard({
     super.key,
     required this.item,
+    this.minTripPrice,
     this.onTap,
   });
 
   final TripItem item;
+  /// الحد الأدنى لسعر الرحلة من لوحة التحكم — يُعرض على الكارت ويُطبّق عند الدفع.
+  final double? minTripPrice;
   final VoidCallback? onTap;
+
+  /// السعر المعروض: الحد الأدنى إن وُجد، وإلا سعر الرحلة.
+  double get _displayPrice {
+    if (minTripPrice != null && minTripPrice! > 0) return minTripPrice!;
+    return item.pricePerKg > 0 ? item.pricePerKg : 0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +90,9 @@ class TripResultCard extends StatelessWidget {
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                   Text(
-                    '${item.profitDisplay} ${AppStrings.profit}',
+                    _displayPrice > 0
+                        ? '${item.currencySymbol}${_displayPrice.toStringAsFixed(1)} ${AppStrings.profit}'
+                        : '— ${AppStrings.profit}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,

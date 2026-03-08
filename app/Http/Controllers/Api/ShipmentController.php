@@ -213,6 +213,46 @@ class ShipmentController extends Controller
     }
 
     /**
+     * إنشاء طلب على شحنة فقط (بدون دفع). يظهر في تطابقات حتى يقبل صاحب الشحنة.
+     */
+    public function createRequest(Request $request, Shipment $shipment): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if ((int) $shipment->user_id === (int) $user->id) {
+            return response()->json(['message' => 'لا يمكن إرسال طلب على شحنتك.'], 422);
+        }
+
+        $request->validate([
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        $amount = (float) ($shipment->price_min ?? 1);
+        if ($amount <= 0) {
+            $amount = 1;
+        }
+
+        $req = RequestModel::create([
+            'shipment_id' => $shipment->id,
+            'requester_id' => $user->id,
+            'price' => $amount,
+            'currency_id' => $shipment->currency_id,
+            'message' => $request->message,
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'data' => [
+                'request_id' => $req->id,
+                'message' => 'تم إرسال الطلب. ستظهر في تطابقات حتى يقبل صاحب الشحنة.',
+            ],
+        ], 201);
+    }
+
+    /**
      * إرسال طلب على شحنة + دفع + إنشاء/فتح محادثة مع صاحب الشحنة.
      * يتطلب مصادقة. نفس آلية send-request للرحلات.
      */
