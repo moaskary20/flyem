@@ -4,6 +4,7 @@ import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
+import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
 
@@ -37,10 +38,26 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
   int _currentStep = 0;
   bool _insuranceChecked = false;
 
+  /// الحد الأدنى لمكافأة المسافر من لوحة التحكم (إن وُجد)
+  double? _minTravelerReward;
+
   @override
   void initState() {
     super.initState();
     _loadCountries();
+    _loadMinTravelerReward();
+  }
+
+  Future<void> _loadMinTravelerReward() async {
+    try {
+      final settings = await ContentService.getSettings();
+      final v = settings['min_traveler_reward'];
+      if (v != null) {
+        final s = v is String ? v : v.toString();
+        final d = double.tryParse(s.trim());
+        if (mounted && d != null && d >= 0) setState(() => _minTravelerReward = d);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadCountries() async {
@@ -96,6 +113,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
   void dispose() {
     _titleController.dispose();
     _notesController.dispose();
+    _rewardController.dispose();
     super.dispose();
   }
 
@@ -322,6 +340,30 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                                           return null;
                                         },
                                       ),
+                                      if (_minTravelerReward != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 6),
+                                          child: Text(
+                                            AppStrings.minRewardDisclaimer(_minTravelerReward!),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 6),
+                                          child: Text(
+                                            AppStrings.minRewardDisclaimerNoMin,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        ),
                                       const SizedBox(height: 12),
                                       TextFormField(
                                         controller: _titleController,

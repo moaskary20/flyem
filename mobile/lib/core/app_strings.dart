@@ -43,6 +43,11 @@ class AppStrings {
   static const String itemCategory = 'فئة السلعة';
   static const String travelerProfit = 'مكسب المسافر';
   static const String travelerReward = 'مكافأة المسافر (السعر)';
+  /// تحت حقل مكافأة المسافر: جملة واحدة فيها الحد الأدنى (الرقم من لوحة التحكم) وزيادة فرصة إنجاز العملية.
+  static String minRewardDisclaimer(double minValue) =>
+      'مع العلم أن الحد الأدنى ($minValue) وزيادة التكلفة عنه تزيد من فرصة إنجاز العملية.';
+  static const String minRewardDisclaimerNoMin =
+      'مع العلم أن زيادة التكلفة تزيد من فرصة إنجاز العملية.';
 
   // Filter
   static const String filterTitle = 'فلتر';

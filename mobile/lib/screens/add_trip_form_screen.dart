@@ -34,10 +34,14 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   Country? _toCountry;
   City? _toCity;
   DateTime? _departureDate;
-  final _priceController = TextEditingController();
   final _notesController = TextEditingController();
   /// الحد الأدنى لسعر الرحلة من لوحة التحكم (إن وُجد)
   double? _minTripPrice;
+
+  bool _canPickupInCurrentCountry = false;
+  bool _canDeliverInOtherCountry = false;
+  bool _canReturnOnCancel = false;
+  int _returnBeforeDays = 1;
 
   /// القيم المقبولة في الـ API: flight, car, train, bus, ship, other
   static const List<String> _travelMethods = ['car', 'train', 'flight'];
@@ -63,7 +67,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
 
   @override
   void dispose() {
-    _priceController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -158,45 +161,44 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
                     _buildToField(),
                     const SizedBox(height: 12),
                     _buildDepartureField(),
-                    const SizedBox(height: 12),
-                    _buildPriceField(),
                     const SizedBox(height: 24),
                     _buildSectionTitle(AppStrings.travelTypeSection),
                     const SizedBox(height: 12),
                     _buildTravelTypeSelector(),
                     const SizedBox(height: 24),
-                    // معلومات الحجز تظهر فقط عند اختيار الطائرة
-                    if (_travelTypeIndex == 2) ...[
-                      _buildSectionTitle(AppStrings.bookingInfoSection),
-                      const SizedBox(height: 12),
-                      _buildInput(
-                        hint: AppStrings.airlineHint,
-                        trailing: Icon(Icons.keyboard_arrow_down, color: AppColors.primaryYellow, size: 28),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildInput(hint: AppStrings.bookingRefHint),
-                      const SizedBox(height: 12),
-                      _buildInput(hint: AppStrings.firstNameBookingHint),
-                      const SizedBox(height: 12),
-                      _buildInput(hint: AppStrings.lastNameBookingHint),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () {},
-                        child: Text(
-                          AppStrings.notBookedYet,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[800],
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.grey[800],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    _buildSectionTitle(AppStrings.categoriesDontWantToCarry),
+                    _buildSectionTitle('خيارات الاستلام والتسليم'),
                     const SizedBox(height: 12),
-                    _buildInput(hint: AppStrings.categoriesDontWantToCarry),
+                    _buildOptionCheckbox(
+                      value: _canPickupInCurrentCountry,
+                      label: 'استطيع الذهاب إلى استلام الشحنة في الدولة الحالية',
+                      onChanged: (v) => setState(() => _canPickupInCurrentCountry = v ?? false),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildOptionCheckbox(
+                      value: _canDeliverInOtherCountry,
+                      label: 'الذهاب لتسليم الشحنة في الدولة الأخرى',
+                      onChanged: (v) => setState(() => _canDeliverInOtherCountry = v ?? false),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildOptionCheckbox(
+                      value: _canReturnOnCancel,
+                      label: 'استطيع إرجاع الشحنة للراسل في حالة إلغاء الشحنة قبل يوم',
+                      onChanged: (v) => setState(() => _canReturnOnCancel = v ?? false),
+                    ),
+                    if (_canReturnOnCancel) ...[
+                      const SizedBox(height: 8),
+                      _buildReturnBeforeDaysField(),
+                    ],
+                    const SizedBox(height: 14),
+                    Text(
+                      'مع العلم أن هذه الخدمات اختيارية وتعتمد على المسافة والتكلفة التي يتم عليها الاتفاق بين الطرفين.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[700],
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
                     const SizedBox(height: 24),
                     _buildSectionTitle(AppStrings.notes),
                     const SizedBox(height: 12),
@@ -275,22 +277,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
     }
     setState(() => _submitting = true);
     try {
-      final priceStr = _priceController.text.trim();
-      final pricePerKg = priceStr.isEmpty
-          ? null
-          : double.tryParse(priceStr.replaceFirst(',', '.'));
-      if (pricePerKg != null && _minTripPrice != null && pricePerKg < _minTripPrice!) {
-        setState(() => _submitting = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('السعر لا يمكن أن يكون أقل من الحد الأدنى ($_minTripPrice)'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
       final departureStr = _departureDate!.toIso8601String();
       await TripsService.createTrip(
         userId: userId,
@@ -300,7 +286,7 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
         toCountryId: _toCountry!.id,
         toCityId: _toCity!.id,
         departureDate: departureStr,
-        pricePerKg: pricePerKg,
+        pricePerKg: _minTripPrice,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
       if (!mounted) return;
@@ -535,23 +521,75 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
     );
   }
 
-  Widget _buildPriceField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildInput(
-          hint: AppStrings.priceHintOptional,
-          controller: _priceController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+  Widget _buildOptionCheckbox({
+    required bool value,
+    required String label,
+    required ValueChanged<bool?> onChanged,
+  }) {
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F0E6),
+          borderRadius: BorderRadius.circular(10),
         ),
-        if (_minTripPrice != null) ...[
-          const SizedBox(height: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
+              value: value,
+              onChanged: onChanged,
+              activeColor: AppColors.primaryYellow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[800],
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReturnBeforeDaysField() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12, left: 12),
+      child: Row(
+        children: [
           Text(
-            'الحد الأدنى من لوحة التحكم: $_minTripPrice',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            'قبل كم يوم؟',
+            style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+          ),
+          const SizedBox(width: 12),
+          DropdownButtonFormField<int>(
+            value: _returnBeforeDays.clamp(1, 30),
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              filled: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            items: List.generate(30, (i) => i + 1)
+                .map((d) => DropdownMenuItem(value: d, child: Text('$d')))
+                .toList(),
+            onChanged: (v) => setState(() => _returnBeforeDays = v ?? 1),
           ),
         ],
-      ],
+      ),
     );
   }
 

@@ -601,12 +601,20 @@ class _AddTripPassportSheet extends StatefulWidget {
 }
 
 class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
-  Uint8List? _passportImageBytes; // bytes يعمل على الويب والموبايل (Image.file غير مدعوم على الويب)
-  bool _isPicking = false;
+  Uint8List? _passportImageBytes;
+  Uint8List? _flightTicketImageBytes;
+  bool _isPickingPassport = false;
+  bool _isPickingTicket = false;
 
-  Future<void> _openCamera() async {
+  bool get _isPicking => _isPickingPassport || _isPickingTicket;
+
+  Future<void> _pickImage(bool forPassport) async {
     if (_isPicking) return;
-    setState(() => _isPicking = true);
+    if (forPassport) {
+      setState(() => _isPickingPassport = true);
+    } else {
+      setState(() => _isPickingTicket = true);
+    }
     try {
       final picker = ImagePicker();
       final file = await picker.pickImage(
@@ -615,10 +623,21 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
       );
       if (file != null && mounted) {
         final bytes = await file.readAsBytes();
-        setState(() => _passportImageBytes = bytes);
+        setState(() {
+          if (forPassport) {
+            _passportImageBytes = bytes;
+          } else {
+            _flightTicketImageBytes = bytes;
+          }
+        });
       }
     } finally {
-      if (mounted) setState(() => _isPicking = false);
+      if (mounted) {
+        setState(() {
+          _isPickingPassport = false;
+          _isPickingTicket = false;
+        });
+      }
     }
   }
 
@@ -627,6 +646,62 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
     showAddTripFormFromBottom(
       widget.hostContext,
       onTripAdded: widget.onTripAdded,
+    );
+  }
+
+  Widget _buildImageSlot({
+    required String label,
+    required Uint8List? imageBytes,
+    required bool isLoading,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: _isPicking ? null : onTap,
+      child: SizedBox(
+        height: 100,
+        child: imageBytes != null
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.memory(imageBytes, fit: BoxFit.cover),
+                  Positioned(
+                    bottom: 6,
+                    left: 0,
+                    right: 0,
+                    child: Text(
+                      'اضغط لتغيير الصورة',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isLoading)
+                    const SizedBox(
+                      height: 28,
+                      width: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(icon, size: 36, color: Colors.grey[500]),
+                  if (!isLoading) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
+                  ],
+                ],
+              ),
+      ),
     );
   }
 
@@ -688,70 +763,38 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            GestureDetector(
-              onTap: _isPicking ? null : _openCamera,
-              child: Container(
-                height: 160,
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: _passportImageBytes != null
-                    ? Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.memory(_passportImageBytes!, fit: BoxFit.cover),
-                          Positioned(
-                            bottom: 8,
-                            left: 0,
-                            right: 0,
-                            child: Text(
-                              'اضغط لتغيير الصورة',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (_isPicking)
-                            const Padding(
-                              padding: EdgeInsets.all(24),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          else
-                            Icon(
-                              Icons.badge_outlined,
-                              size: 48,
-                              color: Colors.grey[500],
-                            ),
-                          if (!_isPicking) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              'صورة جواز السفر',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  _buildImageSlot(
+                    label: 'صورة جواز السفر',
+                    imageBytes: _passportImageBytes,
+                    isLoading: _isPickingPassport,
+                    icon: Icons.badge_outlined,
+                    onTap: () => _pickImage(true),
+                  ),
+                  Container(height: 1, color: Colors.grey.shade300),
+                  _buildImageSlot(
+                    label: 'تذكرة الطيران',
+                    imageBytes: _flightTicketImageBytes,
+                    isLoading: _isPickingTicket,
+                    icon: Icons.confirmation_number_outlined,
+                    onTap: () => _pickImage(false),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _passportImageBytes != null ? _onContinue : null,
+                onPressed: (_passportImageBytes != null && _flightTicketImageBytes != null) ? _onContinue : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryYellow,
                   foregroundColor: Colors.white,
