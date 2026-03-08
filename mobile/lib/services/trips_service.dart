@@ -142,6 +142,10 @@ class TripsService {
     double? pricePerKg,
     int? currencyId,
     String? notes,
+    bool canPickupInCurrentCountry = false,
+    bool canDeliverInOtherCountry = false,
+    bool canReturnOnCancel = false,
+    int? returnBeforeDays,
   }) async {
     final body = <String, dynamic>{
       'user_id': userId,
@@ -151,11 +155,15 @@ class TripsService {
       'to_country_id': toCountryId,
       'to_city_id': toCityId,
       'departure_date': departureDate,
+      'can_pickup_in_current_country': canPickupInCurrentCountry,
+      'can_deliver_in_other_country': canDeliverInOtherCountry,
+      'can_return_on_cancel': canReturnOnCancel,
     };
     if (returnDate != null && returnDate.isNotEmpty) body['return_date'] = returnDate;
     if (pricePerKg != null) body['price_per_kg'] = pricePerKg;
     if (currencyId != null) body['currency_id'] = currencyId;
     if (notes != null && notes.isNotEmpty) body['notes'] = notes;
+    if (returnBeforeDays != null && returnBeforeDays >= 1) body['return_before_days'] = returnBeforeDays;
 
     final headers = <String, String>{
       'Content-Type': 'application/json',

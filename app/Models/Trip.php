@@ -22,6 +22,10 @@ class Trip extends Model
         'price_per_kg',
         'currency_id',
         'notes',
+        'can_pickup_in_current_country',
+        'can_deliver_in_other_country',
+        'can_return_on_cancel',
+        'return_before_days',
         'status',
     ];
 
@@ -30,6 +34,9 @@ class Trip extends Model
         'return_date' => 'datetime',
         'available_weight' => 'decimal:2',
         'price_per_kg' => 'decimal:2',
+        'can_pickup_in_current_country' => 'boolean',
+        'can_deliver_in_other_country' => 'boolean',
+        'can_return_on_cancel' => 'boolean',
     ];
 
     public function user(): BelongsTo

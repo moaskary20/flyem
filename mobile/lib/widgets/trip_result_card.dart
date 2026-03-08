@@ -101,9 +101,41 @@ class TripResultCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (item.canPickupInCurrentCountry || item.canDeliverInOtherCountry || item.canReturnOnCancel) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    if (item.canPickupInCurrentCountry)
+                      _optionChip(AppStrings.canPickupInCurrentCountry),
+                    if (item.canDeliverInOtherCountry)
+                      _optionChip(AppStrings.canDeliverInOtherCountry),
+                    if (item.canReturnOnCancel)
+                      _optionChip(item.returnBeforeDays != null
+                          ? AppStrings.returnBeforeDaysLabel(item.returnBeforeDays!)
+                          : AppStrings.canReturnOnCancel),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  static Widget _optionChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.primaryYellow.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.primaryYellow.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/trip_payment_screen.dart';
+import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 
 /// شاشة تفاصيل الرحلة — تصميم موحد مع شاشة تفاصيل الشحنة.
@@ -20,10 +21,32 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   bool _loading = true;
   String? _error;
 
+  /// الحد الأدنى لسعر الرحلة من لوحة التحكم (للعرض بدل سعر الكيلو).
+  double? _minTripPrice;
+
   @override
   void initState() {
     super.initState();
     _load();
+    _loadMinTripPrice();
+  }
+
+  Future<void> _loadMinTripPrice() async {
+    try {
+      final settings = await ContentService.getSettings();
+      final v = settings['min_trip_price'];
+      if (v != null) {
+        final s = v is String ? v : v.toString();
+        final d = double.tryParse(s.trim());
+        if (mounted && d != null && d >= 0) setState(() => _minTripPrice = d);
+      }
+    } catch (_) {}
+  }
+
+  double get _displayPrice {
+    if (_trip == null) return 0;
+    if (_minTripPrice != null && _minTripPrice! > 0) return _minTripPrice!;
+    return _trip!.pricePerKg > 0 ? _trip!.pricePerKg : 0;
   }
 
   Future<void> _load() async {
@@ -143,8 +166,10 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                           title: 'التسعير',
                                           children: [
                                             _buildDetailRow(
-                                              label: 'السعر',
-                                              value: '${_trip!.currencySymbol}${_trip!.pricePerKg.toStringAsFixed(1)}',
+                                              label: AppStrings.minTripPriceLabel,
+                                              value: _displayPrice > 0
+                                                  ? '${_trip!.currencySymbol}${_displayPrice.toStringAsFixed(1)}'
+                                                  : '—',
                                               icon: Icons.paid,
                                             ),
                                           ],
@@ -188,6 +213,33 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                               label: 'إلى',
                                               value: _trip!.toDisplay,
                                               icon: Icons.place,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildInfoCard(
+                                          title: AppStrings.pickupDeliveryOptionsTitle,
+                                          children: [
+                                            _buildDetailRow(
+                                              label: AppStrings.canPickupInCurrentCountry,
+                                              value: _trip!.canPickupInCurrentCountry ? 'نعم' : 'لا',
+                                              icon: Icons.inventory_2_outlined,
+                                            ),
+                                            const SizedBox(height: 12),
+                                            _buildDetailRow(
+                                              label: AppStrings.canDeliverInOtherCountry,
+                                              value: _trip!.canDeliverInOtherCountry ? 'نعم' : 'لا',
+                                              icon: Icons.local_shipping_outlined,
+                                            ),
+                                            const SizedBox(height: 12),
+                                            _buildDetailRow(
+                                              label: AppStrings.canReturnOnCancel,
+                                              value: _trip!.canReturnOnCancel
+                                                  ? (_trip!.returnBeforeDays != null
+                                                      ? AppStrings.returnBeforeDaysLabel(_trip!.returnBeforeDays!)
+                                                      : 'نعم')
+                                                  : 'لا',
+                                              icon: Icons.reply_outlined,
                                             ),
                                           ],
                                         ),
@@ -385,11 +437,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'سعر الكيلو',
+                  AppStrings.minTripPriceLabel,
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
                 Text(
-                  '${_trip!.currencySymbol}${_trip!.pricePerKg.toStringAsFixed(1)}',
+                  _displayPrice > 0
+                      ? '${_trip!.currencySymbol}${_displayPrice.toStringAsFixed(1)}'
+                      : '—',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],

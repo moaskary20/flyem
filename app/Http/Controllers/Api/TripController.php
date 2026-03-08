@@ -76,6 +76,10 @@ class TripController extends Controller
                 'price_per_kg' => (float) ($t->price_per_kg ?? 0),
                 'currency_symbol' => $t->currency?->symbol ?? '$',
                 'notes' => $t->notes,
+                'can_pickup_in_current_country' => (bool) $t->can_pickup_in_current_country,
+                'can_deliver_in_other_country' => (bool) $t->can_deliver_in_other_country,
+                'can_return_on_cancel' => (bool) $t->can_return_on_cancel,
+                'return_before_days' => $t->return_before_days !== null ? (int) $t->return_before_days : null,
                 'status' => $t->status,
                 'confirmed_deals' => $t->requests()->where('status', 'accepted')->count(),
             ];
@@ -122,6 +126,10 @@ class TripController extends Controller
             'currency_id' => $trip->currency_id,
             'currency_symbol' => $trip->currency?->symbol ?? '$',
             'notes' => $trip->notes,
+            'can_pickup_in_current_country' => (bool) $trip->can_pickup_in_current_country,
+            'can_deliver_in_other_country' => (bool) $trip->can_deliver_in_other_country,
+            'can_return_on_cancel' => (bool) $trip->can_return_on_cancel,
+            'return_before_days' => $trip->return_before_days !== null ? (int) $trip->return_before_days : null,
             'status' => $trip->status,
         ]);
     }
@@ -143,6 +151,10 @@ class TripController extends Controller
             'price_per_kg' => ['nullable', 'numeric', 'min:0'],
             'currency_id' => ['nullable', 'integer', 'exists:currencies,id'],
             'notes' => ['nullable', 'string'],
+            'can_pickup_in_current_country' => ['nullable', 'boolean'],
+            'can_deliver_in_other_country' => ['nullable', 'boolean'],
+            'can_return_on_cancel' => ['nullable', 'boolean'],
+            'return_before_days' => ['nullable', 'integer', 'min:1', 'max:30'],
         ]);
 
         $trip = Trip::create([
@@ -157,6 +169,10 @@ class TripController extends Controller
             'price_per_kg' => $validated['price_per_kg'] ?? null,
             'currency_id' => $validated['currency_id'] ?? null,
             'notes' => $validated['notes'] ?? null,
+            'can_pickup_in_current_country' => (bool) ($validated['can_pickup_in_current_country'] ?? false),
+            'can_deliver_in_other_country' => (bool) ($validated['can_deliver_in_other_country'] ?? false),
+            'can_return_on_cancel' => (bool) ($validated['can_return_on_cancel'] ?? false),
+            'return_before_days' => isset($validated['return_before_days']) ? (int) $validated['return_before_days'] : null,
             'status' => 'active',
         ]);
 

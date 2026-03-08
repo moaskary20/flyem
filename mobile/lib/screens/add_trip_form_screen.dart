@@ -288,6 +288,10 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
         departureDate: departureStr,
         pricePerKg: _minTripPrice,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        canPickupInCurrentCountry: _canPickupInCurrentCountry,
+        canDeliverInOtherCountry: _canDeliverInOtherCountry,
+        canReturnOnCancel: _canReturnOnCancel,
+        returnBeforeDays: _canReturnOnCancel ? _returnBeforeDays.clamp(1, 30) : null,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

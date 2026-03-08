@@ -16,6 +16,10 @@ class TripItem {
   final String status;
   final int confirmedDeals;
   final String? userName;
+  final bool canPickupInCurrentCountry;
+  final bool canDeliverInOtherCountry;
+  final bool canReturnOnCancel;
+  final int? returnBeforeDays;
 
   const TripItem({
     required this.id,
@@ -34,6 +38,10 @@ class TripItem {
     this.status = 'active',
     this.confirmedDeals = 0,
     this.userName,
+    this.canPickupInCurrentCountry = false,
+    this.canDeliverInOtherCountry = false,
+    this.canReturnOnCancel = false,
+    this.returnBeforeDays,
   });
 
   factory TripItem.fromJson(Map<String, dynamic> json) {
@@ -54,6 +62,10 @@ class TripItem {
       status: json['status'] as String? ?? 'active',
       confirmedDeals: (json['confirmed_deals'] as num?)?.toInt() ?? 0,
       userName: json['user_name'] as String?,
+      canPickupInCurrentCountry: json['can_pickup_in_current_country'] as bool? ?? false,
+      canDeliverInOtherCountry: json['can_deliver_in_other_country'] as bool? ?? false,
+      canReturnOnCancel: json['can_return_on_cancel'] as bool? ?? false,
+      returnBeforeDays: (json['return_before_days'] as num?)?.toInt(),
     );
   }
 
@@ -80,6 +92,10 @@ class TripDetails {
   final String currencySymbol;
   final String? notes;
   final String status;
+  final bool canPickupInCurrentCountry;
+  final bool canDeliverInOtherCountry;
+  final bool canReturnOnCancel;
+  final int? returnBeforeDays;
 
   TripDetails({
     required this.id,
@@ -98,6 +114,10 @@ class TripDetails {
     this.currencySymbol = '\$',
     this.notes,
     this.status = 'active',
+    this.canPickupInCurrentCountry = false,
+    this.canDeliverInOtherCountry = false,
+    this.canReturnOnCancel = false,
+    this.returnBeforeDays,
   });
 
   factory TripDetails.fromJson(Map<String, dynamic> json) {
@@ -118,6 +138,10 @@ class TripDetails {
       currencySymbol: json['currency_symbol'] as String? ?? '\$',
       notes: json['notes'] as String?,
       status: json['status'] as String? ?? 'active',
+      canPickupInCurrentCountry: json['can_pickup_in_current_country'] as bool? ?? false,
+      canDeliverInOtherCountry: json['can_deliver_in_other_country'] as bool? ?? false,
+      canReturnOnCancel: json['can_return_on_cancel'] as bool? ?? false,
+      returnBeforeDays: (json['return_before_days'] as num?)?.toInt(),
     );
   }
 

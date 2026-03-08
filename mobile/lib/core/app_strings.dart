@@ -102,6 +102,13 @@ class AppStrings {
   static const String departsOn = 'يغادر في';
   static const String profit = 'مكسب';
   static const String confirmedDeals = 'الصفقات المؤكدة';
+  static const String minTripPriceLabel = 'الحد الأدنى للرحلات';
+  // خيارات الاستلام والتسليم (داخل الرحلة)
+  static const String pickupDeliveryOptionsTitle = 'خيارات الاستلام والتسليم';
+  static const String canPickupInCurrentCountry = 'استلام الشحنة في الدولة الحالية';
+  static const String canDeliverInOtherCountry = 'تسليم الشحنة في الدولة الأخرى';
+  static const String canReturnOnCancel = 'إرجاع الشحنة عند الإلغاء قبل يوم';
+  static String returnBeforeDaysLabel(int days) => 'إرجاع قبل $days يوم';
 
   // Add Shipment (step 1)
   static const String addDetails = 'إضافة التفاصيل';
