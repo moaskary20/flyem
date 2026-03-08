@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\CityController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\PlaceController;
+use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\AppRequestController;
@@ -33,6 +34,7 @@ Route::middleware('auth.api_token')->group(function () {
     Route::patch('/requests/{req}/reject', [AppRequestController::class, 'reject']);
     Route::post('/requests/{req}/pay', [AppRequestController::class, 'payRequest']);
     Route::post('/requests/{req}/rate', [AppRequestController::class, 'rate']);
+    Route::post('/support-tickets', [SupportTicketController::class, 'store']);
 });
 
 Route::get('/banners', [BannerController::class, 'index']);

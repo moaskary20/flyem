@@ -39,19 +39,6 @@ class ContentService {
         .toList();
   }
 
-  /// الكوبونات المتاحة (من لوحة التحكم - إدارة المعاملات > الكوبونات)
-  static Future<List<CouponItem>> getCoupons() async {
-    final response = await ApiClient.get('/api/coupons');
-    if (response.statusCode != 200) {
-      throw Exception('API error: ${response.statusCode}');
-    }
-    final map = jsonDecode(response.body) as Map<String, dynamic>;
-    final data = (map['data'] as List<dynamic>?) ?? [];
-    return data
-        .map((e) => CouponItem.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
   /// إعدادات التطبيق (من لوحة التحكم - الإعدادات)
   static Future<Map<String, dynamic>> getSettings() async {
     final response = await ApiClient.get('/api/settings');
@@ -121,28 +108,3 @@ class FaqItem {
   }
 }
 
-class CouponItem {
-  final int id;
-  final String code;
-  final String discountType;
-  final double discountValue;
-  final String? expiryDate;
-
-  CouponItem({
-    required this.id,
-    required this.code,
-    required this.discountType,
-    required this.discountValue,
-    this.expiryDate,
-  });
-
-  factory CouponItem.fromJson(Map<String, dynamic> json) {
-    return CouponItem(
-      id: json['id'] as int,
-      code: json['code'] as String? ?? '',
-      discountType: json['discount_type'] as String? ?? 'percentage',
-      discountValue: (json['discount_value'] as num?)?.toDouble() ?? 0,
-      expiryDate: json['expiry_date'] as String?,
-    );
-  }
-}

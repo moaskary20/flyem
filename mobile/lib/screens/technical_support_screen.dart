@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/services/support_ticket_service.dart';
 
 /// شاشة الدعم الفني: حقل النص، حقل التفاصيل، زر إرسال.
 class TechnicalSupportScreen extends StatefulWidget {
@@ -121,11 +122,34 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: () {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إرسال رسالتك للدعم الفني')),
-          );
+        onPressed: () async {
+          final subject = _subjectController.text.trim();
+          final details = _detailsController.text.trim();
+          if (subject.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('أدخل الموضوع')),
+            );
+            return;
+          }
+          if (details.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('أدخل التفاصيل')),
+            );
+            return;
+          }
+          try {
+            await SupportTicketService.sendTicket(subject: subject, message: details);
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('تم إرسال رسالتك للدعم الفني')),
+            );
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+            );
+          }
         },
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primaryYellow,

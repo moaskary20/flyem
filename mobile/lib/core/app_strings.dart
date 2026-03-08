@@ -189,7 +189,6 @@ class AppStrings {
   static const String paymentMethodHint = 'اختر طريقة الدفع المفضلة لديك كمسافر';
   static const String chooseMethod = 'اختر طريقة';
   static const String save = 'حفظ';
-  static const String coupons = 'كوبونات';
   static const String currentCode = 'الكود الحالي:';
   static const String code = 'الكود';
   static const String value = 'القيمة';
