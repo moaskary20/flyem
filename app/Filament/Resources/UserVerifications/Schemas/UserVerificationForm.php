@@ -5,6 +5,7 @@ namespace App\Filament\Resources\UserVerifications\Schemas;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -54,6 +55,13 @@ class UserVerificationForm
                             ->label('ملاحظات الأدمن')
                             ->rows(3)
                             ->columnSpanFull(),
+                    ]),
+                Section::make('توثيق الهاتف')
+                    ->description('تم التحقق من الهاتف يظهر للمستخدم في الصفحة الشخصية بالتطبيق.')
+                    ->schema([
+                        Toggle::make('phone_verified')
+                            ->label('تم التحقق من الهاتف')
+                            ->default(false),
                     ]),
             ]);
     }

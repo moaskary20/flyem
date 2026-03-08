@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserVerification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -69,6 +70,12 @@ class AuthController extends Controller
             'travel_phone' => $request->travel_phone,
             'password' => Hash::make($request->password),
             'api_token' => hash('sha256', $token = Str::random(80)),
+            'verification_status' => 'pending',
+        ]);
+
+        UserVerification::create([
+            'user_id' => $user->id,
+            'status' => 'pending',
         ]);
 
         return response()->json([
@@ -87,7 +94,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        $user->loadCount(['shipments', 'trips']);
+        $user->loadCount(['shipments', 'trips', 'ratingsReceived']);
         $user->load(['homeCountry:id,name_ar,name_en', 'homeCity:id,name_ar,name_en', 'travelCountry:id,name_ar,name_en', 'travelCity:id,name_ar,name_en']);
 
         return response()->json([
@@ -98,7 +105,10 @@ class AuthController extends Controller
                 'phone' => $user->phone ?? '',
                 'profile_photo' => $user->profile_photo,
                 'verification_status' => $user->verification_status ?? 'unverified',
+                'documents_verified' => ($user->verification_status ?? 'unverified') === 'verified',
+                'phone_verified' => (bool) ($user->phone_verified ?? false),
                 'rating' => $user->rating ? (float) $user->rating : null,
+                'ratings_count' => $user->ratings_received_count ?? 0,
                 'shipments_count' => $user->shipments_count ?? 0,
                 'trips_count' => $user->trips_count ?? 0,
                 'home_country_id' => $user->home_country_id,

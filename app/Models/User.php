@@ -36,6 +36,7 @@ class User extends Authenticatable implements FilamentUser
         'role',
         'status',
         'verification_status',
+        'phone_verified',
         'rating',
         'wallet_balance',
         'last_seen_at',
@@ -51,6 +52,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified' => 'boolean',
             'password' => 'hashed',
             'last_seen_at' => 'datetime',
             'rating' => 'decimal:2',

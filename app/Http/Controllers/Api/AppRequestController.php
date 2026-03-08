@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\Rating;
 use App\Models\Request as RequestModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class AppRequestController extends Controller
                 'shipment.user:id,name',
                 'shipment.currency:id,symbol',
                 'requester:id,name',
+                'ratings',
             ])
             ->orderByDesc('created_at');
 
@@ -46,6 +48,9 @@ class AppRequestController extends Controller
             $otherUser = $isRequester
                 ? $shipment?->user
                 : $req->requester;
+            $otherUserId = $otherUser?->id;
+            $canRate = in_array($req->status, ['accepted', 'delivered', 'in_progress'], true) && $otherUserId && (int) $otherUserId !== (int) $user->id;
+            $alreadyRated = $canRate && $req->ratings->contains('from_user_id', $user->id);
 
             return [
                 'id' => $req->id,
@@ -65,6 +70,9 @@ class AppRequestController extends Controller
                 'created_at' => $req->created_at->toIso8601String(),
                 'is_requester' => $isRequester,
                 'other_user_name' => $otherUser?->name ?? '',
+                'other_user_id' => $otherUserId,
+                'can_rate' => $canRate,
+                'already_rated' => $alreadyRated,
             ];
         });
 
@@ -172,10 +180,10 @@ class AppRequestController extends Controller
             'request_id' => $req->id,
             'user_id' => $user->id,
             'amount' => $amount,
-            'currency_id' => $shipment->currency_id ?? $appRequest->currency_id,
+            'currency_id' => $shipment->currency_id ?? $req->currency_id,
             'payment_method' => $paymentMethod->code,
             'payment_status' => 'paid',
-            'transaction_reference' => 'req-' . $appRequest->id . '-' . time(),
+            'transaction_reference' => 'req-' . $req->id . '-' . time(),
         ]);
 
         $conversation = Conversation::where('shipment_id', $shipment->id)
@@ -203,6 +211,63 @@ class AppRequestController extends Controller
                 'other_user_name' => $otherName,
                 'message' => 'تم الدفع وفتح المحادثة.',
             ],
+        ], 201);
+    }
+
+    /**
+     * تقييم الطرف الآخر بعد إتمام الاتفاق (طلب مقبول أو منفذ).
+     */
+    public function rate(Request $request, RequestModel $req): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $req->load(['shipment', 'ratings']);
+        $shipment = $req->shipment;
+        if (! $shipment) {
+            return response()->json(['message' => 'الطلب غير موجود.'], 404);
+        }
+
+        $isRequester = (int) $req->requester_id === (int) $user->id;
+        $isOwner = (int) $shipment->user_id === (int) $user->id;
+        if (! $isRequester && ! $isOwner) {
+            return response()->json(['message' => 'غير مصرح بتقييم هذا الطلب.'], 403);
+        }
+
+        if (! in_array($req->status, ['accepted', 'in_progress', 'delivered'], true)) {
+            return response()->json(['message' => 'يمكن التقييم فقط بعد قبول الطلب أو إتمامه.'], 422);
+        }
+
+        $toUserId = $isRequester ? $shipment->user_id : $req->requester_id;
+        if ((int) $toUserId === (int) $user->id) {
+            return response()->json(['message' => 'لا يمكن تقييم نفسك.'], 422);
+        }
+
+        $alreadyRated = $req->ratings->where('from_user_id', $user->id)->isNotEmpty();
+        if ($alreadyRated) {
+            return response()->json(['message' => 'تم التقييم مسبقاً لهذا الطلب.'], 422);
+        }
+
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ], [], [
+            'rating' => 'التقييم',
+            'comment' => 'التعليق',
+        ]);
+
+        Rating::create([
+            'from_user_id' => $user->id,
+            'to_user_id' => $toUserId,
+            'request_id' => $req->id,
+            'rating' => (int) $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        return response()->json([
+            'data' => ['message' => 'تم إرسال التقييم بنجاح.'],
         ], 201);
     }
 }

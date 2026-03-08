@@ -206,6 +206,8 @@ class AppStrings {
   static const String aboutApp = 'حول التطبيق';
 
   // Personal profile screen
+  static const String pendingVerification = 'في انتظار التوثيق';
+  static const String pendingPhoneVerification = 'في انتظار التحقق من الهاتف';
   static const String documentsVerified = 'تم التحقق من الوثائق';
   static const String phoneVerified = 'تم التحقق من الهاتف';
   static const String dealsCount = 'الصفقات';
@@ -219,7 +221,13 @@ class AppStrings {
   static const String phoneForHomeland = 'رقم الهاتف (الدولة الأم)';
   static const String phoneForTravel = 'رقم الهاتف (الدولة السفر)';
   static const String ratingsSection = 'تقييم';
+  static const String myRatingLabel = 'تقييمي';
   static const String travelerRating = 'تقييم المسافر';
   static const String shipperRating = 'تقييم الشاحن';
   static const String noRatings = 'لا يوجد تقييمات';
+  static const String rateUser = 'قيّم';
+  static const String rateUserTitle = 'تقييم الطرف الآخر';
+  static const String rateCommentHint = 'تعليق (اختياري)';
+  static const String submitRating = 'إرسال التقييم';
+  static const String ratingSent = 'تم إرسال التقييم';
 }

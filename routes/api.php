@@ -32,6 +32,7 @@ Route::middleware('auth.api_token')->group(function () {
     Route::patch('/requests/{req}/accept', [AppRequestController::class, 'accept']);
     Route::patch('/requests/{req}/reject', [AppRequestController::class, 'reject']);
     Route::post('/requests/{req}/pay', [AppRequestController::class, 'payRequest']);
+    Route::post('/requests/{req}/rate', [AppRequestController::class, 'rate']);
 });
 
 Route::get('/banners', [BannerController::class, 'index']);

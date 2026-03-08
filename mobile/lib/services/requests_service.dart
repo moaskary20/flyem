@@ -66,6 +66,24 @@ class RequestsService {
     }
   }
 
+  /// تقييم الطرف الآخر بعد إتمام الاتفاق.
+  static Future<void> rateRequest(int requestId, int rating, {String? comment}) async {
+    final response = await ApiClient.post(
+      '/api/requests/$requestId/rate',
+      headers: await _authHeaders(),
+      body: jsonEncode({
+        'rating': rating,
+        if (comment != null && comment.trim().isNotEmpty) 'comment': comment.trim(),
+      }),
+    );
+    if (response.statusCode == 401) throw Exception('يجب تسجيل الدخول');
+    if (response.statusCode == 403) throw Exception('غير مصرح بالتقييم');
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final m = jsonDecode(response.body) as Map<String, dynamic>?;
+      throw Exception(m?['message'] as String? ?? 'فشل إرسال التقييم');
+    }
+  }
+
   /// دفع لطلب مقبول (المرسل فقط). يرجع conversationId و otherUserName لفتح الشات.
   static Future<SendRequestResult> payRequest(int requestId, int paymentMethodId) async {
     final response = await ApiClient.post(
@@ -98,6 +116,8 @@ class RequestListItem {
   final String createdAt;
   final bool isRequester;
   final String otherUserName;
+  final bool canRate;
+  final bool alreadyRated;
 
   RequestListItem({
     required this.id,
@@ -109,6 +129,8 @@ class RequestListItem {
     required this.createdAt,
     required this.isRequester,
     required this.otherUserName,
+    this.canRate = false,
+    this.alreadyRated = false,
   });
 
   factory RequestListItem.fromJson(Map<String, dynamic> json) {
@@ -122,6 +144,8 @@ class RequestListItem {
       createdAt: json['created_at'] as String? ?? '',
       isRequester: json['is_requester'] as bool? ?? false,
       otherUserName: json['other_user_name'] as String? ?? '',
+      canRate: json['can_rate'] as bool? ?? false,
+      alreadyRated: json['already_rated'] as bool? ?? false,
     );
   }
 }

@@ -156,7 +156,10 @@ class UserProfile {
   final String phone;
   final String? profilePhoto;
   final String verificationStatus;
+  final bool documentsVerified;
+  final bool phoneVerified;
   final double? rating;
+  final int ratingsCount;
   final int shipmentsCount;
   final int tripsCount;
   final int? homeCountryId;
@@ -180,7 +183,10 @@ class UserProfile {
     required this.phone,
     this.profilePhoto,
     this.verificationStatus = 'unverified',
+    this.documentsVerified = false,
+    this.phoneVerified = false,
     this.rating,
+    this.ratingsCount = 0,
     this.shipmentsCount = 0,
     this.tripsCount = 0,
     this.homeCountryId,
@@ -206,7 +212,10 @@ class UserProfile {
       phone: json['phone'] as String? ?? '',
       profilePhoto: json['profile_photo'] as String?,
       verificationStatus: json['verification_status'] as String? ?? 'unverified',
+      documentsVerified: json['documents_verified'] as bool? ?? false,
+      phoneVerified: json['phone_verified'] as bool? ?? false,
       rating: (json['rating'] as num?)?.toDouble(),
+      ratingsCount: (json['ratings_count'] as num?)?.toInt() ?? 0,
       shipmentsCount: (json['shipments_count'] as num?)?.toInt() ?? 0,
       tripsCount: (json['trips_count'] as num?)?.toInt() ?? 0,
       homeCountryId: (json['home_country_id'] as num?)?.toInt(),

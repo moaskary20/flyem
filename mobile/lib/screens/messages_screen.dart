@@ -87,6 +87,105 @@ class _MessagesScreenState extends State<MessagesScreen>
   }
 }
 
+void _showRateDialog(
+  BuildContext context,
+  int requestId,
+  String otherUserName,
+  VoidCallback onSuccess,
+) {
+  int selectedRating = 0;
+  final commentController = TextEditingController();
+
+  showDialog<void>(
+    context: context,
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text(AppStrings.rateUserTitle),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (otherUserName.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        otherUserName,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      ),
+                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (i) {
+                      final star = i + 1;
+                      return IconButton(
+                        onPressed: () => setState(() => selectedRating = star),
+                        icon: Icon(
+                          star <= selectedRating ? Icons.star : Icons.star_border,
+                          size: 36,
+                          color: Colors.amber[700],
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: commentController,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.rateCommentHint,
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text(AppStrings.back),
+              ),
+              FilledButton(
+                onPressed: selectedRating < 1
+                    ? null
+                    : () async {
+                        try {
+                          await RequestsService.rateRequest(
+                            requestId,
+                            selectedRating,
+                            comment: commentController.text.trim().isEmpty
+                                ? null
+                                : commentController.text.trim(),
+                          );
+                          if (ctx.mounted) {
+                            Navigator.of(ctx).pop();
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(content: Text(AppStrings.ratingSent)),
+                            );
+                            onSuccess();
+                          }
+                        } catch (e) {
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(e.toString().replaceFirst('Exception: ', '')),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: const Text(AppStrings.submitRating),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 /// تبويب تطابقات: قائمة الطلبات (مرسلة/واردة) مع قبول/رفض أو ادفع الآن.
 class _MatchesTabContent extends StatefulWidget {
   @override
@@ -133,6 +232,10 @@ class _MatchesTabContentState extends State<_MatchesTabContent> {
         return AppStrings.requestStatusAccepted;
       case 'rejected':
         return AppStrings.requestStatusRejected;
+      case 'in_progress':
+        return 'قيد التنفيذ';
+      case 'delivered':
+        return 'تم التوصيل';
       default:
         return status;
     }
@@ -254,6 +357,9 @@ class _MatchesTabContentState extends State<_MatchesTabContent> {
                       }
                     }
                   : null,
+              onRate: item.canRate && !item.alreadyRated
+                  ? () => _showRateDialog(context, item.id, item.otherUserName, _load)
+                  : null,
             );
           },
         ),
@@ -269,6 +375,7 @@ class _RequestTile extends StatelessWidget {
     this.onAccept,
     this.onReject,
     this.onPayNow,
+    this.onRate,
   });
 
   final RequestListItem item;
@@ -276,6 +383,7 @@ class _RequestTile extends StatelessWidget {
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
   final VoidCallback? onPayNow;
+  final VoidCallback? onRate;
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +432,9 @@ class _RequestTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: item.status == 'pending'
                         ? Colors.orange.shade100
-                        : item.status == 'accepted'
+                        : (item.status == 'accepted' ||
+                                item.status == 'in_progress' ||
+                                item.status == 'delivered')
                             ? Colors.green.shade100
                             : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(8),
@@ -333,7 +443,9 @@ class _RequestTile extends StatelessWidget {
                     statusLabel,
                     style: TextStyle(
                       fontSize: 12,
-                      color: item.status == 'accepted'
+                      color: (item.status == 'accepted' ||
+                              item.status == 'in_progress' ||
+                              item.status == 'delivered')
                           ? Colors.green.shade800
                           : item.status == 'pending'
                               ? Colors.orange.shade800
@@ -343,11 +455,17 @@ class _RequestTile extends StatelessWidget {
                 ),
               ],
             ),
-            if (onAccept != null || onReject != null || onPayNow != null) ...[
+            if (onAccept != null || onReject != null || onPayNow != null || onRate != null) ...[
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (onRate != null)
+                    TextButton.icon(
+                      onPressed: onRate,
+                      icon: const Icon(Icons.star_border, size: 18),
+                      label: const Text(AppStrings.rateUser),
+                    ),
                   if (onAccept != null)
                     TextButton(
                       onPressed: onAccept,

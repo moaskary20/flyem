@@ -156,10 +156,16 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.verified_outlined, size: 18, color: Colors.grey[700]),
+                            Icon(
+                              _user?.documentsVerified == true ? Icons.verified_outlined : Icons.schedule,
+                              size: 18,
+                              color: _user?.documentsVerified == true ? Colors.grey[700] : Colors.grey[600],
+                            ),
                             const SizedBox(width: 6),
                             Text(
-                              AppStrings.documentsVerified,
+                              _user?.documentsVerified == true
+                                  ? AppStrings.documentsVerified
+                                  : AppStrings.pendingVerification,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[800],
@@ -170,10 +176,16 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.check_circle, size: 18, color: Colors.blue[700]),
+                            Icon(
+                              _user?.phoneVerified == true ? Icons.check_circle : Icons.schedule,
+                              size: 18,
+                              color: _user?.phoneVerified == true ? Colors.blue[700] : Colors.grey[600],
+                            ),
                             const SizedBox(width: 6),
                             Text(
-                              AppStrings.phoneVerified,
+                              _user?.phoneVerified == true
+                                  ? AppStrings.phoneVerified
+                                  : AppStrings.pendingPhoneVerification,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[800],
@@ -392,7 +404,6 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
 
   Widget _buildBasicInfoSection() {
     final email = _user?.email ?? '';
-    final phone = _user?.phone ?? '';
     final homePhone = _user?.homePhone ?? '';
     final travelPhone = _user?.travelPhone ?? '';
 
@@ -414,21 +425,6 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
           verified: true,
         ),
         const SizedBox(height: 14),
-        Text(
-          AppStrings.phoneNumbersLabel,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        _InfoRow(
-          label: AppStrings.phoneLabel,
-          value: phone.isNotEmpty ? phone : 'غير محدد',
-          verified: phone.isNotEmpty,
-        ),
-        const SizedBox(height: 10),
         _InfoRow(
           label: AppStrings.phoneForHomeland,
           value: homePhone.isNotEmpty ? homePhone : 'غير محدد',
@@ -445,13 +441,17 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   }
 
   Widget _buildRatingsSection() {
-    const ratingCount = 0; // يمكن إضافته من الـ API لاحقاً
+    final rating = _user?.rating;
+    final count = _user?.ratingsCount ?? 0;
+    final avg = rating != null && rating > 0 ? rating : 0.0;
+    final fullStars = avg.floor();
+    final hasHalf = (avg - fullStars) >= 0.5;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '$ratingCount ${AppStrings.ratingsSection}',
+          '${AppStrings.ratingsSection}${count > 0 ? ' ($count)' : ''}',
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.bold,
@@ -462,31 +462,37 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         Row(
           children: [
             Text(
-              AppStrings.travelerRating,
+              AppStrings.myRatingLabel,
               style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             ),
             const SizedBox(width: 8),
-            ...List.generate(5, (_) => Icon(Icons.star_border, size: 20, color: Colors.grey[400])),
+            ...List.generate(5, (i) {
+              if (i < fullStars) {
+                return Icon(Icons.star, size: 20, color: Colors.amber[700]);
+              }
+              if (i == fullStars && hasHalf) {
+                return Icon(Icons.star_half, size: 20, color: Colors.amber[700]);
+              }
+              return Icon(Icons.star_border, size: 20, color: Colors.grey[400]);
+            }),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Text(
+                avg.toStringAsFixed(1),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+            ],
           ],
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Text(
-              AppStrings.shipperRating,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+        if (count == 0) ...[
+          const SizedBox(height: 12),
+          Center(
+            child: Text(
+              AppStrings.noRatings,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
-            const SizedBox(width: 8),
-            ...List.generate(5, (_) => Icon(Icons.star_border, size: 20, color: Colors.grey[400])),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: Text(
-            AppStrings.noRatings,
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
-        ),
+        ],
       ],
     );
   }
