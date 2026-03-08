@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flyem_app/services/content_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 /// سلايدر البنرات الإعلانية بعرض كامل الشاشة (مرتبط بلوحة التحكم).
@@ -130,10 +131,15 @@ class _BannerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if (link != null && link!.isNotEmpty) {
-          // TODO: url_launcher أو فتح ويب في التطبيق
-        }
+      onTap: () async {
+        if (link == null || link!.trim().isEmpty) return;
+        final uri = Uri.tryParse(link!);
+        if (uri == null) return;
+        try {
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+          }
+        } catch (_) {}
       },
       child: Container(
         width: double.infinity,
