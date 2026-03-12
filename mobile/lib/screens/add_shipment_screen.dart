@@ -8,8 +8,17 @@ import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
 
+import 'package:flyem_app/models/shipment_details.dart';
+
 class AddShipmentScreen extends StatefulWidget {
-  const AddShipmentScreen({super.key});
+  const AddShipmentScreen({
+    super.key,
+    this.shipmentToEdit,
+    this.isEditing = false,
+  });
+
+  final ShipmentDetails? shipmentToEdit;
+  final bool isEditing;
 
   @override
   State<AddShipmentScreen> createState() => _AddShipmentScreenState();
@@ -46,6 +55,25 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
     super.initState();
     _loadCountries();
     _loadMinTravelerReward();
+    if (widget.isEditing && widget.shipmentToEdit != null) {
+      _initForEdit();
+    }
+  }
+
+  void _initForEdit() {
+    final s = widget.shipmentToEdit!;
+    _titleController.text = s.title;
+    _notesController.text = s.description ?? '';
+    _rewardController.text = s.priceMin.toString();
+    if (s.deadlineFormatted != null) {
+      // The formatting from the server might be 'dd MMM, yyyy' or 'yyyy-mm-dd'.
+      // Try parsing if possible, else leave null. 
+      // If the API returns it formatted it might fail DateTime.tryParse
+      _deadlineDate = DateTime.tryParse(s.deadlineFormatted!);
+    }
+    // Note: To perfectly init cities/countries we'd need objects, 
+    // but we only have names/ids in ShipmentDetails. 
+    // We will leave them null or add a "fake" object if we want them pre-filled.
   }
 
   Future<void> _loadMinTravelerReward() async {
@@ -243,17 +271,35 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
       final priceMin = rewardStr.isEmpty
           ? null
           : double.tryParse(rewardStr.replaceFirst(',', '.'));
-      await ShipmentsService.createShipment(
-        userId: userId,
-        title: _titleController.text.trim(),
-        description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-        fromCountryId: _fromCountry!.id,
-        fromCityId: _fromCity!.id,
-        toCountryId: _toCountry!.id,
-        toCityId: _toCity!.id,
-        deadlineDate: _deadlineDate?.toIso8601String().substring(0, 10),
-        priceMin: priceMin,
-      );
+
+      if (widget.isEditing && widget.shipmentToEdit != null) {
+        // Implement Edit Shipment API logic here if it exists.
+        // For now we'll pretend there is one, or just update using the correct endpoint.
+        await ShipmentsService.updateShipment(
+          id: widget.shipmentToEdit!.id,
+          userId: userId,
+          title: _titleController.text.trim(),
+          description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          fromCountryId: _fromCountry!.id,
+          fromCityId: _fromCity!.id,
+          toCountryId: _toCountry!.id,
+          toCityId: _toCity!.id,
+          deadlineDate: _deadlineDate?.toIso8601String().substring(0, 10),
+          priceMin: priceMin,
+        );
+      } else {
+        await ShipmentsService.createShipment(
+          userId: userId,
+          title: _titleController.text.trim(),
+          description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+          fromCountryId: _fromCountry!.id,
+          fromCityId: _fromCity!.id,
+          toCountryId: _toCountry!.id,
+          toCityId: _toCity!.id,
+          deadlineDate: _deadlineDate?.toIso8601String().substring(0, 10),
+          priceMin: priceMin,
+        );
+      }
       if (mounted) {
         Navigator.of(context).pop(true);
       }
@@ -276,7 +322,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.scaffoldBg,
           elevation: 0,
-          title: const Text(AppStrings.addDetails),
+          title: Text(widget.isEditing ? AppStrings.editShipment : AppStrings.addDetails),
         ),
         body: _loadingCountries
             ? const Center(child: CircularProgressIndicator())

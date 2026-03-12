@@ -8,6 +8,10 @@ class ShipmentDetails {
   final int quantity;
   final String type;
   final String typeLabelEn;
+  final int? fromCountryId;
+  final int? fromCityId;
+  final int? toCountryId;
+  final int? toCityId;
   final String fromCode;
   final String fromName;
   final String? fromCityName;
@@ -30,6 +34,10 @@ class ShipmentDetails {
     required this.quantity,
     required this.type,
     required this.typeLabelEn,
+    this.fromCountryId,
+    this.fromCityId,
+    this.toCountryId,
+    this.toCityId,
     required this.fromCode,
     required this.fromName,
     this.fromCityName,
@@ -55,6 +63,10 @@ class ShipmentDetails {
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       type: json['type'] as String? ?? 'other',
       typeLabelEn: json['type_label_en'] as String? ?? 'Other',
+      fromCountryId: (json['from_country_id'] as num?)?.toInt(),
+      fromCityId: (json['from_city_id'] as num?)?.toInt(),
+      toCountryId: (json['to_country_id'] as num?)?.toInt(),
+      toCityId: (json['to_city_id'] as num?)?.toInt(),
       fromCode: json['from_code'] as String? ?? '',
       fromName: json['from_name'] as String? ?? '',
       fromCityName: json['from_city'] as String?,

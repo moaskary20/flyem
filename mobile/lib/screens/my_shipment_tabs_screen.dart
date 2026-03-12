@@ -4,6 +4,11 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/shipment_detail_content.dart';
+import 'package:flyem_app/screens/add_shipment_screen.dart' as flyem_app_add_shipment;
+import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/models/trip_item.dart';
+import 'package:flyem_app/widgets/trip_result_card.dart';
+import 'package:flyem_app/screens/trip_details_screen.dart';
 
 /// شاشة شحنتي بعد النشر: ثلاثة تبويبات (الصفقات - الرحلات المناسبة - التفاصيل).
 class MyShipmentTabsScreen extends StatelessWidget {
@@ -102,7 +107,9 @@ class _TabsContent extends StatelessWidget {
               color: Colors.white,
               iconColor: Colors.white,
               onSelected: (value) async {
-                if (value == AppStrings.editShipment) {}
+                if (value == AppStrings.editShipment) {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => flyem_app_add_shipment.AddShipmentScreen(shipmentToEdit: shipment, isEditing: true)));
+                }
                 else if (value == AppStrings.deleteShipment) {
                   final confirm = await showDialog<bool>(
                     context: context,
@@ -137,7 +144,9 @@ class _TabsContent extends StatelessWidget {
                     );
                   }
                 }
-                else if (value == AppStrings.reportShipment) {}
+                else if (value == AppStrings.addNewShipment) {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const flyem_app_add_shipment.AddShipmentScreen()));
+                }
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
@@ -149,8 +158,8 @@ class _TabsContent extends StatelessWidget {
                   child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
                 ),
                 PopupMenuItem(
-                  value: AppStrings.reportShipment,
-                  child: Text(AppStrings.reportShipment, style: const TextStyle(color: Colors.black87)),
+                  value: AppStrings.addNewShipment,
+                  child: Text(AppStrings.addNewShipment, style: const TextStyle(color: Colors.black87)),
                 ),
               ],
             ),
@@ -173,15 +182,21 @@ class _TabsContent extends StatelessWidget {
                             children: [
                               ListTile(
                                 title: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
-                                onTap: () => Navigator.pop(ctx),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => flyem_app_add_shipment.AddShipmentScreen(shipmentToEdit: shipment, isEditing: true)));
+                                },
                               ),
                               ListTile(
                                 title: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
                                 onTap: () => Navigator.pop(ctx),
                               ),
                               ListTile(
-                                title: Text(AppStrings.reportShipment, style: const TextStyle(color: Colors.black87)),
-                                onTap: () => Navigator.pop(ctx),
+                                title: Text(AppStrings.addNewShipment, style: const TextStyle(color: Colors.black87)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const flyem_app_add_shipment.AddShipmentScreen()));
+                                },
                               ),
                             ],
                           ),
@@ -210,7 +225,7 @@ class _TabsContent extends StatelessWidget {
         body: TabBarView(
           children: [
             _DealsTab(),
-            _SuitableTripsTab(),
+            _SuitableTripsTab(shipment: shipment),
             ShipmentDetailContent(shipment: shipment),
           ],
         ),
@@ -231,14 +246,91 @@ class _DealsTab extends StatelessWidget {
   }
 }
 
-class _SuitableTripsTab extends StatelessWidget {
+class _SuitableTripsTab extends StatefulWidget {
+  final ShipmentDetails shipment;
+  const _SuitableTripsTab({required this.shipment});
+
+  @override
+  State<_SuitableTripsTab> createState() => _SuitableTripsTabState();
+}
+
+class _SuitableTripsTabState extends State<_SuitableTripsTab> {
+  bool _isLoading = true;
+  String? _error;
+  List<TripItem> _trips = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSuitableTrips();
+  }
+
+  Future<void> _fetchSuitableTrips() async {
+    try {
+      final response = await TripsService.getTripsForSearch(
+        fromCountryId: widget.shipment.fromCountryId,
+        toCountryId: widget.shipment.toCountryId,
+        fromCityId: widget.shipment.fromCityId,
+        toCityId: widget.shipment.toCityId,
+        // Uncomment the deadline matching if the API supports filtering by deadline
+        // departureAfter: widget.shipment.deadlineFormatted, 
+        perPage: 20,
+      );
+      if (mounted) {
+        setState(() {
+          _trips = response.data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'لا توجد رحلات مناسبة',
-        style: TextStyle(color: Colors.grey[600], fontSize: 15),
-      ),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Text(
+          'حدث خطأ أثناء جلب الرحلات: $_error',
+          style: TextStyle(color: Colors.red[600], fontSize: 15),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    if (_trips.isEmpty) {
+      return Center(
+        child: Text(
+          'لا توجد رحلات مناسبة في الوقت الحالي',
+          style: TextStyle(color: Colors.grey[600], fontSize: 15),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      itemCount: _trips.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return TripResultCard(
+          item: _trips[index],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TripDetailsScreen(tripId: _trips[index].id),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

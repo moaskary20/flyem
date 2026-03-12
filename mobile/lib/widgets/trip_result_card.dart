@@ -18,11 +18,7 @@ class TripResultCard extends StatelessWidget {
   final double? minTripPrice;
   final VoidCallback? onTap;
 
-  /// السعر المعروض: الحد الأدنى إن وُجد، وإلا سعر الرحلة.
-  double get _displayPrice {
-    if (minTripPrice != null && minTripPrice! > 0) return minTripPrice!;
-    return item.pricePerKg > 0 ? item.pricePerKg : 0;
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -88,16 +84,6 @@ class TripResultCard extends StatelessWidget {
                   Text(
                     '${item.confirmedDeals} ${AppStrings.confirmedDeals}',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                  Text(
-                    _displayPrice > 0
-                        ? '${item.currencySymbol}${_displayPrice.toStringAsFixed(1)} ${AppStrings.profit}'
-                        : '— ${AppStrings.profit}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: AppColors.primaryYellow,
-                    ),
                   ),
                 ],
               ),

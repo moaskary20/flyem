@@ -610,6 +610,30 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
 
   Future<void> _pickImage(bool forPassport) async {
     if (_isPicking) return;
+    
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('الكاميرا'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('المعرض'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
     if (forPassport) {
       setState(() => _isPickingPassport = true);
     } else {
@@ -618,7 +642,7 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
     try {
       final picker = ImagePicker();
       final file = await picker.pickImage(
-        source: ImageSource.camera,
+        source: source,
         imageQuality: 85,
       );
       if (file != null && mounted) {

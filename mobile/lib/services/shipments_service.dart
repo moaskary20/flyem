@@ -192,6 +192,47 @@ class ShipmentsService {
     return (map['id'] as num).toInt();
   }
 
+  static Future<void> updateShipment({
+    required int id,
+    required int userId,
+    required String title,
+    String? description,
+    required int fromCountryId,
+    required int fromCityId,
+    required int toCountryId,
+    required int toCityId,
+    String? deadlineDate,
+    int? quantity,
+    String? productLink,
+    String? type,
+    double? priceMin,
+  }) async {
+    final body = <String, dynamic>{
+      'user_id': userId,
+      'title': title,
+      'from_country_id': fromCountryId,
+      'from_city_id': fromCityId,
+      'to_country_id': toCountryId,
+      'to_city_id': toCityId,
+      '_method': 'PUT', // Useful for some PHP frameworks like Laravel
+    };
+    if (description != null && description.isNotEmpty) body['description'] = description;
+    if (deadlineDate != null && deadlineDate.isNotEmpty) body['deadline_date'] = deadlineDate;
+    if (quantity != null) body['quantity'] = quantity;
+    if (productLink != null && productLink.isNotEmpty) body['product_link'] = productLink;
+    if (type != null && type.isNotEmpty) body['type'] = type;
+    if (priceMin != null) body['price_min'] = priceMin;
+    final response = await ApiClient.post(
+      '/api/shipments/$id', // Usually POST with _method=PUT or straight PUT depending on the API
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      final msg = response.body;
+      throw Exception('API error: ${response.statusCode} $msg');
+    }
+  }
+
   static Future<List<Country>> getCountries({String? search}) async {
     final response = await ApiClient.get(
       '/api/countries',

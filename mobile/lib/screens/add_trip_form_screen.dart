@@ -576,21 +576,45 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
       child: Row(
         children: [
           Text(
-            'قبل كم يوم؟',
+            'حتى تاريخ:',
             style: TextStyle(fontSize: 14, color: Colors.grey[700]),
           ),
           const SizedBox(width: 12),
-          DropdownButtonFormField<int>(
-            value: _returnBeforeDays.clamp(1, 30),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          Expanded(
+            child: InkWell(
+              onTap: () async {
+                final initial = DateTime.now().add(Duration(days: _returnBeforeDays));
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: initial,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null && mounted) {
+                  final diff = date.difference(DateTime.now()).inDays;
+                  setState(() => _returnBeforeDays = diff > 0 ? diff : 1);
+                }
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'بعد $_returnBeforeDays يوم',
+                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    ),
+                    Icon(Icons.calendar_today_outlined, size: 18, color: Colors.grey[600]),
+                  ],
+                ),
+              ),
             ),
-            items: List.generate(30, (i) => i + 1)
-                .map((d) => DropdownMenuItem(value: d, child: Text('$d')))
-                .toList(),
-            onChanged: (v) => setState(() => _returnBeforeDays = v ?? 1),
           ),
         ],
       ),
