@@ -48,6 +48,22 @@ class User extends Authenticatable implements FilamentUser
         'api_token',
     ];
 
+    /**
+     * عند القراءة: إزالة المسافات والأسطر من مسار الصورة لتفادي روابط مقطوعة.
+     */
+    protected function profilePhoto(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: function (?string $value) {
+                if ($value === null || $value === '') {
+                    return $value;
+                }
+                $cleaned = trim(preg_replace('/\s+/', '', $value));
+                return $cleaned !== '' ? $cleaned : null;
+            },
+        );
+    }
+
     protected function casts(): array
     {
         return [

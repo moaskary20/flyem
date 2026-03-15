@@ -60,7 +60,7 @@ class ShipmentUser {
     return ShipmentUser(
       id: json['id'] as int?,
       name: json['name'] as String? ?? '',
-      profilePhoto: json['profile_photo'] as String?,
+      profilePhoto: (json['profile_photo'] as String?)?.replaceAll(RegExp(r'\s'), '').trim(),
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
     );
   }

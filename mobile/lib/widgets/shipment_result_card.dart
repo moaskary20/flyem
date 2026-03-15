@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/widgets/api_client_image.dart';
 
 class ShipmentResultCard extends StatelessWidget {
   final String productName;
@@ -34,8 +35,16 @@ class ShipmentResultCard extends StatelessWidget {
     this.onActionButtonTap,
   });
 
+  static String? _sanitizeUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    final s = url.replaceAll(RegExp(r'\s'), '').trim();
+    return s.isEmpty ? null : s;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final safeImageUrl = _sanitizeUrl(imageUrl);
+    final safeUserPhotoUrl = _sanitizeUrl(userPhotoUrl);
     const margin = EdgeInsets.symmetric(horizontal: 16, vertical: 8);
     Widget card = Card(
       margin: EdgeInsets.zero,
@@ -60,9 +69,9 @@ class ShipmentResultCard extends StatelessWidget {
                         width: 72,
                         height: 72,
                         color: Colors.grey[300],
-                        child: imageUrl != null && imageUrl!.isNotEmpty
+                        child: safeImageUrl != null && safeImageUrl.isNotEmpty
                             ? Image.network(
-                                imageUrl!,
+                                safeImageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => Icon(Icons.inventory_2, size: 28, color: Colors.grey[500]),
                               )
@@ -110,23 +119,41 @@ class ShipmentResultCard extends StatelessWidget {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.grey[400],
-                            backgroundImage: userPhotoUrl != null && userPhotoUrl!.isNotEmpty
-                                ? NetworkImage(userPhotoUrl!)
-                                : null,
-                            child: userPhotoUrl == null || userPhotoUrl!.isEmpty
-                                ? Text(
+                          safeUserPhotoUrl != null && safeUserPhotoUrl.isNotEmpty
+                              ? ClipOval(
+                                  child: SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: ApiClientImage(
+                                      url: safeUserPhotoUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor: Colors.grey[400],
+                                        child: Text(
+                                          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: Colors.grey[400],
+                                  child: Text(
                                     userName.isNotEmpty ? userName[0].toUpperCase() : '?',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
-                                  )
-                                : null,
-                          ),
+                                  ),
+                                ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(

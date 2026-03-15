@@ -239,9 +239,13 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   }
 
   Future<Uint8List?> _loadProfileImageBytes(String url) async {
+    final cleanUrl = _sanitizePhotoUrl(url);
+    if (cleanUrl.isEmpty) return null;
+    final uri = Uri.tryParse(cleanUrl);
+    if (uri == null || !uri.hasScheme) return null;
     final client = getApiClient();
     try {
-      final response = await client.get(Uri.parse(url));
+      final response = await client.get(uri);
       if (response.statusCode == 200) return response.bodyBytes;
       return null;
     } catch (_) {

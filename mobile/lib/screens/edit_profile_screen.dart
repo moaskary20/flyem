@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
+import 'package:flyem_app/widgets/api_client_image.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,6 +25,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Uint8List? _previewBytes;
   bool _uploading = false;
   String? _error;
+
+  String? get _currentPhotoUrl {
+    final url = widget.currentPhotoUrl;
+    if (url == null || url.isEmpty) return null;
+    return url.replaceAll(RegExp(r'\s'), '').trim();
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -107,21 +114,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundColor: Colors.grey[200],
-                          backgroundImage: _previewBytes != null
-                              ? MemoryImage(_previewBytes!)
-                              : (widget.currentPhotoUrl != null &&
-                                      widget.currentPhotoUrl!.isNotEmpty
-                                  ? NetworkImage(widget.currentPhotoUrl!)
-                                  : null),
-                          child: _previewBytes == null &&
-                                  (widget.currentPhotoUrl == null ||
-                                      widget.currentPhotoUrl!.isEmpty)
-                              ? Icon(Icons.person, size: 64, color: Colors.grey[600])
-                              : null,
-                        ),
+                        _previewBytes != null
+                            ? CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage: MemoryImage(_previewBytes!),
+                              )
+                            : _currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty
+                                ? ClipOval(
+                                    child: SizedBox(
+                                      width: 120,
+                                      height: 120,
+                                      child: ApiClientImage(
+                                        url: _currentPhotoUrl,
+                                        fit: BoxFit.cover,
+                                        placeholder: Icon(Icons.person, size: 64, color: Colors.grey[600]),
+                                      ),
+                                    ),
+                                  )
+                                : CircleAvatar(
+                                    radius: 60,
+                                    backgroundColor: Colors.grey[200],
+                                    child: Icon(Icons.person, size: 64, color: Colors.grey[600]),
+                                  ),
                         if (!_uploading)
                           Positioned(
                             bottom: 0,
