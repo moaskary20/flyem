@@ -20,6 +20,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   UserProfile? _user;
   bool _loading = true;
   String? _error;
+  int _photoKey = 0;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
       if (mounted) setState(() {
         _user = user;
         _loading = false;
+        _photoKey = DateTime.now().millisecondsSinceEpoch;
         _error = user == null ? 'فشل تحميل البيانات' : null;
       });
     } catch (_) {
@@ -155,11 +157,14 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
+                    key: ValueKey('profile_photo_$_photoKey'),
                     radius: 40,
                     backgroundColor: Colors.white,
                     backgroundImage: _user?.profilePhoto != null &&
                             _user!.profilePhoto!.isNotEmpty
-                        ? NetworkImage(_user!.profilePhoto!)
+                        ? NetworkImage(
+                            '${_user!.profilePhoto!}${_user!.profilePhoto!.contains('?') ? '&' : '?'}v=$_photoKey',
+                          )
                         : null,
                     child: _user?.profilePhoto == null ||
                             _user!.profilePhoto!.isEmpty
