@@ -56,9 +56,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final bytes = await _pickedFile!.readAsBytes();
       final name = _pickedFile!.name;
       final filename = name.isNotEmpty ? name : 'photo.jpg';
-      await AuthService.uploadProfilePhoto(bytes, filename: filename);
+      final photoUrl = await AuthService.uploadProfilePhoto(bytes, filename: filename);
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(photoUrl);
     } on AuthException catch (e) {
       if (mounted) setState(() {
         _error = e.message;

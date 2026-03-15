@@ -22,6 +22,8 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   bool _loading = true;
   String? _error;
   int _photoKey = 0;
+  /// رابط الصورة بعد الحفظ مباشرة (يُعرض فوراً قبل أن يرجع GET /api/user).
+  String? _profilePhotoUrlOverride;
 
   @override
   void initState() {
@@ -36,6 +38,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         _user = user;
         _loading = false;
         _photoKey = DateTime.now().millisecondsSinceEpoch;
+        _profilePhotoUrlOverride = null;
         _error = user == null ? 'فشل تحميل البيانات' : null;
       });
     } catch (_) {
@@ -131,14 +134,21 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      final updated = await Navigator.of(context).push<bool>(
+                      final result = await Navigator.of(context).push<Object>(
                         MaterialPageRoute(
                           builder: (_) => EditProfileScreen(
                             currentPhotoUrl: _user?.profilePhoto,
                           ),
                         ),
                       );
-                      if (updated == true && mounted) _loadUser();
+                      if (!mounted) return;
+                      if (result is String) {
+                        setState(() {
+                          _profilePhotoUrlOverride = result;
+                          _photoKey = DateTime.now().millisecondsSinceEpoch;
+                        });
+                      }
+                      if (result != null) _loadUser();
                     },
                     child: const Text(
                       AppStrings.edit,
@@ -224,7 +234,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   }
 
   Widget _buildProfileAvatar() {
-    final raw = _user?.profilePhoto;
+    final raw = _profilePhotoUrlOverride ?? _user?.profilePhoto;
     final photoUrl = (raw != null && raw.isNotEmpty)
         ? (raw.startsWith('http') ? raw : '${kApiBaseUrl.replaceAll(RegExp(r'/$'), '')}/${raw.startsWith('/') ? raw.substring(1) : raw}')
         : null;
