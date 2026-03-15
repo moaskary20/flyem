@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
@@ -156,21 +157,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    key: ValueKey('profile_photo_$_photoKey'),
-                    radius: 40,
-                    backgroundColor: Colors.white,
-                    backgroundImage: _user?.profilePhoto != null &&
-                            _user!.profilePhoto!.isNotEmpty
-                        ? NetworkImage(
-                            '${_user!.profilePhoto!}${_user!.profilePhoto!.contains('?') ? '&' : '?'}v=$_photoKey',
-                          )
-                        : null,
-                    child: _user?.profilePhoto == null ||
-                            _user!.profilePhoto!.isEmpty
-                        ? Icon(Icons.person, size: 48, color: Colors.grey[600])
-                        : null,
-                  ),
+                  _buildProfileAvatar(),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -231,6 +218,52 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar() {
+    final raw = _user?.profilePhoto;
+    final photoUrl = (raw != null && raw.isNotEmpty)
+        ? (raw.startsWith('http') ? raw : '${kApiBaseUrl.replaceAll(RegExp(r'/$'), '')}/${raw.startsWith('/') ? raw.substring(1) : raw}')
+        : null;
+    final urlWithCache = photoUrl != null
+        ? '$photoUrl${photoUrl.contains('?') ? '&' : '?'}v=$_photoKey'
+        : null;
+    if (urlWithCache == null) {
+      return CircleAvatar(
+        radius: 40,
+        backgroundColor: Colors.white,
+        child: Icon(Icons.person, size: 48, color: Colors.grey[600]),
+      );
+    }
+    return SizedBox(
+      width: 80,
+      height: 80,
+      child: ClipOval(
+        child: Image.network(
+          urlWithCache,
+          fit: BoxFit.cover,
+          width: 80,
+          height: 80,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.white,
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          },
+          errorBuilder: (_, __, ___) => CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.white,
+            child: Icon(Icons.person, size: 48, color: Colors.grey[600]),
+          ),
         ),
       ),
     );

@@ -98,9 +98,11 @@ class AuthController extends Controller
         $user->loadCount(['shipments', 'trips', 'ratingsReceived']);
         $user->load(['homeCountry:id,name_ar,name_en', 'homeCity:id,name_ar,name_en', 'travelCountry:id,name_ar,name_en', 'travelCity:id,name_ar,name_en']);
 
-        $profilePhotoUrl = $user->profile_photo
-            ? url('storage/'.$user->profile_photo)
-            : null;
+        $profilePhotoUrl = null;
+        if ($user->profile_photo) {
+            $base = rtrim(config('app.url'), '/');
+            $profilePhotoUrl = $base.'/storage/'.ltrim($user->profile_photo, '/');
+        }
 
         return response()->json([
             'data' => [
