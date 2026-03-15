@@ -21,6 +21,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware('auth.api_token')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::put('/user', [AuthController::class, 'updateProfile']);
+    Route::post('/user/profile-photo', [AuthController::class, 'updateProfilePhoto']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::post('/conversations', [ConversationController::class, 'store']);

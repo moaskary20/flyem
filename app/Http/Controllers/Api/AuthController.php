@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -50,22 +51,22 @@ class AuthController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|string|max:50',
-            'home_phone' => ['nullable', 'string', 'max:50'],
-            'travel_phone' => ['nullable', 'string', 'max:50'],
+            'home_phone' => ['required', 'string', 'max:50'],
+            'travel_phone' => ['required', 'string', 'max:50'],
             'password' => 'required|string|min:8|confirmed',
         ], [], [
             'first_name' => __('First name'),
             'last_name' => __('Last name'),
             'email' => __('Email'),
-            'phone' => __('Phone'),
+            'home_phone' => __('Phone (home country)'),
+            'travel_phone' => __('Phone (travel country)'),
             'password' => __('Password'),
         ]);
 
         $user = User::create([
             'name' => $request->first_name . ' ' . $request->last_name,
             'email' => $request->email,
-            'phone' => $request->phone,
+            'phone' => $request->home_phone,
             'home_phone' => $request->home_phone,
             'travel_phone' => $request->travel_phone,
             'password' => Hash::make($request->password),
@@ -97,13 +98,17 @@ class AuthController extends Controller
         $user->loadCount(['shipments', 'trips', 'ratingsReceived']);
         $user->load(['homeCountry:id,name_ar,name_en', 'homeCity:id,name_ar,name_en', 'travelCountry:id,name_ar,name_en', 'travelCity:id,name_ar,name_en']);
 
+        $profilePhotoUrl = $user->profile_photo
+            ? url('storage/'.$user->profile_photo)
+            : null;
+
         return response()->json([
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone ?? '',
-                'profile_photo' => $user->profile_photo,
+                'profile_photo' => $profilePhotoUrl,
                 'verification_status' => $user->verification_status ?? 'unverified',
                 'documents_verified' => ($user->verification_status ?? 'unverified') === 'verified',
                 'phone_verified' => (bool) ($user->phone_verified ?? false),
@@ -163,6 +168,35 @@ class AuthController extends Controller
         ]);
 
         return response()->json(['message' => 'updated', 'data' => ['id' => $user->id]]);
+    }
+
+    /**
+     * رفع صورة الملف الشخصي (multipart/form-data مع profile_photo).
+     */
+    public function updateProfilePhoto(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $request->validate([
+            'profile_photo' => ['required', 'image', 'max:5120'],
+        ], [], ['profile_photo' => __('Profile photo')]);
+
+        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
+            Storage::disk('public')->delete($user->profile_photo);
+        }
+
+        $path = $request->file('profile_photo')->store('profiles', 'public');
+        $user->update(['profile_photo' => $path]);
+
+        $profilePhotoUrl = url('storage/'.$path);
+
+        return response()->json([
+            'message' => 'updated',
+            'data' => ['profile_photo' => $profilePhotoUrl],
+        ]);
     }
 
     /**

@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
-import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/models/shipment_list_item.dart';
 import 'package:flyem_app/screens/add_shipment_screen.dart';
 import 'package:flyem_app/screens/my_shipment_tabs_screen.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/shipment_result_card.dart';
-import 'package:flyem_app/widgets/shipment_detail_content.dart';
-import 'package:flyem_app/widgets/filter_sheet.dart';
 
 class MyShipmentsScreen extends StatefulWidget {
   const MyShipmentsScreen({super.key});
@@ -25,12 +22,11 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
   bool _loading = true;
   String? _error;
   List<ShipmentListItem>? _myShipmentsList;
-  ShipmentsFilterResult? _filter;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, initialIndex: 2, vsync: this);
+    _tabController = TabController(length: 2, initialIndex: 1, vsync: this);
     _tabController.addListener(() {
       if (mounted) setState(() {});
     });
@@ -67,17 +63,6 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
     });
   }
 
-  Future<void> _openFilter() async {
-    await showShipmentsFilterSheet(
-      context,
-      initial: _filter,
-      onApply: (result) {
-        setState(() => _filter = result);
-        _load();
-      },
-    );
-  }
-
   Future<void> _openAddShipment() async {
     final added = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AddShipmentScreen()),
@@ -102,19 +87,11 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          leading: (_hasShipments && _tabController.index == 2)
-              ? Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: TextButton.icon(
-                    onPressed: _openAddShipment,
-                    icon: const Icon(Icons.add, size: 22, color: Colors.white),
-                    label: Text(
-                      AppStrings.addNewShipment,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                  ),
-                )
-              : null,
+          leading: IconButton(
+            onPressed: _openAddShipment,
+            icon: const Icon(Icons.add, color: Colors.white),
+            tooltip: AppStrings.addNewShipment,
+          ),
           title: Text(
             AppStrings.navShipments,
             style: TextStyle(
@@ -123,38 +100,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
               fontWeight: FontWeight.w500,
             ),
           ),
-          actions: [
-            if (_hasShipments)
-              Padding(
-                padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
-                child: Material(
-                  color: _tabBarGrey,
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    onTap: _openFilter,
-                    borderRadius: BorderRadius.circular(10),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.filter_list, size: 20, color: Colors.white),
-                          const SizedBox(width: 6),
-                          Text(
-                            AppStrings.sort,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          actions: const [],
           bottom: _hasShipments
               ? PreferredSize(
                   preferredSize: const Size.fromHeight(48),
@@ -167,7 +113,6 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                       labelColor: AppColors.primaryYellow,
                       unselectedLabelColor: Colors.grey[400],
                       tabs: const [
-                        Tab(text: AppStrings.tabDeals),
                         Tab(text: AppStrings.tabSuitableTrips),
                         Tab(text: AppStrings.tabDetails),
                       ],
@@ -194,7 +139,6 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
     return TabBarView(
       controller: _tabController,
       children: [
-        _DealsTab(),
         _SuitableTripsTab(),
         _buildDetailsTab(),
       ],
@@ -218,42 +162,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
         if (res.data.isEmpty) {
           return _buildEmptyState();
         }
-        final firstId = res.data.first.id;
-        return FutureBuilder<ShipmentDetails>(
-          future: ShipmentsService.getShipment(firstId),
-          builder: (context, detailSnapshot) {
-            if (detailSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (detailSnapshot.hasError || !detailSnapshot.hasData) {
-              return Center(
-                child: Text(
-                  detailSnapshot.hasError ? detailSnapshot.error.toString() : 'لا توجد بيانات',
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-            return ShipmentDetailContent(
-              shipment: detailSnapshot.data!,
-              onEdited: () => _load(),
-              onDelete: () async {
-                try {
-                  await ShipmentsService.deleteShipment(firstId);
-                  if (!mounted) return;
-                  _load();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تم حذف الشحنة')),
-                  );
-                } catch (_) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('فشل حذف الشحنة'), backgroundColor: Colors.red),
-                  );
-                }
-              },
-            );
-          },
-        );
+        return _buildList(res);
       },
     );
   }
@@ -457,18 +366,6 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
     );
   }
 
-}
-
-class _DealsTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'لا توجد صفقات',
-        style: TextStyle(color: Colors.grey[600], fontSize: 15),
-      ),
-    );
-  }
 }
 
 class _SuitableTripsTab extends StatelessWidget {

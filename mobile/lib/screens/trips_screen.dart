@@ -9,7 +9,6 @@ import 'package:flyem_app/screens/edit_trip_screen.dart';
 import 'package:flyem_app/screens/trip_details_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
-import 'package:flyem_app/widgets/filter_sheet.dart';
 import 'package:image_picker/image_picker.dart';
 
 void _showAddTripPassportSheet(BuildContext context, {VoidCallback? onTripAdded}) {
@@ -35,7 +34,6 @@ class _TripsScreenState extends State<TripsScreen> {
   List<TripItem> _trips = [];
   bool _loading = true;
   String? _error;
-  TripsFilterResult? _filter;
 
   @override
   void initState() {
@@ -48,17 +46,9 @@ class _TripsScreenState extends State<TripsScreen> {
       _loading = true;
       _error = null;
     });
-    final dep = _filter?.departureAfterStr;
     try {
       final userId = await AuthService.getUserId();
-      final res = await TripsService.getMyTrips(
-        userId: userId,
-        fromCountryId: _filter?.fromPlace?.countryId,
-        toCountryId: _filter?.toPlace?.countryId,
-        fromCityId: _filter?.fromPlace?.cityId,
-        toCityId: _filter?.toPlace?.cityId,
-        departureAfter: dep,
-      );
+      final res = await TripsService.getMyTrips(userId: userId);
       if (mounted) {
         setState(() {
           _trips = res.data;
@@ -79,17 +69,6 @@ class _TripsScreenState extends State<TripsScreen> {
     _loadTrips();
   }
 
-  Future<void> _openFilter() async {
-    await showTripsFilterSheet(
-      context,
-      initial: _filter,
-      onApply: (result) {
-        setState(() => _filter = result);
-        _loadTrips();
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final hasTrips = _trips.isNotEmpty;
@@ -102,7 +81,7 @@ class _TripsScreenState extends State<TripsScreen> {
           elevation: 0,
           centerTitle: true,
           title: const SizedBox.shrink(),
-          leading: hasTrips ? null : _buildSortButton(iconOnly: true),
+          leading: null,
         ),
         body: SafeArea(
           child: _loading
@@ -112,49 +91,6 @@ class _TripsScreenState extends State<TripsScreen> {
                   : hasTrips
                       ? _buildWithTripsContent()
                       : _buildEmptyContent(),
-        ),
-      ),
-    );
-  }
-
-  /// iconOnly: true في الـ AppBar (leading) لتجنب overflow؛ false في المحتوى لعرض النص كاملاً.
-  Widget _buildSortButton({bool iconOnly = false}) {
-    if (iconOnly) {
-      return Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: IconButton(
-          onPressed: _openFilter,
-          icon: const Icon(Icons.filter_list, color: Colors.white, size: 22),
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.buttonDark,
-            padding: const EdgeInsets.all(10),
-          ),
-        ),
-      );
-    }
-    return Material(
-      color: AppColors.buttonDark,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: _openFilter,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.filter_list, size: 20, color: Colors.white),
-              const SizedBox(width: 6),
-              Text(
-                AppStrings.sort,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -193,8 +129,6 @@ class _TripsScreenState extends State<TripsScreen> {
               ),
               Row(
                 children: [
-                  _buildSortButton(),
-                  const SizedBox(width: 10),
                   Material(
                     color: AppColors.primaryYellow,
                     borderRadius: BorderRadius.circular(14),

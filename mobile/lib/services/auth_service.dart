@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
+import 'package:flyem_app/core/api_http_client.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -30,9 +32,8 @@ class AuthService {
     required String firstName,
     required String lastName,
     required String email,
-    required String phone,
-    String? homePhone,
-    String? travelPhone,
+    required String homePhone,
+    required String travelPhone,
     required String password,
     required String passwordConfirmation,
   }) async {
@@ -40,12 +41,11 @@ class AuthService {
       'first_name': firstName,
       'last_name': lastName,
       'email': email,
-      'phone': phone,
+      'home_phone': homePhone.trim(),
+      'travel_phone': travelPhone.trim(),
       'password': password,
       'password_confirmation': passwordConfirmation,
     };
-    if (homePhone != null && homePhone.trim().isNotEmpty) body['home_phone'] = homePhone.trim();
-    if (travelPhone != null && travelPhone.trim().isNotEmpty) body['travel_phone'] = travelPhone.trim();
     final response = await ApiClient.post(
       '/api/register',
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
@@ -145,6 +145,33 @@ class AuthService {
     if (response.statusCode != 200 && response.statusCode != 204) {
       final map = jsonDecode(response.body) as Map<String, dynamic>?;
       throw AuthException(map?['message'] as String? ?? 'فشل التحديث');
+    }
+  }
+
+  /// رفع صورة الملف الشخصي (صورة جديدة فقط).
+  static Future<String> uploadProfilePhoto(File imageFile) async {
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) throw AuthException('يجب تسجيل الدخول');
+    final uri = Uri.parse('$kApiBaseUrl/api/user/profile-photo');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+    request.files.add(await http.MultipartFile.fromPath('profile_photo', imageFile.path));
+    final client = getApiClient();
+    try {
+      final streamed = await client.send(request);
+      final response = await http.Response.fromStream(streamed);
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final map = jsonDecode(response.body) as Map<String, dynamic>?;
+        throw AuthException(map?['message'] as String? ?? 'فشل رفع الصورة');
+      }
+      final map = jsonDecode(response.body) as Map<String, dynamic>?;
+      final data = map?['data'] as Map<String, dynamic>?;
+      final url = data?['profile_photo'] as String?;
+      if (url == null || url.isEmpty) throw AuthException('لم يُرجع السيرفر رابط الصورة');
+      return url;
+    } finally {
+      client.close();
     }
   }
 }

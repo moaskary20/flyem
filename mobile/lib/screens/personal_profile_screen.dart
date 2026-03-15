@@ -3,6 +3,7 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
+import 'package:flyem_app/screens/edit_profile_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
@@ -126,7 +127,16 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final updated = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => EditProfileScreen(
+                            currentPhotoUrl: _user?.profilePhoto,
+                          ),
+                        ),
+                      );
+                      if (updated == true && mounted) _loadUser();
+                    },
                     child: const Text(
                       AppStrings.edit,
                       style: TextStyle(
@@ -147,7 +157,14 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 48, color: Colors.grey[600]),
+                    backgroundImage: _user?.profilePhoto != null &&
+                            _user!.profilePhoto!.isNotEmpty
+                        ? NetworkImage(_user!.profilePhoto!)
+                        : null,
+                    child: _user?.profilePhoto == null ||
+                            _user!.profilePhoto!.isEmpty
+                        ? Icon(Icons.person, size: 48, color: Colors.grey[600])
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(

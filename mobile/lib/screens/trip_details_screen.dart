@@ -3,7 +3,6 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/trip_payment_screen.dart';
-import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 
 /// شاشة تفاصيل الرحلة — تصميم موحد مع شاشة تفاصيل الشحنة.
@@ -21,32 +20,10 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   bool _loading = true;
   String? _error;
 
-  /// الحد الأدنى لسعر الرحلة من لوحة التحكم (للعرض بدل سعر الكيلو).
-  double? _minTripPrice;
-
   @override
   void initState() {
     super.initState();
     _load();
-    _loadMinTripPrice();
-  }
-
-  Future<void> _loadMinTripPrice() async {
-    try {
-      final settings = await ContentService.getSettings();
-      final v = settings['min_trip_price'];
-      if (v != null) {
-        final s = v is String ? v : v.toString();
-        final d = double.tryParse(s.trim());
-        if (mounted && d != null && d >= 0) setState(() => _minTripPrice = d);
-      }
-    } catch (_) {}
-  }
-
-  double get _displayPrice {
-    if (_trip == null) return 0;
-    if (_minTripPrice != null && _minTripPrice! > 0) return _minTripPrice!;
-    return _trip!.pricePerKg > 0 ? _trip!.pricePerKg : 0;
   }
 
   Future<void> _load() async {
@@ -158,19 +135,6 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                               label: 'نوع الرحلة',
                                               value: _trip!.travelMethodLabel,
                                               icon: Icons.directions_transit,
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildInfoCard(
-                                          title: 'التسعير',
-                                          children: [
-                                            _buildDetailRow(
-                                              label: AppStrings.minTripPriceLabel,
-                                              value: _displayPrice > 0
-                                                  ? '${_trip!.currencySymbol}${_displayPrice.toStringAsFixed(1)}'
-                                                  : '—',
-                                              icon: Icons.paid,
                                             ),
                                           ],
                                         ),
@@ -415,40 +379,18 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
         ],
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: FilledButton(
-                onPressed: _onSendRequest,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryYellow,
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('إرسال طلب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
+        child: FilledButton(
+          onPressed: _onSendRequest,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primaryYellow,
+            foregroundColor: Colors.black87,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            minimumSize: const Size(double.infinity, 0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppStrings.minTripPriceLabel,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-                Text(
-                  _displayPrice > 0
-                      ? '${_trip!.currencySymbol}${_displayPrice.toStringAsFixed(1)}'
-                      : '—',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
+          ),
+          child: const Text('إرسال طلب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ),
       ),
     );

@@ -4,7 +4,7 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 
-/// شاشة الاشتراك: الاسم الأول، الاسم الأخير، البريد الإلكتروني، رقم الهاتف، كلمة المرور.
+/// شاشة الاشتراك: الاسم، البريد، رقم الهاتف الدولة الأم، رقم الهاتف دولة السفر، كلمة المرور.
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -17,7 +17,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _homePhoneController = TextEditingController();
   final _travelPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -35,12 +34,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   static const String _lastNameEn = 'Last name';
   static const String _emailAr = 'البريد الإلكتروني';
   static const String _emailEn = 'Email';
-  static const String _phoneAr = 'رقم الهاتف';
-  static const String _phoneEn = 'Phone number';
-  static const String _homePhoneAr = 'رقم الهاتف (الدولة الأم)';
-  static const String _homePhoneEn = 'Phone (home country)';
-  static const String _travelPhoneAr = 'رقم الهاتف (الدولة السفر)';
-  static const String _travelPhoneEn = 'Phone (travel country)';
+  static const String _homePhoneAr = 'رقم الهاتف الدولة الأم (إلزامي)';
+  static const String _homePhoneEn = 'Phone (home country) - required';
+  static const String _travelPhoneAr = 'رقم الهاتف دولة السفر (إلزامي)';
+  static const String _travelPhoneEn = 'Phone (travel country) - required';
   static const String _passwordAr = 'كلمة المرور';
   static const String _passwordEn = 'Password';
   static const String _passwordConfirmAr = 'تأكيد كلمة المرور';
@@ -63,7 +60,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _homePhoneController.dispose();
     _travelPhoneController.dispose();
     _passwordController.dispose();
@@ -75,13 +71,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
     final email = _emailController.text.trim();
-    final phone = _phoneController.text.trim();
     final homePhone = _homePhoneController.text.trim();
     final travelPhone = _travelPhoneController.text.trim();
     final password = _passwordController.text;
     final confirm = _passwordConfirmController.text;
 
-    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || phone.isEmpty) {
+    if (firstName.isEmpty || lastName.isEmpty || email.isEmpty || homePhone.isEmpty || travelPhone.isEmpty) {
       setState(() => _error = _isAr ? 'يرجى تعبئة جميع الحقول' : 'Please fill all fields');
       return;
     }
@@ -103,9 +98,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        phone: phone,
-        homePhone: homePhone.isEmpty ? null : homePhone,
-        travelPhone: travelPhone.isEmpty ? null : travelPhone,
+        homePhone: homePhone,
+        travelPhone: travelPhone,
         password: password,
         passwordConfirmation: confirm,
       );
@@ -193,12 +187,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
                   decoration: _inputDecoration(_isAr ? _emailAr : _emailEn),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: _inputDecoration(_isAr ? _phoneAr : _phoneEn),
                 ),
                 const SizedBox(height: 14),
                 TextField(
