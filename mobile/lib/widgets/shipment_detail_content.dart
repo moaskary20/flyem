@@ -6,17 +6,16 @@ import 'package:flyem_app/screens/add_shipment_screen.dart' as flyem_app_add_shi
 
 /// محتوى تفاصيل الشحنة (المسار، تعديل، إقرار، وصف المنتج، مكسب المسافر) — يُستخدم في شاشة التفاصيل وتبويب التفاصيل.
 class ShipmentDetailContent extends StatelessWidget {
-  const ShipmentDetailContent({super.key, required this.shipment, this.onEdited});
+  const ShipmentDetailContent({super.key, required this.shipment, this.onEdited, this.onDelete});
 
   final ShipmentDetails shipment;
   final VoidCallback? onEdited;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final fromCity = shipment.fromCityName ?? shipment.fromName;
     final toCity = shipment.toCityName ?? shipment.toName;
-    final priceMax = shipment.priceMin;
-    final priceMin = (shipment.priceMin * 0.5).toStringAsFixed(1);
     final productText = shipment.description?.isNotEmpty == true
         ? shipment.description!
         : shipment.title;
@@ -32,7 +31,7 @@ class ShipmentDetailContent extends StatelessWidget {
             const SizedBox(height: 16),
             _buildCostAndDisclaimerBox(),
             const SizedBox(height: 16),
-            if (productText.isNotEmpty) _buildProductSection(productText, priceMax, priceMin),
+            if (productText.isNotEmpty) _buildProductSection(productText, shipment.priceMin),
             const SizedBox(height: 24),
           ],
         ),
@@ -40,7 +39,7 @@ class ShipmentDetailContent extends StatelessWidget {
     );
   }
 
-  Widget _buildProductSection(String productText, double priceMax, String priceMin) {
+  Widget _buildProductSection(String productText, double rewardAmount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -69,7 +68,7 @@ class ShipmentDetailContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${shipment.currencySymbol}$priceMax ~ ${shipment.currencySymbol}$priceMin',
+                  '${shipment.currencySymbol}${rewardAmount.toStringAsFixed(1)}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -166,29 +165,55 @@ class ShipmentDetailContent extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FilledButton(
-              onPressed: () async {
-                final added = await Navigator.of(context).push<bool>(
-                  MaterialPageRoute(
-                    builder: (_) => flyem_app_add_shipment.AddShipmentScreen(
-                      shipmentToEdit: shipment,
-                      isEditing: true,
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == AppStrings.editShipment) {
+                  final added = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => flyem_app_add_shipment.AddShipmentScreen(
+                        shipmentToEdit: shipment,
+                        isEditing: true,
+                      ),
                     ),
-                  ),
-                );
-                if (added == true && onEdited != null) {
-                  onEdited!();
+                  );
+                  if (added == true && onEdited != null) {
+                    onEdited!();
+                  }
+                } else if (value == AppStrings.deleteShipment && onDelete != null) {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text(AppStrings.deleteShipment),
+                      content: const Text(AppStrings.confirmDeleteShipment),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text(AppStrings.cancel),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                          child: const Text(AppStrings.delete),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) onDelete!();
                 }
               },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryYellow,
-                foregroundColor: Colors.black87,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: AppStrings.editShipment,
+                  child: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
                 ),
-              ),
-              child: const Text(AppStrings.edit),
+                PopupMenuItem(
+                  value: AppStrings.deleteShipment,
+                  child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
+                ),
+              ],
+              icon: Icon(Icons.more_vert, color: Colors.grey[700], size: 28),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
             ),
             const Spacer(),
             Column(
@@ -238,11 +263,6 @@ class ShipmentDetailContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.costInfoText,
-            style: const TextStyle(fontSize: 14, height: 1.4),
-          ),
-          const SizedBox(height: 14),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

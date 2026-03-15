@@ -91,12 +91,14 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
   Future<void> _loadCountries() async {
     try {
       final list = await ShipmentsService.getCountries();
-      if (mounted) {
-        setState(() {
-          _countries = list;
-          _loadingCountries = false;
-          _loadError = null;
-        });
+      if (!mounted) return;
+      setState(() {
+        _countries = list;
+        _loadingCountries = false;
+        _loadError = null;
+      });
+      if (widget.isEditing && widget.shipmentToEdit != null && list.isNotEmpty) {
+        await _applyShipmentToEdit();
       }
     } catch (e) {
       if (mounted) {
@@ -106,6 +108,40 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
         });
       }
     }
+  }
+
+  /// بعد تحميل الدول والمدن: تعبئة من/إلى من بيانات الشحنة عند التعديل.
+  Future<void> _applyShipmentToEdit() async {
+    final s = widget.shipmentToEdit!;
+    final fromCountryId = s.fromCountryId;
+    final toCountryId = s.toCountryId;
+    final fromCityId = s.fromCityId;
+    final toCityId = s.toCityId;
+    if (fromCountryId == null || toCountryId == null || fromCityId == null || toCityId == null) return;
+    try {
+      final fromCountry = _countries.firstWhere((c) => c.id == fromCountryId);
+      final toCountry = _countries.firstWhere((c) => c.id == toCountryId);
+      await _loadFromCities(fromCountryId);
+      if (!mounted) return;
+      await _loadToCities(toCountryId);
+      if (!mounted) return;
+      City? fromCity;
+      City? toCity;
+      try {
+        fromCity = _fromCities.firstWhere((c) => c.id == fromCityId);
+      } catch (_) {}
+      try {
+        toCity = _toCities.firstWhere((c) => c.id == toCityId);
+      } catch (_) {}
+      if (mounted) {
+        setState(() {
+          _fromCountry = fromCountry;
+          _toCountry = toCountry;
+          _fromCity = fromCity;
+          _toCity = toCity;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadFromCities(int countryId) async {

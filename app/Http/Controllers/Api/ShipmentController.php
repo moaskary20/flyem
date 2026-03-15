@@ -208,6 +208,42 @@ class ShipmentController extends Controller
     }
 
     /**
+     * Update a shipment (تعديل الشحنة).
+     */
+    public function update(Request $request, Shipment $shipment): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'from_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'from_city_id' => ['required', 'integer', 'exists:cities,id'],
+            'to_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'to_city_id' => ['required', 'integer', 'exists:cities,id'],
+            'deadline_date' => ['nullable', 'date'],
+            'quantity' => ['nullable', 'integer', 'min:1'],
+            'product_link' => ['nullable', 'string', 'max:500'],
+            'type' => ['nullable', Rule::in(['documents', 'fragile', 'electronics', 'clothing', 'food', 'other'])],
+            'price_min' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $shipment->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'from_country_id' => $validated['from_country_id'],
+            'from_city_id' => $validated['from_city_id'],
+            'to_country_id' => $validated['to_country_id'],
+            'to_city_id' => $validated['to_city_id'],
+            'deadline_date' => array_key_exists('deadline_date', $validated) ? $validated['deadline_date'] : $shipment->deadline_date,
+            'quantity' => $validated['quantity'] ?? $shipment->quantity,
+            'product_link' => $validated['product_link'] ?? $shipment->product_link,
+            'type' => $validated['type'] ?? $shipment->type,
+            'price_min' => $validated['price_min'] ?? $shipment->price_min,
+        ]);
+
+        return response()->json(['message' => 'updated', 'id' => $shipment->id]);
+    }
+
+    /**
      * Delete a shipment (حذف الشحنة).
      */
     public function destroy(Shipment $shipment): JsonResponse

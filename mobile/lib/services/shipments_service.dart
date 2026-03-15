@@ -208,13 +208,11 @@ class ShipmentsService {
     double? priceMin,
   }) async {
     final body = <String, dynamic>{
-      'user_id': userId,
       'title': title,
       'from_country_id': fromCountryId,
       'from_city_id': fromCityId,
       'to_country_id': toCountryId,
       'to_city_id': toCityId,
-      '_method': 'PUT', // Useful for some PHP frameworks like Laravel
     };
     if (description != null && description.isNotEmpty) body['description'] = description;
     if (deadlineDate != null && deadlineDate.isNotEmpty) body['deadline_date'] = deadlineDate;
@@ -223,7 +221,7 @@ class ShipmentsService {
     if (type != null && type.isNotEmpty) body['type'] = type;
     if (priceMin != null) body['price_min'] = priceMin;
     final response = await ApiClient.post(
-      '/api/shipments/$id', // Usually POST with _method=PUT or straight PUT depending on the API
+      '/api/shipments/$id/update',
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
       body: jsonEncode(body),
     );

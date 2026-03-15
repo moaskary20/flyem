@@ -47,6 +47,8 @@ Route::get('/cities', [CityController::class, 'index']);
 Route::get('/shipments', [ShipmentController::class, 'index']);
 Route::post('/shipments', [ShipmentController::class, 'store']);
 Route::get('/shipments/{shipment}', [ShipmentController::class, 'show']);
+Route::put('/shipments/{shipment}', [ShipmentController::class, 'update']);
+Route::post('/shipments/{shipment}/update', [ShipmentController::class, 'update']);
 Route::delete('/shipments/{shipment}', [ShipmentController::class, 'destroy']);
 
 Route::get('/trips', [TripController::class, 'index']);

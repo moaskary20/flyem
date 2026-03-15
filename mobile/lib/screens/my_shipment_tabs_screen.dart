@@ -102,110 +102,24 @@ class _TabsContent extends StatelessWidget {
           ),
           centerTitle: true,
           actions: [
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              color: Colors.white,
-              iconColor: Colors.white,
-              onSelected: (value) async {
-                if (value == AppStrings.editShipment) {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => flyem_app_add_shipment.AddShipmentScreen(shipmentToEdit: shipment, isEditing: true)));
-                }
-                else if (value == AppStrings.deleteShipment) {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text(AppStrings.deleteShipment),
-                      content: const Text(AppStrings.confirmDeleteShipment),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text(AppStrings.cancel),
-                        ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                          child: const Text(AppStrings.delete),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm != true || !context.mounted) return;
-                  try {
-                    await ShipmentsService.deleteShipment(shipment.id);
-                    if (!context.mounted) return;
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('تم حذف الشحنة')),
-                    );
-                  } catch (_) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('فشل حذف الشحنة'), backgroundColor: Colors.red),
-                    );
-                  }
-                }
-                else if (value == AppStrings.addNewShipment) {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const flyem_app_add_shipment.AddShipmentScreen()));
-                }
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const flyem_app_add_shipment.AddShipmentScreen()),
+                );
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: AppStrings.editShipment,
-                  child: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
-                ),
-                PopupMenuItem(
-                  value: AppStrings.deleteShipment,
-                  child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
-                ),
-                PopupMenuItem(
-                  value: AppStrings.addNewShipment,
-                  child: Text(AppStrings.addNewShipment, style: const TextStyle(color: Colors.black87)),
-                ),
-              ],
+              icon: const Icon(Icons.add, size: 22, color: Colors.white),
+              label: Text(
+                AppStrings.addNewShipment,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
             ),
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(48),
             child: Container(
               color: _tabBarGrey,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.more_vert, color: Colors.white70),
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.white,
-                        builder: (ctx) => SafeArea(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                title: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => flyem_app_add_shipment.AddShipmentScreen(shipmentToEdit: shipment, isEditing: true)));
-                                },
-                              ),
-                              ListTile(
-                                title: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
-                                onTap: () => Navigator.pop(ctx),
-                              ),
-                              ListTile(
-                                title: Text(AppStrings.addNewShipment, style: const TextStyle(color: Colors.black87)),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const flyem_app_add_shipment.AddShipmentScreen()));
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  Expanded(
-                    child: TabBar(
+              child: TabBar(
                       indicatorColor: AppColors.primaryYellow,
                       indicatorWeight: 3,
                       labelColor: AppColors.primaryYellow,
@@ -217,11 +131,8 @@ class _TabsContent extends StatelessWidget {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
           ),
-        ),
         body: TabBarView(
           children: [
             _DealsTab(),
@@ -229,6 +140,21 @@ class _TabsContent extends StatelessWidget {
             ShipmentDetailContent(
               shipment: shipment,
               onEdited: () => Navigator.of(context).pop(true),
+              onDelete: () async {
+                try {
+                  await ShipmentsService.deleteShipment(shipment.id);
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('تم حذف الشحنة')),
+                  );
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('فشل حذف الشحنة'), backgroundColor: Colors.red),
+                  );
+                }
+              },
             ),
           ],
         ),

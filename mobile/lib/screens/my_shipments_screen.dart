@@ -103,82 +103,16 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
           elevation: 0,
           centerTitle: true,
           leading: (_hasShipments && _tabController.index == 2)
-              ? PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  color: Colors.white,
-                  onSelected: (value) async {
-                    if (value == AppStrings.editShipment) {
-                  final firstId = _myShipmentsList?.isNotEmpty == true ? _myShipmentsList!.first.id : null;
-                  if (firstId == null) return;
-                  showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
-                  try {
-                      final details = await ShipmentsService.getShipment(firstId);
-                      if (!mounted) return;
-                      Navigator.pop(context); // close dialog
-                      final added = await Navigator.of(context).push<bool>(
-                          MaterialPageRoute(builder: (_) => AddShipmentScreen(shipmentToEdit: details, isEditing: true)),
-                      );
-                      if (added == true && mounted) _load();
-                  } catch (e) {
-                      if (!mounted) return;
-                      Navigator.pop(context); // close dialog
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('فشل جلب التفاصيل')));
-                  }
-                }
-                else if (value == AppStrings.deleteShipment) {
-                  final firstId = _myShipmentsList?.isNotEmpty == true ? _myShipmentsList!.first.id : null;
-                  if (firstId == null) return;
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text(AppStrings.deleteShipment),
-                          content: const Text(AppStrings.confirmDeleteShipment),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text(AppStrings.cancel),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                              child: const Text(AppStrings.delete),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm != true || !mounted) return;
-                      try {
-                        await ShipmentsService.deleteShipment(firstId);
-                        if (!mounted) return;
-                        _load();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('تم حذف الشحنة')),
-                        );
-                      } catch (_) {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('فشل حذف الشحنة'), backgroundColor: Colors.red),
-                        );
-                      }
-                    }
-                    else if (value == AppStrings.addNewShipment) {
-                  _openAddShipment();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: AppStrings.editShipment,
-                  child: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
-                ),
-                PopupMenuItem(
-                  value: AppStrings.deleteShipment,
-                  child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
-                ),
-                PopupMenuItem(
-                  value: AppStrings.addNewShipment,
-                  child: Text(AppStrings.addNewShipment, style: const TextStyle(color: Colors.black87)),
-                ),
-              ],
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: TextButton.icon(
+                    onPressed: _openAddShipment,
+                    icon: const Icon(Icons.add, size: 22, color: Colors.white),
+                    label: Text(
+                      AppStrings.addNewShipment,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
                 )
               : null,
           title: Text(
@@ -302,6 +236,21 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
             return ShipmentDetailContent(
               shipment: detailSnapshot.data!,
               onEdited: () => _load(),
+              onDelete: () async {
+                try {
+                  await ShipmentsService.deleteShipment(firstId);
+                  if (!mounted) return;
+                  _load();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('تم حذف الشحنة')),
+                  );
+                } catch (_) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('فشل حذف الشحنة'), backgroundColor: Colors.red),
+                  );
+                }
+              },
             );
           },
         );

@@ -153,8 +153,6 @@ class AppStrings {
   static const String confirmDeleteShipment = 'هل تريد حذف هذه الشحنة؟';
   static const String confirmDeleteTrip = 'هل تريد حذف هذه الرحلة؟';
   static const String delete = 'حذف';
-  static const String costInfoText =
-      'تعتمد التكلفة على رسوم السوق، نحن أرخص بنسبة ٥٠٪–٧٠٪';
   static const String insuranceDisclaimer =
       'أقر بأن جميع تفاصيل هذه الشحنة صحيحة وأن أي تفاصيل غير صحيحة أو غير واضحة أو مفقودة قد تؤدي إلى أخطاء في عملية التسليم ولا نتحمل نتيجة ذلك.';
   static const String totalOrdersLabel = 'مجموع الطلبات';
