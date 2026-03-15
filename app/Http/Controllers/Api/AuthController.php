@@ -181,7 +181,7 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'profile_photo' => ['required', 'image', 'max:5120'],
+            'profile_photo' => ['required', 'file', 'mimes:jpeg,jpg,png,gif', 'max:5120'],
         ], [], ['profile_photo' => __('Profile photo')]);
 
         if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {

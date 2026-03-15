@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
@@ -148,22 +148,30 @@ class AuthService {
     }
   }
 
-  /// رفع صورة الملف الشخصي (صورة جديدة فقط).
-  static Future<String> uploadProfilePhoto(File imageFile) async {
+  /// رفع صورة الملف الشخصي (بايتات الصورة + اسم الملف لتفادي مشاكل المسار على أندرويد).
+  static Future<String> uploadProfilePhoto(
+    Uint8List imageBytes, {
+    String filename = 'photo.jpg',
+  }) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw AuthException('يجب تسجيل الدخول');
     final uri = Uri.parse('$kApiBaseUrl/api/user/profile-photo');
     final request = http.MultipartRequest('POST', uri);
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
-    request.files.add(await http.MultipartFile.fromPath('profile_photo', imageFile.path));
+    request.files.add(http.MultipartFile.fromBytes(
+      'profile_photo',
+      imageBytes,
+      filename: filename,
+    ));
     final client = getApiClient();
     try {
       final streamed = await client.send(request);
       final response = await http.Response.fromStream(streamed);
       if (response.statusCode != 200 && response.statusCode != 201) {
         final map = jsonDecode(response.body) as Map<String, dynamic>?;
-        throw AuthException(map?['message'] as String? ?? 'فشل رفع الصورة');
+        final msg = map?['message'] as String? ?? map?['errors']?.toString() ?? 'فشل رفع الصورة';
+        throw AuthException(msg.toString());
       }
       final map = jsonDecode(response.body) as Map<String, dynamic>?;
       final data = map?['data'] as Map<String, dynamic>?;

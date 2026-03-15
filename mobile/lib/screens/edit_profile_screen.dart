@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
@@ -20,7 +20,8 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  File? _pickedFile;
+  XFile? _pickedFile;
+  Uint8List? _previewBytes;
   bool _uploading = false;
   String? _error;
 
@@ -31,10 +32,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       imageQuality: 85,
     );
     if (xFile != null && mounted) {
-      setState(() {
-        _pickedFile = File(xFile.path);
-        _error = null;
-      });
+      final bytes = await xFile.readAsBytes();
+      if (mounted) {
+        setState(() {
+          _pickedFile = xFile;
+          _previewBytes = bytes;
+          _error = null;
+        });
+      }
     }
   }
 
@@ -48,7 +53,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _error = null;
     });
     try {
-      await AuthService.uploadProfilePhoto(_pickedFile!);
+      final bytes = await _pickedFile!.readAsBytes();
+      final name = _pickedFile!.name;
+      final filename = name.isNotEmpty ? name : 'photo.jpg';
+      await AuthService.uploadProfilePhoto(bytes, filename: filename);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on AuthException catch (e) {
@@ -102,13 +110,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         CircleAvatar(
                           radius: 60,
                           backgroundColor: Colors.grey[200],
-                          backgroundImage: _pickedFile != null
-                              ? FileImage(_pickedFile!)
+                          backgroundImage: _previewBytes != null
+                              ? MemoryImage(_previewBytes!)
                               : (widget.currentPhotoUrl != null &&
                                       widget.currentPhotoUrl!.isNotEmpty
                                   ? NetworkImage(widget.currentPhotoUrl!)
                                   : null),
-                          child: _pickedFile == null &&
+                          child: _previewBytes == null &&
                                   (widget.currentPhotoUrl == null ||
                                       widget.currentPhotoUrl!.isEmpty)
                               ? Icon(Icons.person, size: 64, color: Colors.grey[600])
