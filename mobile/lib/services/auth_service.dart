@@ -175,7 +175,7 @@ class AuthService {
       }
       final map = jsonDecode(response.body) as Map<String, dynamic>?;
       final data = map?['data'] as Map<String, dynamic>?;
-      final url = data?['profile_photo'] as String?;
+      final url = (data?['profile_photo'] as String?)?.replaceAll(RegExp(r'\s'), '').trim();
       if (url == null || url.isEmpty) throw AuthException('لم يُرجع السيرفر رابط الصورة');
       return url;
     } finally {
@@ -245,7 +245,7 @@ class UserProfile {
       name: json['name'] as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
-      profilePhoto: json['profile_photo'] as String?,
+      profilePhoto: (json['profile_photo'] as String?)?.replaceAll(RegExp(r'\s'), '').trim(),
       verificationStatus: json['verification_status'] as String? ?? 'unverified',
       documentsVerified: json['documents_verified'] as bool? ?? false,
       phoneVerified: json['phone_verified'] as bool? ?? false,

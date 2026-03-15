@@ -101,7 +101,10 @@ class AuthController extends Controller
         $profilePhotoUrl = null;
         if ($user->profile_photo) {
             $base = rtrim(config('app.url'), '/');
-            $profilePhotoUrl = $base.'/storage/'.ltrim($user->profile_photo, '/');
+            $path = trim(preg_replace('/\s+/', '', $user->profile_photo));
+            if ($path !== '') {
+                $profilePhotoUrl = $base.'/storage/'.ltrim($path, '/');
+            }
         }
 
         return response()->json([
@@ -190,10 +193,11 @@ class AuthController extends Controller
             Storage::disk('public')->delete($user->profile_photo);
         }
 
-        $path = $request->file('profile_photo')->store('profiles', 'public');
+        $path = trim($request->file('profile_photo')->store('profiles', 'public'));
         $user->update(['profile_photo' => $path]);
 
-        $profilePhotoUrl = url('storage/'.$path);
+        $base = rtrim(config('app.url'), '/');
+        $profilePhotoUrl = $base.'/storage/'.ltrim($path, '/');
 
         return response()->json([
             'message' => 'updated',

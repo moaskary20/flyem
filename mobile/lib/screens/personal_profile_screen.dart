@@ -251,12 +251,17 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     }
   }
 
+  static String _sanitizePhotoUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    return url.replaceAll(RegExp(r'\s'), '').trim();
+  }
+
   Widget _buildProfileAvatar() {
-    final raw = _profilePhotoUrlOverride ?? _user?.profilePhoto;
-    final photoUrl = (raw != null && raw.isNotEmpty)
+    final raw = _sanitizePhotoUrl(_profilePhotoUrlOverride ?? _user?.profilePhoto);
+    final photoUrl = raw.isNotEmpty
         ? (raw.startsWith('http') ? raw : '${kApiBaseUrl.replaceAll(RegExp(r'/$'), '')}/${raw.startsWith('/') ? raw.substring(1) : raw}')
         : null;
-    final urlWithCache = photoUrl != null
+    final urlWithCache = photoUrl != null && photoUrl.isNotEmpty
         ? '$photoUrl${photoUrl.contains('?') ? '&' : '?'}v=$_photoKey'
         : null;
     if (urlWithCache == null) {
