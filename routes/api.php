@@ -52,6 +52,7 @@ Route::delete('/shipments/{shipment}', [ShipmentController::class, 'destroy']);
 Route::get('/trips', [TripController::class, 'index']);
 Route::post('/trips', [TripController::class, 'store']);
 Route::get('/trips/{trip}', [TripController::class, 'show']);
+Route::put('/trips/{trip}', [TripController::class, 'update']);
 Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
 
 Route::get('/faqs', [FaqController::class, 'index']);

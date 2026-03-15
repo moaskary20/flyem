@@ -185,6 +185,64 @@ class TripsService {
     final map = jsonDecode(response.body) as Map<String, dynamic>;
     return (map['id'] as num).toInt();
   }
+
+  /// تحديث رحلة موجودة
+  static Future<void> updateTrip({
+    required int tripId,
+    required String travelMethod,
+    required int fromCountryId,
+    required int fromCityId,
+    required int toCountryId,
+    required int toCityId,
+    required String departureDate,
+    String? returnDate,
+    double? availableWeight,
+    String? weightUnit,
+    double? pricePerKg,
+    int? currencyId,
+    String? notes,
+    bool canPickupInCurrentCountry = false,
+    bool canDeliverInOtherCountry = false,
+    bool canReturnOnCancel = false,
+    int? returnBeforeDays,
+  }) async {
+    final body = <String, dynamic>{
+      'travel_method': travelMethod,
+      'from_country_id': fromCountryId,
+      'from_city_id': fromCityId,
+      'to_country_id': toCountryId,
+      'to_city_id': toCityId,
+      'departure_date': departureDate,
+      'can_pickup_in_current_country': canPickupInCurrentCountry,
+      'can_deliver_in_other_country': canDeliverInOtherCountry,
+      'can_return_on_cancel': canReturnOnCancel,
+    };
+    if (returnDate != null && returnDate.isNotEmpty) body['return_date'] = returnDate;
+    if (availableWeight != null) body['available_weight'] = availableWeight;
+    if (weightUnit != null && weightUnit.isNotEmpty) body['weight_unit'] = weightUnit;
+    if (pricePerKg != null) body['price_per_kg'] = pricePerKg;
+    if (currencyId != null) body['currency_id'] = currencyId;
+    if (notes != null && notes.isNotEmpty) body['notes'] = notes;
+    if (returnBeforeDays != null && returnBeforeDays >= 1) body['return_before_days'] = returnBeforeDays;
+
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    final token = await AppPreferences.getAuthToken();
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    final response = await ApiClient.put(
+      '/api/trips/$tripId',
+      headers: headers,
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200) {
+      final msg = response.body;
+      throw Exception('API error: ${response.statusCode} $msg');
+    }
+  }
 }
 
 class TripsListResponse {

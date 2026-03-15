@@ -122,6 +122,8 @@ class TripController extends Controller
             'to_city' => $trip->toCity?->name_ar ?? '',
             'departure_date' => $trip->departure_date?->format('Y-m-d H:i'),
             'return_date' => $trip->return_date?->format('Y-m-d H:i'),
+            'available_weight' => (float) ($trip->available_weight ?? 0),
+            'weight_unit' => $trip->weight_unit ?? 'kg',
             'price_per_kg' => (float) ($trip->price_per_kg ?? 0),
             'currency_id' => $trip->currency_id,
             'currency_symbol' => $trip->currency?->symbol ?? '$',
@@ -132,6 +134,52 @@ class TripController extends Controller
             'return_before_days' => $trip->return_before_days !== null ? (int) $trip->return_before_days : null,
             'status' => $trip->status,
         ]);
+    }
+
+    /**
+     * تحديث رحلة (لصاحب الرحلة من تطبيق الموبايل).
+     */
+    public function update(Request $request, Trip $trip): JsonResponse
+    {
+        $validated = $request->validate([
+            'travel_method' => ['required', 'string', 'in:flight,car,train,bus,ship,other'],
+            'from_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'from_city_id' => ['required', 'integer', 'exists:cities,id'],
+            'to_country_id' => ['required', 'integer', 'exists:countries,id'],
+            'to_city_id' => ['required', 'integer', 'exists:cities,id'],
+            'departure_date' => ['required', 'date'],
+            'return_date' => ['nullable', 'date'],
+            'available_weight' => ['nullable', 'numeric', 'min:0'],
+            'weight_unit' => ['nullable', 'string', 'in:kg,g,lb'],
+            'price_per_kg' => ['nullable', 'numeric', 'min:0'],
+            'currency_id' => ['nullable', 'integer', 'exists:currencies,id'],
+            'notes' => ['nullable', 'string'],
+            'can_pickup_in_current_country' => ['nullable', 'boolean'],
+            'can_deliver_in_other_country' => ['nullable', 'boolean'],
+            'can_return_on_cancel' => ['nullable', 'boolean'],
+            'return_before_days' => ['nullable', 'integer', 'min:1', 'max:30'],
+        ]);
+
+        $trip->update([
+            'travel_method' => $validated['travel_method'],
+            'from_country_id' => $validated['from_country_id'],
+            'from_city_id' => $validated['from_city_id'],
+            'to_country_id' => $validated['to_country_id'],
+            'to_city_id' => $validated['to_city_id'],
+            'departure_date' => $validated['departure_date'],
+            'return_date' => $validated['return_date'] ?? null,
+            'available_weight' => $validated['available_weight'] ?? null,
+            'weight_unit' => $validated['weight_unit'] ?? 'kg',
+            'price_per_kg' => $validated['price_per_kg'] ?? null,
+            'currency_id' => $validated['currency_id'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'can_pickup_in_current_country' => (bool) ($validated['can_pickup_in_current_country'] ?? false),
+            'can_deliver_in_other_country' => (bool) ($validated['can_deliver_in_other_country'] ?? false),
+            'can_return_on_cancel' => (bool) ($validated['can_return_on_cancel'] ?? false),
+            'return_before_days' => isset($validated['return_before_days']) ? (int) $validated['return_before_days'] : null,
+        ]);
+
+        return response()->json(['message' => 'updated', 'id' => $trip->id]);
     }
 
     /**

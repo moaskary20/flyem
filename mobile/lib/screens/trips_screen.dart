@@ -5,6 +5,7 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/add_trip_form_screen.dart';
+import 'package:flyem_app/screens/edit_trip_screen.dart';
 import 'package:flyem_app/screens/trip_details_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
@@ -228,7 +229,7 @@ class _TripsScreenState extends State<TripsScreen> {
           const SizedBox(height: 24),
           ..._trips.map((t) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: _TripCard(item: t, onDeleted: _loadTrips),
+                child: _TripCard(item: t, onDeleted: _loadTrips, onUpdated: _loadTrips),
               )),
         ],
       ),
@@ -331,10 +332,11 @@ class _TripsScreenState extends State<TripsScreen> {
 
 /// بطاقة رحلة واحدة (من - إلى، تاريخ المغادرة، الوزن، المكسب، الصفقات)
 class _TripCard extends StatelessWidget {
-  const _TripCard({required this.item, this.onDeleted});
+  const _TripCard({required this.item, this.onDeleted, this.onUpdated});
 
   final TripItem item;
   final VoidCallback? onDeleted;
+  final VoidCallback? onUpdated;
 
   Future<void> _confirmDeleteTrip(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -471,6 +473,16 @@ class _TripCard extends StatelessWidget {
                                     ),
                                     items: [
                                       PopupMenuItem<String>(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.edit_outlined, size: 20, color: Colors.grey[800]),
+                                            const SizedBox(width: 8),
+                                            const Text('تعديل الرحلة'),
+                                          ],
+                                        ),
+                                      ),
+                                      PopupMenuItem<String>(
                                         value: 'delete',
                                         child: Row(
                                           children: [
@@ -482,7 +494,18 @@ class _TripCard extends StatelessWidget {
                                       ),
                                     ],
                                   ).then((value) {
-                                    if (value == 'delete') _confirmDeleteTrip(context);
+                                    if (value == 'edit') {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => EditTripScreen(
+                                            tripId: item.id,
+                                            onUpdated: onUpdated,
+                                          ),
+                                        ),
+                                      );
+                                    } else if (value == 'delete') {
+                                      _confirmDeleteTrip(context);
+                                    }
                                   });
                                 },
                                 child: Padding(
@@ -523,21 +546,6 @@ class _TripCard extends StatelessWidget {
                                       style: TextStyle(fontSize: 13, color: Colors.grey[800]),
                                     ),
                                   ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryYellow.withValues(alpha: 0.25),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    item.profitDisplay,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
                                 ),
                               ],
                             ),

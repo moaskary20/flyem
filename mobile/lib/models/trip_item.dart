@@ -80,15 +80,20 @@ class TripDetails {
   final int? userId;
   final String? userName;
   final String travelMethod;
+  final int? fromCountryId;
   final String fromCountry;
+  final int? fromCityId;
   final String fromCity;
+  final int? toCountryId;
   final String toCountry;
+  final int? toCityId;
   final String toCity;
   final String? departureDate;
   final String? returnDate;
   final double availableWeight;
   final String weightUnit;
   final double pricePerKg;
+  final int? currencyId;
   final String currencySymbol;
   final String? notes;
   final String status;
@@ -102,15 +107,20 @@ class TripDetails {
     this.userId,
     this.userName,
     this.travelMethod = 'flight',
+    this.fromCountryId,
     this.fromCountry = '',
+    this.fromCityId,
     this.fromCity = '',
+    this.toCountryId,
     this.toCountry = '',
+    this.toCityId,
     this.toCity = '',
     this.departureDate,
     this.returnDate,
     this.availableWeight = 0,
     this.weightUnit = 'kg',
     this.pricePerKg = 0,
+    this.currencyId,
     this.currencySymbol = '\$',
     this.notes,
     this.status = 'active',
@@ -126,15 +136,20 @@ class TripDetails {
       userId: (json['user_id'] as num?)?.toInt(),
       userName: json['user_name'] as String?,
       travelMethod: json['travel_method'] as String? ?? 'flight',
+      fromCountryId: (json['from_country_id'] as num?)?.toInt(),
       fromCountry: json['from_country'] as String? ?? '',
+      fromCityId: (json['from_city_id'] as num?)?.toInt(),
       fromCity: json['from_city'] as String? ?? '',
+      toCountryId: (json['to_country_id'] as num?)?.toInt(),
       toCountry: json['to_country'] as String? ?? '',
+      toCityId: (json['to_city_id'] as num?)?.toInt(),
       toCity: json['to_city'] as String? ?? '',
       departureDate: json['departure_date'] as String?,
       returnDate: json['return_date'] as String?,
       availableWeight: (json['available_weight'] as num?)?.toDouble() ?? 0,
       weightUnit: json['weight_unit'] as String? ?? 'kg',
       pricePerKg: (json['price_per_kg'] as num?)?.toDouble() ?? 0,
+      currencyId: (json['currency_id'] as num?)?.toInt(),
       currencySymbol: json['currency_symbol'] as String? ?? '\$',
       notes: json['notes'] as String?,
       status: json['status'] as String? ?? 'active',

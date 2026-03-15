@@ -226,7 +226,10 @@ class _TabsContent extends StatelessWidget {
           children: [
             _DealsTab(),
             _SuitableTripsTab(shipment: shipment),
-            ShipmentDetailContent(shipment: shipment),
+            ShipmentDetailContent(
+              shipment: shipment,
+              onEdited: () => Navigator.of(context).pop(true),
+            ),
           ],
         ),
       ),

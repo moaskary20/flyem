@@ -107,10 +107,27 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                   icon: const Icon(Icons.more_vert, color: Colors.white),
                   color: Colors.white,
                   onSelected: (value) async {
-                    if (value == AppStrings.editShipment) {}
-                    else if (value == AppStrings.deleteShipment) {
-                      final firstId = _myShipmentsList?.isNotEmpty == true ? _myShipmentsList!.first.id : null;
-                      if (firstId == null) return;
+                    if (value == AppStrings.editShipment) {
+                  final firstId = _myShipmentsList?.isNotEmpty == true ? _myShipmentsList!.first.id : null;
+                  if (firstId == null) return;
+                  showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+                  try {
+                      final details = await ShipmentsService.getShipment(firstId);
+                      if (!mounted) return;
+                      Navigator.pop(context); // close dialog
+                      final added = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(builder: (_) => AddShipmentScreen(shipmentToEdit: details, isEditing: true)),
+                      );
+                      if (added == true && mounted) _load();
+                  } catch (e) {
+                      if (!mounted) return;
+                      Navigator.pop(context); // close dialog
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('فشل جلب التفاصيل')));
+                  }
+                }
+                else if (value == AppStrings.deleteShipment) {
+                  final firstId = _myShipmentsList?.isNotEmpty == true ? _myShipmentsList!.first.id : null;
+                  if (firstId == null) return;
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
@@ -144,22 +161,24 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                         );
                       }
                     }
-                    else if (value == AppStrings.reportShipment) {}
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: AppStrings.editShipment,
-                      child: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
-                    ),
-                    PopupMenuItem(
-                      value: AppStrings.deleteShipment,
-                      child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
-                    ),
-                    PopupMenuItem(
-                      value: AppStrings.reportShipment,
-                      child: Text(AppStrings.reportShipment, style: const TextStyle(color: Colors.black87)),
-                    ),
-                  ],
+                    else if (value == AppStrings.addNewShipment) {
+                  _openAddShipment();
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: AppStrings.editShipment,
+                  child: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
+                ),
+                PopupMenuItem(
+                  value: AppStrings.deleteShipment,
+                  child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
+                ),
+                PopupMenuItem(
+                  value: AppStrings.addNewShipment,
+                  child: Text(AppStrings.addNewShipment, style: const TextStyle(color: Colors.black87)),
+                ),
+              ],
                 )
               : null,
           title: Text(
@@ -280,7 +299,10 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                 ),
               );
             }
-            return ShipmentDetailContent(shipment: detailSnapshot.data!);
+            return ShipmentDetailContent(
+              shipment: detailSnapshot.data!,
+              onEdited: () => _load(),
+            );
           },
         );
       },
@@ -449,6 +471,36 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                   builder: (_) => MyShipmentTabsScreen(shipmentId: item.id),
                 ),
               );
+            },
+            actionButtonText: AppStrings.edit,
+            onActionButtonTap: () async {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(child: CircularProgressIndicator()),
+              );
+              try {
+                final details = await ShipmentsService.getShipment(item.id);
+                if (!context.mounted) return;
+                Navigator.pop(context); // close dialog
+                final added = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => AddShipmentScreen(
+                      shipmentToEdit: details,
+                      isEditing: true,
+                    ),
+                  ),
+                );
+                if (added == true && context.mounted) {
+                  _load();
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                Navigator.pop(context); // close dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('فشل جلب التفاصيل')),
+                );
+              }
             },
           );
         },

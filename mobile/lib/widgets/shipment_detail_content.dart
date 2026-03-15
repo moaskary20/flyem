@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
+import 'package:flyem_app/screens/add_shipment_screen.dart' as flyem_app_add_shipment;
 
 /// محتوى تفاصيل الشحنة (المسار، تعديل، إقرار، وصف المنتج، مكسب المسافر) — يُستخدم في شاشة التفاصيل وتبويب التفاصيل.
 class ShipmentDetailContent extends StatelessWidget {
-  const ShipmentDetailContent({super.key, required this.shipment});
+  const ShipmentDetailContent({super.key, required this.shipment, this.onEdited});
 
   final ShipmentDetails shipment;
+  final VoidCallback? onEdited;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class ShipmentDetailContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildRouteWithEdit(fromCity, toCity),
+            _buildRouteWithEdit(context, fromCity, toCity),
             const SizedBox(height: 16),
             _buildCostAndDisclaimerBox(),
             const SizedBox(height: 16),
@@ -81,7 +83,7 @@ class ShipmentDetailContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteWithEdit(String fromCity, String toCity) {
+  Widget _buildRouteWithEdit(BuildContext context, String fromCity, String toCity) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -165,7 +167,19 @@ class ShipmentDetailContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FilledButton(
-              onPressed: () {},
+              onPressed: () async {
+                final added = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => flyem_app_add_shipment.AddShipmentScreen(
+                      shipmentToEdit: shipment,
+                      isEditing: true,
+                    ),
+                  ),
+                );
+                if (added == true && onEdited != null) {
+                  onEdited!();
+                }
+              },
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primaryYellow,
                 foregroundColor: Colors.black87,

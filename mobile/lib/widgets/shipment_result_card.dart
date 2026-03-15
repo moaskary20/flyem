@@ -14,6 +14,8 @@ class ShipmentResultCard extends StatelessWidget {
   final String? userPhotoUrl;
   final int? shipmentId;
   final VoidCallback? onTap;
+  final String? actionButtonText;
+  final VoidCallback? onActionButtonTap;
 
   const ShipmentResultCard({
     super.key,
@@ -28,6 +30,8 @@ class ShipmentResultCard extends StatelessWidget {
     this.userPhotoUrl,
     this.shipmentId,
     this.onTap,
+    this.actionButtonText,
+    this.onActionButtonTap,
   });
 
   @override
@@ -151,7 +155,7 @@ class ShipmentResultCard extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
-                          onPressed: onTap,
+                          onPressed: onActionButtonTap ?? onTap,
                           style: FilledButton.styleFrom(
                             backgroundColor: AppColors.primaryYellow,
                             foregroundColor: Colors.black87,
@@ -160,7 +164,7 @@ class ShipmentResultCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text(AppStrings.sendRequest),
+                          child: Text(actionButtonText ?? AppStrings.sendRequest),
                         ),
                       ),
                     ],
