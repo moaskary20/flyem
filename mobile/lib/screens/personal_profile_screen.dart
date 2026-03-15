@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/api_config.dart';
+import 'package:flyem_app/core/api_http_client.dart';
 import 'package:flyem_app/core/app_theme.dart';
+import 'package:http/http.dart' as http;
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
@@ -24,6 +28,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   int _photoKey = 0;
   /// رابط الصورة بعد الحفظ مباشرة (يُعرض فوراً قبل أن يرجع GET /api/user).
   String? _profilePhotoUrlOverride;
+  final Map<String, Future<Uint8List?>> _profileImageCache = {};
 
   @override
   void initState() {
@@ -233,6 +238,19 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     );
   }
 
+  Future<Uint8List?> _loadProfileImageBytes(String url) async {
+    final client = getApiClient();
+    try {
+      final response = await client.get(Uri.parse(url));
+      if (response.statusCode == 200) return response.bodyBytes;
+      return null;
+    } catch (_) {
+      return null;
+    } finally {
+      client.close();
+    }
+  }
+
   Widget _buildProfileAvatar() {
     final raw = _profilePhotoUrlOverride ?? _user?.profilePhoto;
     final photoUrl = (raw != null && raw.isNotEmpty)
@@ -248,17 +266,27 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         child: Icon(Icons.person, size: 48, color: Colors.grey[600]),
       );
     }
+    final future = _profileImageCache.putIfAbsent(
+      urlWithCache,
+      () => _loadProfileImageBytes(urlWithCache),
+    );
     return SizedBox(
       width: 80,
       height: 80,
-      child: ClipOval(
-        child: Image.network(
-          urlWithCache,
-          fit: BoxFit.cover,
-          width: 80,
-          height: 80,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
+      child: FutureBuilder<Uint8List?>(
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+            return ClipOval(
+              child: Image.memory(
+                snapshot.data!,
+                fit: BoxFit.cover,
+                width: 80,
+                height: 80,
+              ),
+            );
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return Container(
               color: Colors.white,
               alignment: Alignment.center,
@@ -268,13 +296,13 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             );
-          },
-          errorBuilder: (_, __, ___) => CircleAvatar(
+          }
+          return CircleAvatar(
             radius: 40,
             backgroundColor: Colors.white,
             child: Icon(Icons.person, size: 48, color: Colors.grey[600]),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
