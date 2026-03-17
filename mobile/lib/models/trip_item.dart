@@ -101,6 +101,8 @@ class TripDetails {
   final bool canDeliverInOtherCountry;
   final bool canReturnOnCancel;
   final int? returnBeforeDays;
+  final bool userHasRequested;
+  final int? existingRequestId;
 
   TripDetails({
     required this.id,
@@ -128,6 +130,8 @@ class TripDetails {
     this.canDeliverInOtherCountry = false,
     this.canReturnOnCancel = false,
     this.returnBeforeDays,
+    this.userHasRequested = false,
+    this.existingRequestId,
   });
 
   factory TripDetails.fromJson(Map<String, dynamic> json) {
@@ -157,6 +161,8 @@ class TripDetails {
       canDeliverInOtherCountry: json['can_deliver_in_other_country'] as bool? ?? false,
       canReturnOnCancel: json['can_return_on_cancel'] as bool? ?? false,
       returnBeforeDays: (json['return_before_days'] as num?)?.toInt(),
+      userHasRequested: json['user_has_requested'] as bool? ?? false,
+      existingRequestId: (json['existing_request_id'] as num?)?.toInt(),
     );
   }
 

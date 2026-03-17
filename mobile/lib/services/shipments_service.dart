@@ -51,8 +51,14 @@ class ShipmentsService {
     );
   }
 
+  /// تفاصيل شحنة واحدة. يرسل التوكن إن وُجد لاستلام user_has_requested.
   static Future<ShipmentDetails> getShipment(int id) async {
-    final response = await ApiClient.get('/api/shipments/$id');
+    final token = await AppPreferences.getAuthToken();
+    final headers = <String, String>{'Accept': 'application/json'};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    final response = await ApiClient.get('/api/shipments/$id', headers: headers);
     if (response.statusCode != 200) {
       throw Exception('API error: ${response.statusCode}');
     }

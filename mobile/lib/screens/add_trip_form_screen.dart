@@ -9,6 +9,8 @@ import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
+import 'package:flyem_app/core/api_client.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 
 /// شاشة نموذج "أضف رحلتك" - تُعرض من الأسفل (bottom sheet أو route)
 class AddTripFormScreen extends StatefulWidget {
@@ -294,6 +296,11 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
         returnBeforeDays: _canReturnOnCancel ? _returnBeforeDays.clamp(1, 30) : null,
       );
       if (!mounted) return;
+      await LocalNotificationService.showNotification(
+        id: LocalNotificationService.idForEvent('trip_added'),
+        title: AppStrings.notificationTripAdded,
+        body: AppStrings.notificationTripAdded,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تمت إضافة الرحلة')),
       );
@@ -303,7 +310,9 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
       if (mounted) {
         setState(() => _submitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل إضافة الرحلة: $e'), backgroundColor: Colors.red),
+          e is DuplicateRequestException
+              ? SnackBar(content: Text(e.message))
+              : SnackBar(content: Text('فشل إضافة الرحلة: $e'), backgroundColor: Colors.red),
         );
       }
     }

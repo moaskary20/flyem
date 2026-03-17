@@ -9,6 +9,7 @@ import 'package:flyem_app/screens/edit_trip_screen.dart';
 import 'package:flyem_app/screens/trip_details_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 void _showAddTripPassportSheet(BuildContext context, {VoidCallback? onTripAdded}) {
@@ -295,6 +296,11 @@ class _TripCard extends StatelessWidget {
     try {
       await TripsService.deleteTrip(item.id);
       if (context.mounted) {
+        await LocalNotificationService.showNotification(
+          id: LocalNotificationService.idForEvent('trip_deleted'),
+          title: AppStrings.notificationTripDeleted,
+          body: AppStrings.notificationTripDeleted,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم حذف الرحلة')),
         );

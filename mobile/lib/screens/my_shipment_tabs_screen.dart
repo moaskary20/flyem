@@ -6,6 +6,7 @@ import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/shipment_detail_content.dart';
 import 'package:flyem_app/screens/add_shipment_screen.dart' as flyem_app_add_shipment;
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/widgets/trip_result_card.dart';
 import 'package:flyem_app/screens/trip_details_screen.dart';
@@ -144,6 +145,11 @@ class _TabsContent extends StatelessWidget {
                 try {
                   await ShipmentsService.deleteShipment(shipment.id);
                   if (!context.mounted) return;
+                  await LocalNotificationService.showNotification(
+                    id: LocalNotificationService.idForEvent('shipment_deleted'),
+                    title: AppStrings.notificationShipmentDeleted,
+                    body: AppStrings.notificationShipmentDeleted,
+                  );
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('تم حذف الشحنة')),

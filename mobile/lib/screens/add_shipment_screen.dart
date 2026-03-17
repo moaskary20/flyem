@@ -9,6 +9,8 @@ import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
 
 import 'package:flyem_app/models/shipment_details.dart';
+import 'package:flyem_app/core/api_client.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 
 class AddShipmentScreen extends StatefulWidget {
   const AddShipmentScreen({
@@ -337,14 +339,25 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
         );
       }
       if (mounted) {
+        await LocalNotificationService.showNotification(
+          id: LocalNotificationService.idForEvent('shipment'),
+          title: widget.isEditing ? AppStrings.notificationShipmentUpdated : AppStrings.notificationShipmentAdded,
+          body: widget.isEditing ? AppStrings.notificationShipmentUpdated : AppStrings.notificationShipmentAdded,
+        );
         Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _submitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل الحفظ: $e')),
-        );
+        if (e is DuplicateRequestException) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message)),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('فشل الحفظ: $e')),
+          );
+        }
       }
     }
   }

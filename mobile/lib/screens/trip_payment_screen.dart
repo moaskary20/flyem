@@ -5,6 +5,9 @@ import 'package:flyem_app/screens/main_nav_screen.dart';
 import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/payment_methods_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/core/api_client.dart';
+import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 
 /// شاشة الدفع لإرسال طلب على رحلة: اختيار وسيلة الدفع ثم إتمام الدفع.
 /// بعد النجاح يتم التوجيه إلى شاشة الرسائل وفتح المحادثة مع صاحب الرحلة.
@@ -83,6 +86,11 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
       );
       if (!mounted) return;
       setState(() => _paying = false);
+      await LocalNotificationService.showNotification(
+        id: LocalNotificationService.idForEvent('request_sent'),
+        title: AppStrings.notificationRequestSent,
+        body: AppStrings.notificationRequestSent,
+      );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => MainNavScreen(
@@ -96,7 +104,9 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
     } catch (e) {
       if (mounted) setState(() {
         _paying = false;
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = e is DuplicateRequestException
+            ? e.message
+            : e.toString().replaceFirst('Exception: ', '');
       });
     }
   }

@@ -9,6 +9,7 @@ use App\Models\PaymentMethod;
 use App\Models\Request as RequestModel;
 use App\Models\Setting;
 use App\Models\Trip;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -95,8 +96,9 @@ class TripController extends Controller
 
     /**
      * تفاصيل رحلة واحدة.
+     * إذا كان الطلب مصحوباً بمصادقة، يُعاد user_has_requested و existing_request_id عند وجود طلب سابق من المستخدم.
      */
-    public function show(Trip $trip): JsonResponse
+    public function show(Request $request, Trip $trip): JsonResponse
     {
         $trip->load([
             'user:id,name',
@@ -107,7 +109,7 @@ class TripController extends Controller
             'currency:id,symbol,code',
         ]);
 
-        return response()->json([
+        $payload = [
             'id' => $trip->id,
             'user_id' => $trip->user_id,
             'user_name' => $trip->user?->name ?? '',
@@ -133,7 +135,20 @@ class TripController extends Controller
             'can_return_on_cancel' => (bool) $trip->can_return_on_cancel,
             'return_before_days' => $trip->return_before_days !== null ? (int) $trip->return_before_days : null,
             'status' => $trip->status,
-        ]);
+        ];
+
+        $token = $request->bearerToken();
+        if ($token) {
+            $hashed = hash('sha256', $token);
+            $user = User::where('api_token', $hashed)->first();
+            if ($user) {
+                $existing = RequestModel::where('trip_id', $trip->id)->where('requester_id', $user->id)->first();
+                $payload['user_has_requested'] = (bool) $existing;
+                $payload['existing_request_id'] = $existing?->id;
+            }
+        }
+
+        return response()->json($payload);
     }
 
     /**
@@ -249,6 +264,10 @@ class TripController extends Controller
 
         if ((int) $trip->user_id === (int) $user->id) {
             return response()->json(['message' => 'لا يمكن إرسال طلب على رحلتك.'], 422);
+        }
+
+        if (RequestModel::where('trip_id', $trip->id)->where('requester_id', $user->id)->exists()) {
+            return response()->json(['message' => 'لقد أرسلت طلباً على هذه الرحلة مسبقاً.'], 422);
         }
 
         $request->validate([

@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Request as RequestModel;
 use App\Models\Shipment;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -97,8 +98,9 @@ class ShipmentController extends Controller
 
     /**
      * Single shipment details for trip/shipment details screen.
+     * إذا كان الطلب مصحوباً بمصادقة، يُعاد user_has_requested و existing_request_id عند وجود طلب سابق من المستخدم.
      */
-    public function show(Shipment $shipment): JsonResponse
+    public function show(Request $request, Shipment $shipment): JsonResponse
     {
         $shipment->load(['user:id,name,profile_photo,rating', 'fromCountry:id,code,name_ar', 'fromCity:id,name_ar,name_en', 'toCountry:id,code,name_ar', 'toCity:id,name_ar,name_en', 'currency:id,symbol,code']);
 
@@ -132,7 +134,7 @@ class ShipmentController extends Controller
             'other' => 'Other',
         ];
 
-        return response()->json([
+        $payload = [
             'id' => $shipment->id,
             'title' => $shipment->title,
             'description' => $shipment->description,
@@ -162,7 +164,20 @@ class ShipmentController extends Controller
             'price_min' => (float) ($shipment->price_min ?? 0),
             'currency_symbol' => $shipment->currency?->symbol ?? '$',
             'image_url' => $imageUrl,
-        ]);
+        ];
+
+        $token = $request->bearerToken();
+        if ($token) {
+            $hashed = hash('sha256', $token);
+            $user = User::where('api_token', $hashed)->first();
+            if ($user) {
+                $existing = RequestModel::where('shipment_id', $shipment->id)->where('requester_id', $user->id)->first();
+                $payload['user_has_requested'] = (bool) $existing;
+                $payload['existing_request_id'] = $existing?->id;
+            }
+        }
+
+        return response()->json($payload);
     }
 
     /**
@@ -266,6 +281,10 @@ class ShipmentController extends Controller
             return response()->json(['message' => 'لا يمكن إرسال طلب على شحنتك.'], 422);
         }
 
+        if (RequestModel::where('shipment_id', $shipment->id)->where('requester_id', $user->id)->exists()) {
+            return response()->json(['message' => 'لقد أرسلت طلباً على هذه الشحنة مسبقاً.'], 422);
+        }
+
         $request->validate([
             'message' => 'nullable|string|max:500',
         ]);
@@ -305,6 +324,10 @@ class ShipmentController extends Controller
 
         if ((int) $shipment->user_id === (int) $user->id) {
             return response()->json(['message' => 'لا يمكن إرسال طلب على شحنتك.'], 422);
+        }
+
+        if (RequestModel::where('shipment_id', $shipment->id)->where('requester_id', $user->id)->exists()) {
+            return response()->json(['message' => 'لقد أرسلت طلباً على هذه الشحنة مسبقاً.'], 422);
         }
 
         $request->validate([

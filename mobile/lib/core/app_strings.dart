@@ -227,4 +227,14 @@ class AppStrings {
   static const String rateCommentHint = 'تعليق (اختياري)';
   static const String submitRating = 'إرسال التقييم';
   static const String ratingSent = 'تم إرسال التقييم';
+
+  // Local notifications (أحداث التطبيق)
+  static const String notificationShipmentAdded = 'تمت إضافة الشحنة';
+  static const String notificationShipmentUpdated = 'تم تحديث الشحنة';
+  static const String notificationTripAdded = 'تمت إضافة الرحلة';
+  static const String notificationTripUpdated = 'تم حفظ تعديلات الرحلة';
+  static const String notificationRequestSent = 'تم إرسال الطلب';
+  static const String notificationProfileSaved = 'تم حفظ الملف الشخصي';
+  static const String notificationShipmentDeleted = 'تم حذف الشحنة';
+  static const String notificationTripDeleted = 'تم حذف الرحلة';
 }

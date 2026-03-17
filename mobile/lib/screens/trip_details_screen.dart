@@ -366,6 +366,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   }
 
   Widget _buildBottomBar() {
+    final alreadyRequested = _trip?.userHasRequested ?? false;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
@@ -380,17 +381,22 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       ),
       child: SafeArea(
         child: FilledButton(
-          onPressed: _onSendRequest,
+          onPressed: alreadyRequested ? null : _onSendRequest,
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primaryYellow,
+            backgroundColor: alreadyRequested ? Colors.grey : AppColors.primaryYellow,
             foregroundColor: Colors.black87,
+            disabledBackgroundColor: Colors.grey[300],
+            disabledForegroundColor: Colors.grey[600],
             padding: const EdgeInsets.symmetric(vertical: 14),
             minimumSize: const Size(double.infinity, 0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: const Text('إرسال طلب', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          child: Text(
+            alreadyRequested ? 'تم إرسال طلب مسبقاً' : 'إرسال طلب',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
         ),
       ),
     );

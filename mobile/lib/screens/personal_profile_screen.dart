@@ -26,8 +26,10 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   bool _loading = true;
   String? _error;
   int _photoKey = 0;
-  /// رابط الصورة بعد الحفظ مباشرة (يُعرض فوراً قبل أن يرجع GET /api/user).
+  /// رابط الصورة بعد الحفظ مباشرة.
   String? _profilePhotoUrlOverride;
+  /// بايتات الصورة بعد الحفظ (عرض فوري دون طلب شبكة).
+  Uint8List? _profilePhotoBytesOverride;
   final Map<String, Future<Uint8List?>> _profileImageCache = {};
 
   @override
@@ -43,7 +45,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         _user = user;
         _loading = false;
         _photoKey = DateTime.now().millisecondsSinceEpoch;
-        _profilePhotoUrlOverride = null;
+        // عدم مسح الصورة المؤقتة بعد الحفظ حتى تبقى ظاهرة ولا ترجع لأيقونة الشخص
         _error = user == null ? 'فشل تحميل البيانات' : null;
       });
     } catch (_) {
@@ -139,21 +141,32 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   ),
                   TextButton(
                     onPressed: () async {
-                      final result = await Navigator.of(context).push<Object>(
-                        MaterialPageRoute(
-                          builder: (_) => EditProfileScreen(
-                            currentPhotoUrl: _user?.profilePhoto,
+                      try {
+                        final result = await Navigator.of(context).push<Object>(
+                          MaterialPageRoute(
+                            builder: (_) => EditProfileScreen(
+                              currentPhotoUrl: _user?.profilePhoto,
+                            ),
                           ),
-                        ),
-                      );
+                        );
                       if (!mounted) return;
-                      if (result is String) {
+                      if (result is List && result.length >= 2 && result[0] is String && result[1] is Uint8List) {
+                        setState(() {
+                          _profilePhotoUrlOverride = result[0] as String;
+                          _profilePhotoBytesOverride = result[1] as Uint8List;
+                          _photoKey = DateTime.now().millisecondsSinceEpoch;
+                        });
+                      } else if (result is String) {
                         setState(() {
                           _profilePhotoUrlOverride = result;
+                          _profilePhotoBytesOverride = null;
                           _photoKey = DateTime.now().millisecondsSinceEpoch;
                         });
                       }
-                      if (result != null) _loadUser();
+                      if (result != null) await _loadUser();
+                      } catch (_) {
+                        if (mounted) _loadUser();
+                      }
                     },
                     child: const Text(
                       AppStrings.edit,
@@ -261,6 +274,20 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   }
 
   Widget _buildProfileAvatar() {
+    if (_profilePhotoBytesOverride != null && _profilePhotoBytesOverride!.isNotEmpty) {
+      return SizedBox(
+        width: 80,
+        height: 80,
+        child: ClipOval(
+          child: Image.memory(
+            _profilePhotoBytesOverride!,
+            fit: BoxFit.cover,
+            width: 80,
+            height: 80,
+          ),
+        ),
+      );
+    }
     final raw = _sanitizePhotoUrl(_profilePhotoUrlOverride ?? _user?.profilePhoto);
     final photoUrl = raw.isNotEmpty
         ? (raw.startsWith('http') ? raw : '${kApiBaseUrl.replaceAll(RegExp(r'/$'), '')}/${raw.startsWith('/') ? raw.substring(1) : raw}')
@@ -277,7 +304,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     }
     final future = _profileImageCache.putIfAbsent(
       urlWithCache,
-      () => _loadProfileImageBytes(urlWithCache),
+      () => _loadProfileImageBytes(urlWithCache).catchError((_, __) => null),
     );
     return SizedBox(
       width: 80,

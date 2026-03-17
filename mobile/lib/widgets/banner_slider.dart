@@ -156,7 +156,7 @@ class _BannerPage extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: videoUrl != null && videoUrl!.isNotEmpty
-            ? _BannerVideoPlayer(videoUrl: videoUrl!)
+            ? _BannerVideoPlayer(videoUrl: videoUrl!, link: link)
             : imageUrl != null && imageUrl!.isNotEmpty
                 ? Image.network(
                     imageUrl!,
@@ -187,9 +187,10 @@ class _BannerPage extends StatelessWidget {
 }
 
 class _BannerVideoPlayer extends StatefulWidget {
-  const _BannerVideoPlayer({required this.videoUrl});
+  const _BannerVideoPlayer({required this.videoUrl, this.link});
 
   final String videoUrl;
+  final String? link;
 
   @override
   State<_BannerVideoPlayer> createState() => _BannerVideoPlayerState();
@@ -221,6 +222,18 @@ class _BannerVideoPlayerState extends State<_BannerVideoPlayer> {
     super.dispose();
   }
 
+  Future<void> _openLink() async {
+    final link = widget.link?.trim();
+    if (link == null || link.isEmpty) return;
+    final uri = Uri.tryParse(link);
+    if (uri == null) return;
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_error || _controller == null) {
@@ -229,7 +242,7 @@ class _BannerVideoPlayerState extends State<_BannerVideoPlayer> {
     if (!_controller!.value.isInitialized) {
       return const Center(child: CircularProgressIndicator());
     }
-    return SizedBox.expand(
+    final videoContent = SizedBox.expand(
       child: FittedBox(
         fit: BoxFit.cover,
         child: SizedBox(
@@ -239,5 +252,13 @@ class _BannerVideoPlayerState extends State<_BannerVideoPlayer> {
         ),
       ),
     );
+    if (widget.link != null && widget.link!.trim().isNotEmpty) {
+      return GestureDetector(
+        onTap: _openLink,
+        behavior: HitTestBehavior.opaque,
+        child: videoContent,
+      );
+    }
+    return videoContent;
   }
 }

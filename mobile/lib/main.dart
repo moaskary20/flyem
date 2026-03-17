@@ -8,11 +8,17 @@ import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/screens/splash_screen.dart';
 import 'package:flyem_app/screens/home_screen.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
+
+Future<void> _initApp() async {
+  await LocalNotificationService.initialize();
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   runZonedGuarded(() async {
+    await _initApp();
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -28,8 +34,10 @@ void main() async {
         onTimeout: () => 'ar',
       );
     } catch (e, st) {
-      debugPrint('AppPreferences.getAppLocale error: $e');
-      debugPrintStack(stackTrace: st);
+      if (kDebugMode) {
+        debugPrint('AppPreferences.getAppLocale error: $e');
+        debugPrintStack(stackTrace: st);
+      }
     }
     if (!kIsWeb) {
       await SystemChrome.setPreferredOrientations([
@@ -39,13 +47,22 @@ void main() async {
     }
     runApp(MyApp(localeCode: localeCode));
   }, (error, stack) {
-    debugPrint('Uncaught error: $error');
-    debugPrint('$stack');
+    final msg = error.toString();
+    if (kDebugMode) {
+      if (msg.contains('HTTP') || msg.contains('SocketException') || msg.contains('statusCode')) {
+        debugPrint('Network/HTTP error (handled silently): $msg');
+      } else {
+        debugPrint('Uncaught async error: $error');
+        debugPrintStack(stackTrace: stack);
+      }
+    }
   });
 
   FlutterError.onError = (details) {
-    debugPrint('FlutterError: ${details.exception}');
-    debugPrint('${details.stack}');
+    if (kDebugMode) {
+      debugPrint('FlutterError: ${details.exception}');
+      debugPrint('${details.stack}');
+    }
     FlutterError.presentError(details);
   };
 }

@@ -7,6 +7,8 @@ import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
+import 'package:flyem_app/core/api_client.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 
 /// شاشة تعديل الرحلة - تعرض بيانات الرحلة كاملة وتسمح بتعديلها ثم حفظ.
 class EditTripScreen extends StatefulWidget {
@@ -290,6 +292,11 @@ class _EditTripScreenState extends State<EditTripScreen> {
         returnBeforeDays: _canReturnOnCancel ? _returnBeforeDays.clamp(1, 30) : null,
       );
       if (!mounted) return;
+      await LocalNotificationService.showNotification(
+        id: LocalNotificationService.idForEvent('trip_updated'),
+        title: AppStrings.notificationTripUpdated,
+        body: AppStrings.notificationTripUpdated,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم حفظ التعديلات')),
       );
@@ -299,7 +306,9 @@ class _EditTripScreenState extends State<EditTripScreen> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل الحفظ: $e'), backgroundColor: Colors.red),
+          e is DuplicateRequestException
+              ? SnackBar(content: Text(e.message))
+              : SnackBar(content: Text('فشل الحفظ: $e'), backgroundColor: Colors.red),
         );
       }
     }

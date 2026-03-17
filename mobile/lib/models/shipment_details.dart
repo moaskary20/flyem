@@ -23,6 +23,8 @@ class ShipmentDetails {
   final double priceMin;
   final String currencySymbol;
   final String? imageUrl;
+  final bool userHasRequested;
+  final int? existingRequestId;
 
   const ShipmentDetails({
     required this.id,
@@ -49,6 +51,8 @@ class ShipmentDetails {
     required this.priceMin,
     required this.currencySymbol,
     this.imageUrl,
+    this.userHasRequested = false,
+    this.existingRequestId,
   });
 
   factory ShipmentDetails.fromJson(Map<String, dynamic> json) {
@@ -78,6 +82,8 @@ class ShipmentDetails {
       priceMin: (json['price_min'] as num?)?.toDouble() ?? 0,
       currencySymbol: json['currency_symbol'] as String? ?? '\$',
       imageUrl: json['image_url'] as String?,
+      userHasRequested: json['user_has_requested'] as bool? ?? false,
+      existingRequestId: (json['existing_request_id'] as num?)?.toInt(),
     );
   }
 }

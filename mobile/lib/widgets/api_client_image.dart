@@ -50,7 +50,10 @@ class ApiClientImage extends StatelessWidget {
     if (cleanUrl.isEmpty) {
       return _placeholder(context);
     }
-    final future = _cache.putIfAbsent(cleanUrl, () => _fetch(cleanUrl));
+    final future = _cache.putIfAbsent(
+      cleanUrl,
+      () => _fetch(cleanUrl).catchError((_, __) => null),
+    );
     return FutureBuilder<Uint8List?>(
       future: future,
       builder: (context, snapshot) {

@@ -5,6 +5,7 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/widgets/api_client_image.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/auth_service.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// شاشة تعديل الملف الشخصي: تغيير الصورة الشخصية.
@@ -65,7 +66,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final filename = name.isNotEmpty ? name : 'photo.jpg';
       final photoUrl = await AuthService.uploadProfilePhoto(bytes, filename: filename);
       if (!mounted) return;
-      Navigator.of(context).pop(photoUrl);
+      await LocalNotificationService.showNotification(
+        id: LocalNotificationService.idForEvent('profile_saved'),
+        title: AppStrings.notificationProfileSaved,
+        body: AppStrings.notificationProfileSaved,
+      );
+      Navigator.of(context).pop(<Object>[photoUrl, bytes]);
     } on AuthException catch (e) {
       if (mounted) setState(() {
         _error = e.message;

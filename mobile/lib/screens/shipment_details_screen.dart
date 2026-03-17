@@ -3,6 +3,7 @@ import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/services/shipments_service.dart';
+import 'package:flyem_app/services/local_notification_service.dart';
 
 class ShipmentDetailsScreen extends StatelessWidget {
   const ShipmentDetailsScreen({super.key, required this.shipmentId});
@@ -304,6 +305,7 @@ class _DetailsContent extends StatelessWidget {
   }
 
   Widget _buildBottomBar(BuildContext context) {
+    final alreadyRequested = shipment.userHasRequested;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       color: Colors.white,
@@ -312,34 +314,43 @@ class _DetailsContent extends StatelessWidget {
           children: [
             Expanded(
               child: FilledButton(
-                onPressed: () async {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text(AppStrings.sendingRequest)),
-                  );
-                  try {
-                    await ShipmentsService.createShipmentRequest(shipment.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text(AppStrings.requestSentMatches)),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-                      );
-                    }
-                  }
-                },
+                onPressed: alreadyRequested
+                    ? null
+                    : () async {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text(AppStrings.sendingRequest)),
+                        );
+                        try {
+                          await ShipmentsService.createShipmentRequest(shipment.id);
+                          if (context.mounted) {
+                            await LocalNotificationService.showNotification(
+                              id: LocalNotificationService.idForEvent('request_sent'),
+                              title: AppStrings.notificationRequestSent,
+                              body: AppStrings.notificationRequestSent,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text(AppStrings.requestSentMatches)),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                            );
+                          }
+                        }
+                      },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryYellow,
+                  backgroundColor: alreadyRequested ? Colors.grey : AppColors.primaryYellow,
                   foregroundColor: Colors.black87,
+                  disabledBackgroundColor: Colors.grey[300],
+                  disabledForegroundColor: Colors.grey[600],
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(AppStrings.sendRequest),
+                child: Text(alreadyRequested ? 'تم إرسال طلب مسبقاً' : AppStrings.sendRequest),
               ),
             ),
             const SizedBox(width: 16),

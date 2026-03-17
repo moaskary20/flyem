@@ -3,10 +3,15 @@ import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_list_item.dart';
+import 'package:flyem_app/models/shipment_details.dart';
+import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/add_shipment_screen.dart';
 import 'package:flyem_app/screens/my_shipment_tabs_screen.dart';
+import 'package:flyem_app/screens/trip_details_screen.dart';
 import 'package:flyem_app/services/shipments_service.dart';
+import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/widgets/shipment_result_card.dart';
+import 'package:flyem_app/widgets/trip_result_card.dart';
 
 class MyShipmentsScreen extends StatefulWidget {
   const MyShipmentsScreen({super.key});
@@ -139,7 +144,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
     return TabBarView(
       controller: _tabController,
       children: [
-        _SuitableTripsTab(),
+        _SuitableTripsTab(future: _future),
         _buildDetailsTab(),
       ],
     );
@@ -368,14 +373,206 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
 
 }
 
-class _SuitableTripsTab extends StatelessWidget {
+class _SuitableTripsTab extends StatefulWidget {
+  const _SuitableTripsTab({required this.future});
+
+  final Future<ShipmentsListResponse> future;
+
+  @override
+  State<_SuitableTripsTab> createState() => _SuitableTripsTabState();
+}
+
+class _SuitableTripsTabState extends State<_SuitableTripsTab> {
+  int? _selectedShipmentId;
+  ShipmentDetails? _details;
+  List<TripItem> _trips = [];
+  bool _loadingTrips = false;
+  String? _tripsError;
+
+  Future<void> _fetchTripsForShipment(int shipmentId) async {
+    setState(() {
+      _loadingTrips = true;
+      _tripsError = null;
+      _details = null;
+      _trips = [];
+    });
+    try {
+      final details = await ShipmentsService.getShipment(shipmentId);
+      if (!mounted) return;
+      final fromId = details.fromCountryId;
+      final toId = details.toCountryId;
+      final fromCityId = details.fromCityId;
+      final toCityId = details.toCityId;
+      if (fromId == null || toId == null) {
+        if (mounted) {
+          setState(() {
+            _details = details;
+            _trips = [];
+            _loadingTrips = false;
+            _tripsError = 'الشحنة لا تحتوي على من/إلى';
+          });
+        }
+        return;
+      }
+      if (mounted) setState(() => _details = details);
+      final response = await TripsService.getTripsForSearch(
+        fromCountryId: fromId,
+        toCountryId: toId,
+        fromCityId: fromCityId,
+        toCityId: toCityId,
+        perPage: 20,
+      );
+      if (mounted) {
+        setState(() {
+          _trips = response.data;
+          _loadingTrips = false;
+          _tripsError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _tripsError = e.toString();
+          _loadingTrips = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'لا توجد رحلات مناسبة',
-        style: TextStyle(color: Colors.grey[600], fontSize: 15),
-      ),
+    return FutureBuilder<ShipmentsListResponse>(
+      future: widget.future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final res = snapshot.data!;
+        final list = res.data;
+        if (list.isEmpty) {
+          return Center(
+            child: Text(
+              'لا توجد شحنات. أضف شحنة أولاً.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 15),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+        final singleShipment = list.length == 1;
+        final selectedInList = _selectedShipmentId != null && list.any((s) => s.id == _selectedShipmentId);
+        final effectiveId = selectedInList ? _selectedShipmentId! : list.first.id;
+        if (list.isNotEmpty && (!selectedInList || _selectedShipmentId == null)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              final id = list.first.id;
+              setState(() => _selectedShipmentId = id);
+              _fetchTripsForShipment(id);
+            }
+          });
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!singleShipment) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: DropdownButtonFormField<int>(
+                  value: effectiveId,
+                  decoration: InputDecoration(
+                    labelText: 'اختر الشحنة',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: list.map((s) {
+                    return DropdownMenuItem<int>(
+                      value: s.id,
+                      child: Text('${s.title.isNotEmpty ? s.title : 'شحنة'} من ${s.fromCode} إلى ${s.toCode}'),
+                    );
+                  }).toList(),
+                  onChanged: (id) {
+                    if (id != null && id != _selectedShipmentId) {
+                      setState(() => _selectedShipmentId = id);
+                      _fetchTripsForShipment(id);
+                    }
+                  },
+                ),
+              ),
+            ],
+            if (_details != null && !_loadingTrips && _tripsError == null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'رحلات مناسبة لشحنتك: من ${_details!.fromName.isNotEmpty ? _details!.fromName : _details!.fromCode} إلى ${_details!.toName.isNotEmpty ? _details!.toName : _details!.toCode}',
+                  style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            Expanded(
+              child: _buildTripsContent(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTripsContent() {
+    if (_loadingTrips) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_tripsError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'حدث خطأ أثناء جلب الرحلات: $_tripsError',
+                style: TextStyle(color: Colors.red[600], fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: _selectedShipmentId != null
+                    ? () => _fetchTripsForShipment(_selectedShipmentId!)
+                    : null,
+                child: const Text('إعادة المحاولة'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_trips.isEmpty && _details != null) {
+      return Center(
+        child: Text(
+          'لا توجد رحلات مناسبة في الوقت الحالي',
+          style: TextStyle(color: Colors.grey[600], fontSize: 15),
+        ),
+      );
+    }
+    if (_trips.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _trips.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final trip = _trips[index];
+        return TripResultCard(
+          item: trip,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TripDetailsScreen(tripId: trip.id),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
