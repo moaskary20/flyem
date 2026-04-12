@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
-import 'package:flyem_app/screens/add_trip_form_screen.dart';
+import 'package:flyem_app/widgets/add_trip_passport_sheet.dart';
 
 /// تطلب من المسافر إضافة رحلة قبل تصفح/طلب الشحنات.
 class AddTripRequiredScreen extends StatelessWidget {
@@ -56,15 +56,16 @@ class AddTripRequiredScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 FilledButton(
-                  onPressed: () async {
-                    final ok = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute<bool>(
-                        builder: (_) => const AddTripFormScreen(),
-                      ),
+                  onPressed: () {
+                    showAddTripPassportThenTripForm(
+                      context,
+                      useFullScreenForm: true,
+                      onTripCreated: (added) {
+                        if (context.mounted && added) {
+                          Navigator.of(context).pop(true);
+                        }
+                      },
                     );
-                    if (context.mounted && ok == true) {
-                      Navigator.of(context).pop(true);
-                    }
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primaryYellow,

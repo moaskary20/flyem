@@ -68,18 +68,26 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   Future<void> _loadUser() async {
     try {
       final user = await AuthService.getCurrentUser();
-      if (mounted) setState(() {
-        _user = user;
+      if (!mounted) return;
+      setState(() {
+        if (user != null) {
+          _user = user;
+          _error = null;
+        } else if (_user == null) {
+          _error = 'فشل تحميل البيانات';
+        }
         _loading = false;
         _photoKey = DateTime.now().millisecondsSinceEpoch;
-        // عدم مسح الصورة المؤقتة بعد الحفظ حتى تبقى ظاهرة ولا ترجع لأيقونة الشخص
-        _error = user == null ? 'فشل تحميل البيانات' : null;
       });
     } catch (_) {
-      if (mounted) setState(() {
-        _loading = false;
-        _error = 'فشل تحميل البيانات';
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          if (_user == null) {
+            _error = 'فشل تحميل البيانات';
+          }
+        });
+      }
     }
   }
 

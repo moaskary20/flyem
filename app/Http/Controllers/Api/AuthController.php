@@ -208,8 +208,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        // image أوسع من mimes فقط (webp، صور بلا امتداد واضح من الموبايل، إلخ)
         $request->validate([
-            'profile_photo' => ['required', 'file', 'mimes:jpeg,jpg,png,gif', 'max:5120'],
+            'profile_photo' => ['required', 'file', 'image', 'max:5120'],
         ], [], ['profile_photo' => __('Profile photo')]);
 
         // قيمة العمود كما في قاعدة البيانات (بدون المُحوِّل) لتفادي مسار خاطئ عند الحذف.

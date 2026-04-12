@@ -63,9 +63,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
     try {
       final bytes = await _pickedFile!.readAsBytes();
-      final name = _pickedFile!.name;
-      final filename = name.isNotEmpty ? name : 'photo.jpg';
-      final photoUrl = await AuthService.uploadProfilePhoto(bytes, filename: filename);
+      final photoUrl = await AuthService.uploadProfilePhoto(
+        bytes,
+        filename: _pickedFile!.name,
+        mimeType: _pickedFile!.mimeType,
+      );
       if (!mounted) return;
       await LocalNotificationService.showNotification(
         id: LocalNotificationService.idForEvent('profile_saved'),

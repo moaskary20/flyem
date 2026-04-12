@@ -7,7 +7,7 @@ import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
-import 'package:flyem_app/screens/add_trip_form_screen.dart';
+import 'package:flyem_app/widgets/add_trip_passport_sheet.dart';
 import 'package:flyem_app/widgets/user_profile_link.dart';
 
 class ShipmentDetailsScreen extends StatefulWidget {
@@ -340,15 +340,16 @@ class _DetailsContent extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               FilledButton(
-                onPressed: () async {
-                  final ok = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute<bool>(
-                      builder: (_) => const AddTripFormScreen(),
-                    ),
+                onPressed: () {
+                  showAddTripPassportThenTripForm(
+                    context,
+                    useFullScreenForm: true,
+                    onTripCreated: (added) {
+                      if (added) {
+                        onTripRegistered?.call();
+                      }
+                    },
                   );
-                  if (context.mounted && ok == true) {
-                    onTripRegistered?.call();
-                  }
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primaryYellow,

@@ -6,6 +6,7 @@ import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/api_http_client.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class AuthService {
   static Future<AuthResult> login(String email, String password) async {
@@ -91,6 +92,53 @@ class AuthService {
   static Future<String?> getToken() => AppPreferences.getAuthToken();
   static Future<int?> getUserId() => AppPreferences.getUserId();
 
+  /// رابط صورة يعمل من التطبيق حتى لو أرجع السيرفر [APP_URL] مختلفاً عن [kApiBaseUrl].
+  static String? resolveProfilePhotoUrl(dynamic raw) {
+    if (raw == null) return null;
+    final s = raw.toString().replaceAll(RegExp(r'\s'), '').trim();
+    if (s.isEmpty) return null;
+
+    final api = Uri.tryParse(kApiBaseUrl);
+    if (api == null) return s;
+    final origin = api.origin;
+
+    if (s.startsWith('http://') || s.startsWith('https://')) {
+      final u = Uri.tryParse(s);
+      if (u == null) return s;
+      const marker = '/storage/';
+      final p = u.path;
+      final idx = p.indexOf(marker);
+      if (idx >= 0) {
+        final rest = p.substring(idx + marker.length);
+        return '$origin$marker$rest';
+      }
+      return s;
+    }
+
+    final path = s.startsWith('/') ? s.substring(1) : s;
+    if (path.startsWith('storage/')) {
+      return '$origin/$path';
+    }
+    return '$origin/storage/$path';
+  }
+
+  static String _apiErrorMessage(String body, int statusCode) {
+    try {
+      final map = jsonDecode(body) as Map<String, dynamic>?;
+      final errors = map?['errors'] as Map<String, dynamic>?;
+      if (errors != null && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is List && first.isNotEmpty) {
+          return first.first.toString();
+        }
+        return first.toString();
+      }
+      final msg = map?['message'];
+      if (msg != null) return msg.toString();
+    } catch (_) {}
+    return statusCode == 422 ? 'صورة غير مقبولة أو حجمها كبير' : 'فشل رفع الصورة';
+  }
+
   /// جلب بيانات المستخدم الحالي من الـ API (يتطلب تسجيل الدخول).
   static Future<UserProfile?> getCurrentUser() async {
     try {
@@ -175,30 +223,54 @@ class AuthService {
   static Future<String> uploadProfilePhoto(
     Uint8List imageBytes, {
     String filename = 'photo.jpg',
+    String? mimeType,
   }) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw AuthException('يجب تسجيل الدخول');
-    final uri = Uri.parse('$kApiBaseUrl/api/user/profile-photo');
+    var safeName = filename.trim();
+    if (safeName.isEmpty) safeName = 'photo.jpg';
+    final lower = safeName.toLowerCase();
+    const knownExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    if (!knownExt.any(lower.endsWith)) {
+      final m = mimeType?.toLowerCase() ?? '';
+      final ext = m.contains('png')
+          ? '.png'
+          : m.contains('webp')
+              ? '.webp'
+              : m.contains('gif')
+                  ? '.gif'
+                  : '.jpg';
+      safeName = 'upload$ext';
+    }
+    MediaType? contentType;
+    final mt = mimeType?.trim();
+    if (mt != null && mt.isNotEmpty) {
+      try {
+        contentType = MediaType.parse(mt);
+      } catch (_) {}
+    }
+
+    final uri = Uri.parse('${kApiBaseUrl.replaceAll(RegExp(r'/$'), '')}/api/user/profile-photo');
     final request = http.MultipartRequest('POST', uri);
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Accept'] = 'application/json';
     request.files.add(http.MultipartFile.fromBytes(
       'profile_photo',
       imageBytes,
-      filename: filename,
+      filename: safeName,
+      contentType: contentType,
     ));
     final client = getApiClient();
     try {
       final streamed = await client.send(request);
       final response = await http.Response.fromStream(streamed);
       if (response.statusCode != 200 && response.statusCode != 201) {
-        final map = jsonDecode(response.body) as Map<String, dynamic>?;
-        final msg = map?['message'] as String? ?? map?['errors']?.toString() ?? 'فشل رفع الصورة';
-        throw AuthException(msg.toString());
+        throw AuthException(_apiErrorMessage(response.body, response.statusCode));
       }
       final map = jsonDecode(response.body) as Map<String, dynamic>?;
       final data = map?['data'] as Map<String, dynamic>?;
-      final url = (data?['profile_photo'] as String?)?.replaceAll(RegExp(r'\s'), '').trim();
+      final rawUrl = (data?['profile_photo'] as String?)?.replaceAll(RegExp(r'\s'), '').trim();
+      final url = resolveProfilePhotoUrl(rawUrl);
       if (url == null || url.isEmpty) throw AuthException('لم يُرجع السيرفر رابط الصورة');
       return url;
     } finally {
@@ -271,12 +343,7 @@ class UserProfile {
       name: UserProfile._readString(json['name']),
       email: UserProfile._readString(json['email']),
       phone: UserProfile._readString(json['phone']),
-      profilePhoto: () {
-        final raw = UserProfile._readStringOrNull(json['profile_photo']);
-        if (raw == null) return null;
-        final t = raw.replaceAll(RegExp(r'\s'), '').trim();
-        return t.isEmpty ? null : t;
-      }(),
+      profilePhoto: AuthService.resolveProfilePhotoUrl(json['profile_photo']),
       verificationStatus: UserProfile._readString(json['verification_status'], fallback: 'unverified'),
       documentsVerified: UserProfile._readBool(json['documents_verified']),
       phoneVerified: UserProfile._readBool(json['phone_verified']),
