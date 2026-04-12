@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -96,13 +97,16 @@ class AuthController extends Controller
         }
 
         $user->loadCount(['shipments', 'trips', 'ratingsReceived']);
-        $user->load([
+        $with = [
             'homeCountry:id,name_ar,name_en',
             'homeCity:id,name_ar,name_en',
             'travelCountry:id,name_ar,name_en',
             'travelCity:id,name_ar,name_en',
-            'payoutAccounts',
-        ]);
+        ];
+        if (Schema::hasTable('user_payout_accounts')) {
+            $with[] = 'payoutAccounts';
+        }
+        $user->load($with);
 
         $profilePhotoUrl = null;
         if ($user->profile_photo) {
@@ -141,14 +145,16 @@ class AuthController extends Controller
                 'bank_account_holder' => $user->bank_account_holder,
                 'home_phone' => $user->home_phone,
                 'travel_phone' => $user->travel_phone,
-                'payout_accounts' => $user->payoutAccounts->sortByDesc('is_primary')->values()->map(fn ($a) => [
-                    'id' => $a->id,
-                    'iban' => $a->iban,
-                    'bank_name' => $a->bank_name,
-                    'account_holder' => $a->account_holder,
-                    'nickname' => $a->nickname,
-                    'is_primary' => (bool) $a->is_primary,
-                ]),
+                'payout_accounts' => Schema::hasTable('user_payout_accounts')
+                    ? $user->payoutAccounts->sortByDesc('is_primary')->values()->map(fn ($a) => [
+                        'id' => $a->id,
+                        'iban' => $a->iban,
+                        'bank_name' => $a->bank_name,
+                        'account_holder' => $a->account_holder,
+                        'nickname' => $a->nickname,
+                        'is_primary' => (bool) $a->is_primary,
+                    ])
+                    : [],
             ],
         ]);
     }

@@ -59,7 +59,59 @@ class _SearchScreenState extends State<SearchScreen> {
         _maybeShowTripRequiredGate();
       }
     });
-    _load();
+    _loadInitial();
+  }
+
+  /// تحميل الشحنات والرحلات معاً عند أول فتح حتى يظهر تبويب الرحلات ممتلئاً دون انتظار بحث.
+  Future<void> _loadInitial() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final dateStr = _selectedDate != null
+        ? '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}'
+        : null;
+    const int? currencyId = null;
+    const int tripsPerPage = 100;
+
+    try {
+      final results = await Future.wait<Object>([
+        ShipmentsService.getShipments(
+          perPage: 20,
+          fromCountryId: _fromPlace?.countryId,
+          toCountryId: _toPlace?.countryId,
+          fromCityId: _fromPlace?.cityId,
+          toCityId: _toPlace?.cityId,
+          deadlineAfter: dateStr,
+          currencyId: currencyId,
+        ),
+        TripsService.getTripsForSearch(
+          fromCountryId: _fromPlace?.countryId,
+          toCountryId: _toPlace?.countryId,
+          fromCityId: _fromPlace?.cityId,
+          toCityId: _toPlace?.cityId,
+          departureAfter: dateStr,
+          currencyId: currencyId,
+          perPage: tripsPerPage,
+        ),
+      ]);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _shipmentsResult = results[0] as ShipmentsListResponse;
+        _tripsResult = results[1] as TripsListResponse;
+        _loading = false;
+      });
+      _maybeShowTripRequiredGate();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = e.toString();
+        });
+      }
+    }
   }
 
   Future<void> _loadMinTripPrice() async {
@@ -98,7 +150,6 @@ class _SearchScreenState extends State<SearchScreen> {
         if (mounted) {
           setState(() {
             _shipmentsResult = res;
-            _tripsResult = null;
             _loading = false;
           });
           _maybeShowTripRequiredGate();
@@ -119,12 +170,11 @@ class _SearchScreenState extends State<SearchScreen> {
         toCityId: _toPlace?.cityId,
         departureAfter: dateStr,
         currencyId: currencyId,
-        perPage: 20,
+        perPage: 100,
       ).then((res) {
         if (mounted) {
           setState(() {
             _tripsResult = res;
-            _shipmentsResult = null;
             _loading = false;
           });
         }
@@ -236,7 +286,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child:               SearchFormSection(
+              child: SearchFormSection(
                 searchType: _searchType,
                 onSearchTypeChanged: _onSearchTypeChanged,
                 onSearchPressed: _onSearchPressed,

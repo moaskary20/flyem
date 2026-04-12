@@ -5,6 +5,23 @@ import 'package:flyem_app/services/content_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+Future<void> _launchBannerLink(String? raw) async {
+  var s = raw?.trim();
+  if (s == null || s.isEmpty) return;
+  if (!s.contains('://')) {
+    s = 'https://$s';
+  }
+  final uri = Uri.tryParse(s);
+  if (uri == null || !uri.hasScheme) return;
+  try {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    return;
+  } catch (_) {}
+  try {
+    await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+  } catch (_) {}
+}
+
 /// سلايدر البنرات الإعلانية بعرض كامل الشاشة (مرتبط بلوحة التحكم).
 class BannerSlider extends StatefulWidget {
   const BannerSlider({
@@ -131,16 +148,7 @@ class _BannerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () async {
-        if (link == null || link!.trim().isEmpty) return;
-        final uri = Uri.tryParse(link!);
-        if (uri == null) return;
-        try {
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-          }
-        } catch (_) {}
-      },
+      onTap: () => _launchBannerLink(link),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -222,17 +230,7 @@ class _BannerVideoPlayerState extends State<_BannerVideoPlayer> {
     super.dispose();
   }
 
-  Future<void> _openLink() async {
-    final link = widget.link?.trim();
-    if (link == null || link.isEmpty) return;
-    final uri = Uri.tryParse(link);
-    if (uri == null) return;
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-      }
-    } catch (_) {}
-  }
+  Future<void> _openLink() => _launchBannerLink(widget.link);
 
   @override
   Widget build(BuildContext context) {

@@ -93,20 +93,25 @@ class AuthService {
 
   /// جلب بيانات المستخدم الحالي من الـ API (يتطلب تسجيل الدخول).
   static Future<UserProfile?> getCurrentUser() async {
-    final token = await AppPreferences.getAuthToken();
-    if (token == null || token.isEmpty) return null;
-    final response = await ApiClient.get(
-      '/api/user',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode != 200) return null;
-    final map = jsonDecode(response.body) as Map<String, dynamic>?;
-    final data = map?['data'] as Map<String, dynamic>?;
-    if (data == null) return null;
-    return UserProfile.fromJson(data);
+    try {
+      final token = await AppPreferences.getAuthToken();
+      if (token == null || token.isEmpty) return null;
+      final response = await ApiClient.get(
+        '/api/user',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode != 200) return null;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) return null;
+      final data = decoded['data'];
+      if (data is! Map<String, dynamic>) return null;
+      return UserProfile.fromJson(data);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// ملف مستخدم عام (للعرض عند الضغط على الاسم): الاسم الأول، التقييم، دولتان فقط.
@@ -262,33 +267,90 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      id: json['id'] as int,
-      name: json['name'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      phone: json['phone'] as String? ?? '',
-      profilePhoto: (json['profile_photo'] as String?)?.replaceAll(RegExp(r'\s'), '').trim(),
-      verificationStatus: json['verification_status'] as String? ?? 'unverified',
-      documentsVerified: json['documents_verified'] as bool? ?? false,
-      phoneVerified: json['phone_verified'] as bool? ?? false,
-      rating: (json['rating'] as num?)?.toDouble(),
-      walletBalance: (json['wallet_balance'] as num?)?.toDouble() ?? 0,
-      ratingsCount: (json['ratings_count'] as num?)?.toInt() ?? 0,
-      shipmentsCount: (json['shipments_count'] as num?)?.toInt() ?? 0,
-      tripsCount: (json['trips_count'] as num?)?.toInt() ?? 0,
-      homeCountryId: (json['home_country_id'] as num?)?.toInt(),
-      homeCityId: (json['home_city_id'] as num?)?.toInt(),
-      homeCountryName: json['home_country_name'] as String?,
-      homeCityName: json['home_city_name'] as String?,
-      travelCountryId: (json['travel_country_id'] as num?)?.toInt(),
-      travelCityId: (json['travel_city_id'] as num?)?.toInt(),
-      travelCountryName: json['travel_country_name'] as String?,
-      travelCityName: json['travel_city_name'] as String?,
-      bankIban: json['bank_iban'] as String?,
-      bankName: json['bank_name'] as String?,
-      bankAccountHolder: json['bank_account_holder'] as String?,
-      homePhone: json['home_phone'] as String?,
-      travelPhone: json['travel_phone'] as String?,
+      id: UserProfile._readInt(json['id']),
+      name: UserProfile._readString(json['name']),
+      email: UserProfile._readString(json['email']),
+      phone: UserProfile._readString(json['phone']),
+      profilePhoto: () {
+        final raw = UserProfile._readStringOrNull(json['profile_photo']);
+        if (raw == null) return null;
+        final t = raw.replaceAll(RegExp(r'\s'), '').trim();
+        return t.isEmpty ? null : t;
+      }(),
+      verificationStatus: UserProfile._readString(json['verification_status'], fallback: 'unverified'),
+      documentsVerified: UserProfile._readBool(json['documents_verified']),
+      phoneVerified: UserProfile._readBool(json['phone_verified']),
+      rating: UserProfile._readDoubleOrNull(json['rating']),
+      walletBalance: UserProfile._readDouble(json['wallet_balance']),
+      ratingsCount: UserProfile._readInt(json['ratings_count']),
+      shipmentsCount: UserProfile._readInt(json['shipments_count']),
+      tripsCount: UserProfile._readInt(json['trips_count']),
+      homeCountryId: UserProfile._readIntOrNull(json['home_country_id']),
+      homeCityId: UserProfile._readIntOrNull(json['home_city_id']),
+      homeCountryName: UserProfile._readStringOrNull(json['home_country_name']),
+      homeCityName: UserProfile._readStringOrNull(json['home_city_name']),
+      travelCountryId: UserProfile._readIntOrNull(json['travel_country_id']),
+      travelCityId: UserProfile._readIntOrNull(json['travel_city_id']),
+      travelCountryName: UserProfile._readStringOrNull(json['travel_country_name']),
+      travelCityName: UserProfile._readStringOrNull(json['travel_city_name']),
+      bankIban: UserProfile._readStringOrNull(json['bank_iban']),
+      bankName: UserProfile._readStringOrNull(json['bank_name']),
+      bankAccountHolder: UserProfile._readStringOrNull(json['bank_account_holder']),
+      homePhone: UserProfile._readStringOrNull(json['home_phone']),
+      travelPhone: UserProfile._readStringOrNull(json['travel_phone']),
     );
+  }
+
+  static int _readInt(dynamic v, [int fallback = 0]) {
+    if (v == null) return fallback;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+  static int? _readIntOrNull(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v);
+    return null;
+  }
+
+  static double _readDouble(dynamic v, [double fallback = 0]) {
+    if (v == null) return fallback;
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+  static double? _readDoubleOrNull(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v);
+    return null;
+  }
+
+  static bool _readBool(dynamic v, [bool fallback = false]) {
+    if (v == null) return fallback;
+    if (v is bool) return v;
+    if (v is num) return v != 0;
+    if (v is String) {
+      final s = v.toLowerCase();
+      return s == '1' || s == 'true' || s == 'yes';
+    }
+    return fallback;
+  }
+
+  static String _readString(dynamic v, {String fallback = ''}) {
+    if (v == null) return fallback;
+    return v.toString();
+  }
+
+  static String? _readStringOrNull(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString();
+    return s.isEmpty ? null : s;
   }
 }
 
