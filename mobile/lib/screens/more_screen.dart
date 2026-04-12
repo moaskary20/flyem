@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_locale.dart';
-import 'package:flyem_app/core/app_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -13,11 +12,12 @@ import 'package:flyem_app/screens/faq_screen.dart';
 import 'package:flyem_app/screens/privacy_terms_screen.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/screens/login_screen.dart';
+import 'package:flyem_app/screens/settings_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 
 enum _MoreAction {
+  settings,
   suggest,
-  language,
   wallet,
   faq,
   privacy,
@@ -143,8 +143,8 @@ class _MoreScreenState extends State<MoreScreen> {
 
   Widget _buildOptionsCard(BuildContext context) {
     final options = <(_MoreAction, String, IconData)>[
+      (_MoreAction.settings, AppStrings.settings, Icons.settings_outlined),
       (_MoreAction.suggest, AppStrings.suggestToUs, Icons.lightbulb_outline),
-      (_MoreAction.language, AppStrings.language, Icons.language_outlined),
       (_MoreAction.wallet, AppStrings.walletProfileTitle, Icons.account_balance_wallet_outlined),
       (_MoreAction.faq, AppStrings.faq, Icons.chat_bubble_outline),
       (_MoreAction.privacy, AppStrings.privacyAndTerms, Icons.description_outlined),
@@ -189,12 +189,15 @@ class _MoreScreenState extends State<MoreScreen> {
 
   Future<void> _onMoreAction(BuildContext context, _MoreAction action) async {
     switch (action) {
+      case _MoreAction.settings:
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+        );
+        if (mounted) setState(() {});
       case _MoreAction.suggest:
         Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const SuggestFeedbackScreen()),
         );
-      case _MoreAction.language:
-        _showLanguagePicker();
       case _MoreAction.wallet:
         if (!await ensureLoggedIn(context) || !context.mounted) return;
         Navigator.of(context).push(
@@ -221,41 +224,6 @@ class _MoreScreenState extends State<MoreScreen> {
       case _MoreAction.about:
         break;
     }
-  }
-
-  Future<void> _showLanguagePicker() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: Text(AppStrings.languageOptionArabic),
-                trailing: AppStrings.isArabic ? Icon(Icons.check, color: AppColors.primaryYellow) : null,
-                onTap: () async {
-                  await AppPreferences.setAppLocale('ar');
-                  AppLocale.setLocale(const Locale('ar'));
-                  if (ctx.mounted) Navigator.of(ctx).pop();
-                },
-              ),
-              ListTile(
-                title: Text(AppStrings.languageOptionEnglish),
-                trailing: AppStrings.isEnglish ? Icon(Icons.check, color: AppColors.primaryYellow) : null,
-                onTap: () async {
-                  await AppPreferences.setAppLocale('en');
-                  AppLocale.setLocale(const Locale('en'));
-                  if (ctx.mounted) Navigator.of(ctx).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (mounted) setState(() {});
   }
 
   Widget _buildLogoutSection(BuildContext context) {
