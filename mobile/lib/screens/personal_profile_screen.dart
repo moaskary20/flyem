@@ -9,7 +9,6 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/screens/edit_profile_screen.dart';
-import 'package:flyem_app/screens/payment_details_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 /// شاشة الصفحة الشخصية: بيانات المستخدم من قاعدة البيانات (API).
@@ -121,8 +120,6 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                               const SizedBox(height: 24),
                               _buildBasicInfoSection(),
                               const SizedBox(height: 24),
-                              _buildWalletSection(context),
-                              const SizedBox(height: 24),
                               _buildLocationSection(),
                               const SizedBox(height: 24),
                               _buildRatingsSection(),
@@ -149,98 +146,99 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
         bottom: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Expanded(
-                    child: Text(
-                      name,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
+              padding: const EdgeInsetsDirectional.fromSTEB(4, 4, 8, 0),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _openEditProfilePhoto,
-                      customBorder: const CircleBorder(),
-                      child: _buildProfileAvatar(),
+                  Center(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _openEditProfilePhoto,
+                        customBorder: const CircleBorder(),
+                        child: _buildProfileAvatar(),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              _user?.documentsVerified == true ? Icons.verified_outlined : Icons.schedule,
-                              size: 18,
-                              color: _user?.documentsVerified == true ? Colors.grey[700] : Colors.grey[600],
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _user?.documentsVerified == true
-                                  ? AppStrings.documentsVerified
-                                  : AppStrings.pendingVerification,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Icon(
-                              _user?.phoneVerified == true ? Icons.check_circle : Icons.schedule,
-                              size: 18,
-                              color: _user?.phoneVerified == true ? Colors.blue[700] : Colors.grey[600],
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _user?.phoneVerified == true
-                                  ? AppStrings.phoneVerified
-                                  : AppStrings.pendingPhoneVerification,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _StatChip(icon: Icons.handshake_outlined, count: 0, label: AppStrings.dealsCount),
-                            _StatChip(icon: Icons.inventory_2_outlined, count: shipmentsCount, label: AppStrings.shipmentsCount),
-                            _StatChip(icon: Icons.luggage_outlined, count: tripsCount, label: AppStrings.tripsCount),
-                          ],
-                        ),
-                      ],
+                  const SizedBox(height: 12),
+                  Text(
+                    name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    alignment: WrapAlignment.center,
+                    spacing: 6,
+                    children: [
+                      Icon(
+                        _user?.documentsVerified == true ? Icons.verified_outlined : Icons.schedule,
+                        size: 18,
+                        color: _user?.documentsVerified == true ? Colors.grey[700] : Colors.grey[600],
+                      ),
+                      Text(
+                        _user?.documentsVerified == true
+                            ? AppStrings.documentsVerified
+                            : AppStrings.pendingVerification,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    alignment: WrapAlignment.center,
+                    spacing: 6,
+                    children: [
+                      Icon(
+                        _user?.phoneVerified == true ? Icons.check_circle : Icons.schedule,
+                        size: 18,
+                        color: _user?.phoneVerified == true ? Colors.blue[700] : Colors.grey[600],
+                      ),
+                      Text(
+                        _user?.phoneVerified == true
+                            ? AppStrings.phoneVerified
+                            : AppStrings.pendingPhoneVerification,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _StatChip(icon: Icons.handshake_outlined, count: 0, label: AppStrings.dealsCount),
+                      _StatChip(icon: Icons.inventory_2_outlined, count: shipmentsCount, label: AppStrings.shipmentsCount),
+                      _StatChip(icon: Icons.luggage_outlined, count: tripsCount, label: AppStrings.tripsCount),
+                    ],
                   ),
                 ],
               ),
@@ -660,74 +658,6 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
           value: travelPhone.isNotEmpty ? travelPhone : AppStrings.unspecified,
           verified: travelPhone.isNotEmpty,
           onEdit: () => _showPhoneEditor(isHome: false),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWalletSection(BuildContext context) {
-    final bal = _user?.walletBalance ?? 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          AppStrings.walletProfileTitle,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                AppStrings.walletProfileHint,
-                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                bal.toStringAsFixed(2),
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const PaymentDetailsScreen(),
-                    ),
-                  );
-                },
-                icon: Icon(Icons.account_balance_wallet_outlined, color: AppColors.primaryYellow),
-                label: Text(
-                  AppStrings.walletWithdrawMyMoney,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryYellow,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ],
     );

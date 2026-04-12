@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_locale.dart';
+import 'package:flyem_app/core/app_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/screens/personal_profile_screen.dart';
-import 'package:flyem_app/screens/payment_details_screen.dart';
-import 'package:flyem_app/screens/settings_screen.dart';
+import 'package:flyem_app/screens/wallet_screen.dart';
+import 'package:flyem_app/screens/suggest_feedback_screen.dart';
 import 'package:flyem_app/screens/technical_support_screen.dart';
 import 'package:flyem_app/screens/faq_screen.dart';
 import 'package:flyem_app/screens/privacy_terms_screen.dart';
@@ -13,8 +14,9 @@ import 'package:flyem_app/screens/login_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 
 enum _MoreAction {
-  settings,
-  withdrawalPayout,
+  suggest,
+  language,
+  wallet,
   faq,
   privacy,
   support,
@@ -122,8 +124,9 @@ class _MoreScreenState extends State<MoreScreen> {
 
   Widget _buildOptionsCard(BuildContext context) {
     final options = <(_MoreAction, String, IconData)>[
-      (_MoreAction.settings, AppStrings.settings, Icons.settings),
-      (_MoreAction.withdrawalPayout, AppStrings.paymentDetails, Icons.credit_card_outlined),
+      (_MoreAction.suggest, AppStrings.suggestToUs, Icons.lightbulb_outline),
+      (_MoreAction.language, AppStrings.language, Icons.language_outlined),
+      (_MoreAction.wallet, AppStrings.walletProfileTitle, Icons.account_balance_wallet_outlined),
       (_MoreAction.faq, AppStrings.faq, Icons.chat_bubble_outline),
       (_MoreAction.privacy, AppStrings.privacyAndTerms, Icons.description_outlined),
       (_MoreAction.support, AppStrings.technicalSupport, Icons.help_outline),
@@ -167,13 +170,15 @@ class _MoreScreenState extends State<MoreScreen> {
 
   void _onMoreAction(BuildContext context, _MoreAction action) {
     switch (action) {
-      case _MoreAction.settings:
+      case _MoreAction.suggest:
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          MaterialPageRoute<void>(builder: (_) => const SuggestFeedbackScreen()),
         );
-      case _MoreAction.withdrawalPayout:
+      case _MoreAction.language:
+        _showLanguagePicker();
+      case _MoreAction.wallet:
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PaymentDetailsScreen()),
+          MaterialPageRoute(builder: (_) => const WalletScreen()),
         );
       case _MoreAction.faq:
         Navigator.of(context).push(
@@ -196,6 +201,41 @@ class _MoreScreenState extends State<MoreScreen> {
       case _MoreAction.about:
         break;
     }
+  }
+
+  Future<void> _showLanguagePicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(AppStrings.languageOptionArabic),
+                trailing: AppStrings.isArabic ? Icon(Icons.check, color: AppColors.primaryYellow) : null,
+                onTap: () async {
+                  await AppPreferences.setAppLocale('ar');
+                  AppLocale.setLocale(const Locale('ar'));
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              ),
+              ListTile(
+                title: Text(AppStrings.languageOptionEnglish),
+                trailing: AppStrings.isEnglish ? Icon(Icons.check, color: AppColors.primaryYellow) : null,
+                onTap: () async {
+                  await AppPreferences.setAppLocale('en');
+                  AppLocale.setLocale(const Locale('en'));
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (mounted) setState(() {});
   }
 
   Widget _buildLogoutSection(BuildContext context) {

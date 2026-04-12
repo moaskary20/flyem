@@ -212,12 +212,21 @@ class AuthController extends Controller
             'profile_photo' => ['required', 'file', 'mimes:jpeg,jpg,png,gif', 'max:5120'],
         ], [], ['profile_photo' => __('Profile photo')]);
 
-        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
-            Storage::disk('public')->delete($user->profile_photo);
+        // قيمة العمود كما في قاعدة البيانات (بدون المُحوِّل) لتفادي مسار خاطئ عند الحذف.
+        $oldPathRaw = $user->getRawOriginal('profile_photo');
+        $oldPath = is_string($oldPathRaw) ? trim(preg_replace('/\s+/', '', $oldPathRaw)) : '';
+
+        $stored = $request->file('profile_photo')->store('profiles', 'public');
+        if (! is_string($stored) || $stored === '') {
+            return response()->json(['message' => __('Could not store the file.')], 500);
         }
 
-        $path = trim($request->file('profile_photo')->store('profiles', 'public'));
-        $user->update(['profile_photo' => $path]);
+        $path = trim($stored);
+        $user->forceFill(['profile_photo' => $path])->save();
+
+        if ($oldPath !== '' && $oldPath !== $path && Storage::disk('public')->exists($oldPath)) {
+            Storage::disk('public')->delete($oldPath);
+        }
 
         $base = rtrim(config('app.url'), '/');
         $profilePhotoUrl = $base.'/storage/'.ltrim($path, '/');

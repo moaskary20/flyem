@@ -59,7 +59,16 @@ class User extends Authenticatable implements FilamentUser
                     return $value;
                 }
                 $cleaned = trim(preg_replace('/\s+/', '', $value));
+
                 return $cleaned !== '' ? $cleaned : null;
+            },
+            set: function (?string $value) {
+                if ($value === null || $value === '') {
+                    return ['profile_photo' => null];
+                }
+                $cleaned = trim(preg_replace('/\s+/', '', $value));
+
+                return ['profile_photo' => $cleaned !== '' ? $cleaned : null];
             },
         );
     }
