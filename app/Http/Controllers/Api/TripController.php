@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\RequiresActiveAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Request as RequestModel;
-use App\Models\Setting;
 use App\Models\Trip;
 use App\Models\User;
 use App\Services\PayPalService;
+use App\Support\StoresBase64ImageToPublicDisk;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TripController extends Controller
 {
+    use RequiresActiveAccount;
+    use StoresBase64ImageToPublicDisk;
+
     /**
      * قائمة الرحلات: مع user_id = رحلات المستخدم (شاشة رحلاتي)، بدون user_id = كل الرحلات النشطة (شاشة البحث).
      */
@@ -160,6 +164,14 @@ class TripController extends Controller
      */
     public function update(Request $request, Trip $trip): JsonResponse
     {
+        $auth = $request->user();
+        if (! $auth || (int) $auth->id !== (int) $trip->user_id) {
+            return response()->json(['message' => 'غير مصرح.'], 403);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'travel_method' => ['required', 'string', 'in:flight,car,train,bus,ship,other'],
             'from_country_id' => ['required', 'integer', 'exists:countries,id'],
@@ -206,6 +218,14 @@ class TripController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $auth = $request->user();
+        if (! $auth) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'travel_method' => ['required', 'string', 'in:flight,car,train,bus,ship,other'],
@@ -222,7 +242,13 @@ class TripController extends Controller
             'can_deliver_in_other_country' => ['nullable', 'boolean'],
             'can_return_on_cancel' => ['nullable', 'boolean'],
             'return_before_days' => ['nullable', 'integer', 'min:1', 'max:30'],
+            'passport_image_base64' => ['nullable', 'string'],
+            'flight_ticket_image_base64' => ['nullable', 'string'],
         ]);
+
+        if ((int) $auth->id !== (int) $validated['user_id']) {
+            return response()->json(['message' => 'غير مصرح.'], 403);
+        }
 
         $trip = Trip::create([
             'user_id' => $validated['user_id'],
@@ -243,15 +269,40 @@ class TripController extends Controller
             'status' => 'active',
         ]);
 
+        $passportPath = $this->storeBase64ImageToPublicDisk(
+            $validated['passport_image_base64'] ?? null,
+            'trips/'.$trip->id,
+            'passport_image_base64',
+        );
+        $ticketPath = $this->storeBase64ImageToPublicDisk(
+            $validated['flight_ticket_image_base64'] ?? null,
+            'trips/'.$trip->id,
+            'flight_ticket_image_base64',
+        );
+        if ($passportPath !== null || $ticketPath !== null) {
+            $trip->update([
+                'passport_image' => $passportPath ?? $trip->passport_image,
+                'flight_ticket_image' => $ticketPath ?? $trip->flight_ticket_image,
+            ]);
+        }
+
         return response()->json(['message' => 'created', 'id' => $trip->id], 201);
     }
 
     /**
      * حذف رحلة.
      */
-    public function destroy(Trip $trip): JsonResponse
+    public function destroy(Request $request, Trip $trip): JsonResponse
     {
+        $auth = $request->user();
+        if (! $auth || (int) $auth->id !== (int) $trip->user_id) {
+            return response()->json(['message' => 'غير مصرح.'], 403);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
         $trip->delete();
+
         return response()->json(['message' => 'deleted']);
     }
 
@@ -264,6 +315,9 @@ class TripController extends Controller
         $user = $request->user();
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
         }
 
         if ((int) $trip->user_id === (int) $user->id) {
@@ -296,15 +350,7 @@ class TripController extends Controller
             return response()->json(['message' => 'PayPal غير متاح حالياً.'], 422);
         }
 
-        $minTripPriceSetting = Setting::where('key', 'min_trip_price')->first();
-        $minTripPrice = $minTripPriceSetting && filled($minTripPriceSetting->value)
-            ? (float) $minTripPriceSetting->value
-            : null;
-
         $amount = (float) ($trip->price_per_kg ?? 0);
-        if ($minTripPrice !== null && $minTripPrice > 0) {
-            $amount = $amount > 0 ? max($amount, $minTripPrice) : $minTripPrice;
-        }
         if ($amount <= 0) {
             $amount = 1;
         }

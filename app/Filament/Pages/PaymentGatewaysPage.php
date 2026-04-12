@@ -64,7 +64,6 @@ class PaymentGatewaysPage extends Page
             ->statePath('data')
             ->components([
                 Section::make('PayPal')
-                    ->description('معرّف العميل والسر من لوحة مطوري PayPal. وضع Sandbox للاختبار. يجب أن يكون APP_URL في ملف .env للخادم عنواناً عاماً (HTTPS) حتى يقبل PayPal روابط العودة بعد الدفع من تطبيق الموبايل.')
                     ->schema([
                         Toggle::make('paypal_enabled')
                             ->label('تفعيل PayPal')

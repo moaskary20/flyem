@@ -32,7 +32,9 @@ class CurrencyForm
                                 TextInput::make('exchange_rate')
                                     ->label('سعر الصرف')
                                     ->numeric()->step(0.000001)->default(1),
-                                Toggle::make('is_default')->label('العملة الافتراضية'),
+                                Toggle::make('is_default')
+                                    ->label('العملة الافتراضية (واحدة فقط)')
+                                    ->helperText('عند التفعيل تُزال الافتراضية عن جميع العملات الأخرى تلقائياً.'),
                                 Toggle::make('is_active')->label('نشطة')->default(true),
                             ]),
                     ]),

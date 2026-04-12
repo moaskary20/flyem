@@ -17,8 +17,23 @@ class RequestsTable
         return $table
             ->columns([
                 TextColumn::make('id')->label('#')->sortable(),
-                TextColumn::make('requester.name')->label('مقدِّم الطلب')->searchable()->sortable(),
-                TextColumn::make('shipment.title')->label('الشحنة')->searchable(),
+                TextColumn::make('requester.name')->label('مقدّم الطلب (مرسل الطلب)')->searchable()->sortable(),
+                TextColumn::make('listing_type')
+                    ->label('نوع الإعلان')
+                    ->getStateUsing(fn ($record) => $record->shipment_id ? 'شحنة' : ($record->trip_id ? 'رحلة' : '—')),
+                TextColumn::make('listing_owner_name')
+                    ->label('صاحب الإعلان (إلى)')
+                    ->getStateUsing(function ($record) {
+                        if ($record->shipment_id) {
+                            return $record->shipment?->user?->name ?? '—';
+                        }
+                        if ($record->trip_id) {
+                            return $record->trip?->user?->name ?? '—';
+                        }
+
+                        return '—';
+                    }),
+                TextColumn::make('shipment.title')->label('عنوان الشحنة')->searchable(),
                 TextColumn::make('trip.id')->label('رقم الرحلة'),
                 TextColumn::make('price')->label('السعر المقترح')->money(),
                 BadgeColumn::make('status')

@@ -180,7 +180,9 @@ class AppStrings {
   static String get departsOn => _en ? 'Departs on' : 'يغادر في';
   static String get profit => _en ? 'Profit' : 'مكسب';
   static String get confirmedDeals => _en ? 'Confirmed deals' : 'الصفقات المؤكدة';
-  static String get minTripPriceLabel => _en ? 'Minimum trip price' : 'الحد الأدنى للرحلات';
+  static String get accountNotActiveForMarketplace => _en
+      ? 'Your account is not activated yet. You cannot post listings or send requests until the admin activates your account.'
+      : 'حسابك غير مُفعّل بعد. لا يمكنك نشر إعلانات أو إرسال طلبات حتى يتم تفعيل حسابك من الإدارة.';
   static String get pickupDeliveryOptionsTitle =>
       _en ? 'Pickup & delivery options' : 'خيارات الاستلام والتسليم';
   static String get canPickupInCurrentCountry =>

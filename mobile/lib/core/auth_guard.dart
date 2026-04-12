@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/screens/login_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 
@@ -17,4 +18,18 @@ Future<bool> ensureLoggedIn(BuildContext context) async {
     ),
   );
   return result == true;
+}
+
+/// بعد تسجيل الدخول: يمنع إنشاء إعلانات أو إرسال طلبات إن كان الحساب غير مُفعّل من الإدارة.
+Future<bool> ensureAccountActiveForMarketplace(BuildContext context) async {
+  final profile = await AuthService.getCurrentUser();
+  if (profile != null && profile.accountActive) {
+    return true;
+  }
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.accountNotActiveForMarketplace)),
+    );
+  }
+  return false;
 }

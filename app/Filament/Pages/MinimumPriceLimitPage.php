@@ -4,10 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use Filament\Actions\Action;
-use Illuminate\Support\Facades\Cache;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
@@ -16,10 +15,11 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * صفحة الحد الأدنى للسعر (تحت إدارة المعاملات).
- * تمكن من تحديد حد أدنى لمكافأة المسافر والحد الأدنى لسعر الرحلة.
+ * تمكن من تحديد حد أدنى لمكافأة المسافر.
  *
  * @property-read Schema $form
  */
@@ -48,10 +48,8 @@ class MinimumPriceLimitPage extends Page
     public function mount(): void
     {
         $minTraveler = Setting::where('key', 'min_traveler_reward')->first();
-        $minTrip = Setting::where('key', 'min_trip_price')->first();
         $data = [
             'min_traveler_reward' => $minTraveler?->value ?? '',
-            'min_trip_price' => $minTrip?->value ?? '',
         ];
         $this->form->fill($data);
     }
@@ -61,8 +59,8 @@ class MinimumPriceLimitPage extends Page
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('الحدود الدنيا للأسعار')
-                    ->description('تحديد الحد الأدنى لمكافأة المسافر وسعر الرحلة (يمكن تركها فارغة إن لم يكن هناك حد).')
+                Section::make('الحد الأدنى لمكافأة المسافر')
+                    ->description('يمكن ترك الحقل فارغاً إن لم يكن هناك حد أدنى للمكافأة على الشحنات.')
                     ->schema([
                         TextInput::make('min_traveler_reward')
                             ->label('الحد الأدنى لمكافأة المسافر')
@@ -70,14 +68,8 @@ class MinimumPriceLimitPage extends Page
                             ->step(0.01)
                             ->minValue(0)
                             ->placeholder('مثال: 1.5'),
-                        TextInput::make('min_trip_price')
-                            ->label('الحد الأدنى لسعر الرحلة')
-                            ->numeric()
-                            ->step(0.01)
-                            ->minValue(0)
-                            ->placeholder('مثال: 2'),
                     ])
-                    ->columns(2),
+                    ->columns(1),
             ]);
     }
 
@@ -114,7 +106,6 @@ class MinimumPriceLimitPage extends Page
     {
         $data = $this->form->getState();
         $minTraveler = $data['min_traveler_reward'] ?? null;
-        $minTrip = $data['min_trip_price'] ?? null;
 
         Setting::updateOrCreate(
             ['key' => 'min_traveler_reward'],
@@ -123,16 +114,6 @@ class MinimumPriceLimitPage extends Page
                 'group' => 'payment',
                 'type' => 'number',
                 'label_ar' => 'الحد الأدنى لمكافأة المسافر',
-            ]
-        );
-
-        Setting::updateOrCreate(
-            ['key' => 'min_trip_price'],
-            [
-                'value' => filled($minTrip) ? (string) $minTrip : null,
-                'group' => 'payment',
-                'type' => 'number',
-                'label_ar' => 'الحد الأدنى لسعر الرحلة',
             ]
         );
 

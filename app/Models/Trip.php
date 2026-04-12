@@ -22,6 +22,8 @@ class Trip extends Model
         'price_per_kg',
         'currency_id',
         'notes',
+        'passport_image',
+        'flight_ticket_image',
         'can_pickup_in_current_country',
         'can_deliver_in_other_country',
         'can_return_on_cancel',

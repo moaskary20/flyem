@@ -55,6 +55,13 @@ Route::middleware('auth.api_token')->group(function () {
     Route::delete('/requests/{req}', [AppRequestController::class, 'destroy']);
     Route::post('/support-tickets', [SupportTicketController::class, 'store']);
     Route::get('/users/{user}/public-profile', [UserPublicProfileController::class, 'show']);
+    Route::post('/shipments', [ShipmentController::class, 'store']);
+    Route::put('/shipments/{shipment}', [ShipmentController::class, 'update']);
+    Route::post('/shipments/{shipment}/update', [ShipmentController::class, 'update']);
+    Route::delete('/shipments/{shipment}', [ShipmentController::class, 'destroy']);
+    Route::post('/trips', [TripController::class, 'store']);
+    Route::put('/trips/{trip}', [TripController::class, 'update']);
+    Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
 });
 
 Route::get('/banners', [BannerController::class, 'index']);
@@ -65,17 +72,10 @@ Route::get('/countries', [CountryController::class, 'index']);
 Route::get('/currencies', [CurrencyController::class, 'index']);
 Route::get('/cities', [CityController::class, 'index']);
 Route::get('/shipments', [ShipmentController::class, 'index']);
-Route::post('/shipments', [ShipmentController::class, 'store']);
 Route::get('/shipments/{shipment}', [ShipmentController::class, 'show']);
-Route::put('/shipments/{shipment}', [ShipmentController::class, 'update']);
-Route::post('/shipments/{shipment}/update', [ShipmentController::class, 'update']);
-Route::delete('/shipments/{shipment}', [ShipmentController::class, 'destroy']);
 
 Route::get('/trips', [TripController::class, 'index']);
-Route::post('/trips', [TripController::class, 'store']);
 Route::get('/trips/{trip}', [TripController::class, 'show']);
-Route::put('/trips/{trip}', [TripController::class, 'update']);
-Route::delete('/trips/{trip}', [TripController::class, 'destroy']);
 
 Route::get('/faqs', [FaqController::class, 'index']);
 Route::get('/settings', [SettingController::class, 'index']);

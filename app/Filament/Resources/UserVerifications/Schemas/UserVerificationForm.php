@@ -5,6 +5,7 @@ namespace App\Filament\Resources\UserVerifications\Schemas;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -16,6 +17,50 @@ class UserVerificationForm
     {
         return $schema
             ->components([
+                Section::make('بيانات المستخدم (للمراجعة)')
+                    ->description('تُعرض تلقائياً عند فتح طلب موجود؛ الحقول للقراءة فقط.')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                TextInput::make('uv_full_name')
+                                    ->label('الاسم الكامل')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('uv_email')
+                                    ->label('البريد الإلكتروني')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('uv_phone')
+                                    ->label('الهاتف الأساسي')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('uv_home_phone')
+                                    ->label('هاتف الدولة الأم')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('uv_travel_phone')
+                                    ->label('هاتف دولة السفر')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('uv_home_location')
+                                    ->label('الأم: دولة ومدينة')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+                                TextInput::make('uv_travel_location')
+                                    ->label('السفر: دولة ومدينة')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+                                TextInput::make('uv_bank')
+                                    ->label('البنك / IBAN / صاحب الحساب')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+                            ]),
+                    ])
+                    ->collapsed()
+                    ->columnSpanFull(),
                 Section::make('بيانات طلب التوثيق')
                     ->schema([
                         Grid::make(2)

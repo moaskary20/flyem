@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -61,8 +62,12 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
     }
   }
 
-  void _onSendRequest() {
+  Future<void> _onSendRequest() async {
     if (_trip == null) return;
+    if (!await ensureAccountActiveForMarketplace(context)) {
+      return;
+    }
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => TripPaymentScreen(tripId: widget.tripId, trip: _trip!),

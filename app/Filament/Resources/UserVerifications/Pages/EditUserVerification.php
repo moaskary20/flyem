@@ -13,8 +13,31 @@ class EditUserVerification extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $record = $this->getRecord();
-        $record->loadMissing('user');
-        $data['phone_verified'] = $record->user?->phone_verified ?? false;
+        $record->loadMissing([
+            'user.homeCountry',
+            'user.homeCity',
+            'user.travelCountry',
+            'user.travelCity',
+        ]);
+        $u = $record->user;
+        $data['phone_verified'] = $u?->phone_verified ?? false;
+        $data['uv_full_name'] = $u?->name ?? '';
+        $data['uv_email'] = $u?->email ?? '';
+        $data['uv_phone'] = $u?->phone ?? '';
+        $data['uv_home_phone'] = $u?->home_phone ?? '';
+        $data['uv_travel_phone'] = $u?->travel_phone ?? '';
+        $hc = $u?->homeCountry?->name_ar ?? $u?->homeCountry?->name_en ?? '';
+        $hct = $u?->homeCity?->name_ar ?? $u?->homeCity?->name_en ?? '';
+        $data['uv_home_location'] = trim($hc.(($hc !== '' && $hct !== '') ? ' — ' : '').$hct);
+        $tc = $u?->travelCountry?->name_ar ?? $u?->travelCountry?->name_en ?? '';
+        $tct = $u?->travelCity?->name_ar ?? $u?->travelCity?->name_en ?? '';
+        $data['uv_travel_location'] = trim($tc.(($tc !== '' && $tct !== '') ? ' — ' : '').$tct);
+        $bankLine = array_filter([
+            $u?->bank_name,
+            $u?->bank_iban,
+            $u?->bank_account_holder,
+        ], fn ($v) => filled($v));
+        $data['uv_bank'] = $bankLine !== [] ? implode(' | ', $bankLine) : '';
 
         return $data;
     }

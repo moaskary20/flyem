@@ -197,6 +197,8 @@ class TripsService {
     bool canDeliverInOtherCountry = false,
     bool canReturnOnCancel = false,
     int? returnBeforeDays,
+    String? passportImageBase64,
+    String? flightTicketImageBase64,
   }) async {
     final body = <String, dynamic>{
       'user_id': userId,
@@ -215,6 +217,12 @@ class TripsService {
     if (currencyId != null) body['currency_id'] = currencyId;
     if (notes != null && notes.isNotEmpty) body['notes'] = notes;
     if (returnBeforeDays != null && returnBeforeDays >= 1) body['return_before_days'] = returnBeforeDays;
+    if (passportImageBase64 != null && passportImageBase64.isNotEmpty) {
+      body['passport_image_base64'] = passportImageBase64;
+    }
+    if (flightTicketImageBase64 != null && flightTicketImageBase64.isNotEmpty) {
+      body['flight_ticket_image_base64'] = flightTicketImageBase64;
+    }
 
     final headers = <String, String>{
       'Content-Type': 'application/json',

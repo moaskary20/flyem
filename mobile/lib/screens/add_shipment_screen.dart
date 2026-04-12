@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/services/auth_service.dart';
@@ -240,6 +241,9 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
           const SnackBar(content: Text('يجب تسجيل الدخول أولاً')),
         );
       }
+      return;
+    }
+    if (!await ensureAccountActiveForMarketplace(context)) {
       return;
     }
     final rewardErr = _validateTravelerReward();

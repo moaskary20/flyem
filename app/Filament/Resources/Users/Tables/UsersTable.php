@@ -2,12 +2,10 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
-use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\BadgeColumn;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -22,10 +20,14 @@ class UsersTable
                 ImageColumn::make('profile_photo')
                     ->label('الصورة')
                     ->circular()
-                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->name) . '&color=7F9CF5&background=EBF4FF'),
+                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name='.urlencode($record->name).'&color=7F9CF5&background=EBF4FF'),
                 TextColumn::make('name')->label('الاسم')->searchable()->sortable(),
                 TextColumn::make('email')->label('البريد الإلكتروني')->searchable()->sortable(),
                 TextColumn::make('phone')->label('الهاتف')->searchable(),
+                TextColumn::make('home_phone')->label('هاتف الأم')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('travel_phone')->label('هاتف السفر')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('bank_iban')->label('IBAN')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('bank_name')->label('البنك')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('country.name_ar')->label('الدولة')->sortable(),
                 BadgeColumn::make('verification_status')
                     ->label('التوثيق')

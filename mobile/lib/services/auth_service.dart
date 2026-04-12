@@ -312,6 +312,8 @@ class UserProfile {
   final String? bankAccountHolder;
   final String? homePhone;
   final String? travelPhone;
+  /// active | inactive | banned — من الخادم؛ الميزات التجارية تتطلب active.
+  final String accountStatus;
 
   UserProfile({
     required this.id,
@@ -340,7 +342,10 @@ class UserProfile {
     this.bankAccountHolder,
     this.homePhone,
     this.travelPhone,
+    this.accountStatus = 'active',
   });
+
+  bool get accountActive => accountStatus == 'active';
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -370,6 +375,7 @@ class UserProfile {
       bankAccountHolder: UserProfile._readStringOrNull(json['bank_account_holder']),
       homePhone: UserProfile._readStringOrNull(json['home_phone']),
       travelPhone: UserProfile._readStringOrNull(json['travel_phone']),
+      accountStatus: UserProfile._readString(json['status'], fallback: 'active'),
     );
   }
 

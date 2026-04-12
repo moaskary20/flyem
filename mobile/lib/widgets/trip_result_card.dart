@@ -5,18 +5,14 @@ import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/widgets/user_profile_link.dart';
 
 /// بطاقة رحلة في نتائج البحث (تبويب رحلات).
-/// يعرض الحد الأدنى لسعر الرحلة (من لوحة التحكم) إن وُجد، وإلا سعر الرحلة.
 class TripResultCard extends StatelessWidget {
   const TripResultCard({
     super.key,
     required this.item,
-    this.minTripPrice,
     this.onTap,
   });
 
   final TripItem item;
-  /// الحد الأدنى لسعر الرحلة من لوحة التحكم — يُعرض على الكارت ويُطبّق عند الدفع.
-  final double? minTripPrice;
   final VoidCallback? onTap;
 
 

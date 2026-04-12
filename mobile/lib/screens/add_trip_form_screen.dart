@@ -1,12 +1,13 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_locale.dart';
-import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/services/auth_service.dart';
-import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/widgets/city_picker_sheet.dart';
@@ -15,10 +16,17 @@ import 'package:flyem_app/services/local_notification_service.dart';
 
 /// شاشة نموذج "أضف رحلتك" - تُعرض من الأسفل (bottom sheet أو route)
 class AddTripFormScreen extends StatefulWidget {
-  const AddTripFormScreen({super.key, this.onTripAdded});
+  const AddTripFormScreen({
+    super.key,
+    this.onTripAdded,
+    this.passportImageBytes,
+    this.flightTicketImageBytes,
+  });
 
   /// يُستدعى عند الضغط على "تم" بعد إضافة الرحلة (للتحديث في شاشة الرحلات)
   final VoidCallback? onTripAdded;
+  final Uint8List? passportImageBytes;
+  final Uint8List? flightTicketImageBytes;
 
   @override
   State<AddTripFormScreen> createState() => _AddTripFormScreenState();
@@ -38,9 +46,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   City? _toCity;
   DateTime? _departureDate;
   final _notesController = TextEditingController();
-  /// الحد الأدنى لسعر الرحلة من لوحة التحكم (إن وُجد)
-  double? _minTripPrice;
-
   bool _canPickupInCurrentCountry = false;
   bool _canDeliverInOtherCountry = false;
   bool _canReturnOnCancel = false;
@@ -53,19 +58,6 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   void initState() {
     super.initState();
     _loadCountries();
-    _loadMinTripPrice();
-  }
-
-  Future<void> _loadMinTripPrice() async {
-    try {
-      final settings = await ContentService.getSettings();
-      final v = settings['min_trip_price'];
-      if (v != null) {
-        final s = v is String ? v : v.toString();
-        final d = double.tryParse(s.trim());
-        if (mounted && d != null && d >= 0) setState(() => _minTripPrice = d);
-      }
-    } catch (_) {}
   }
 
   @override
@@ -281,6 +273,12 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
     setState(() => _submitting = true);
     try {
       final departureStr = _departureDate!.toIso8601String();
+      final passportB64 = widget.passportImageBytes != null
+          ? base64Encode(widget.passportImageBytes!)
+          : null;
+      final ticketB64 = widget.flightTicketImageBytes != null
+          ? base64Encode(widget.flightTicketImageBytes!)
+          : null;
       await TripsService.createTrip(
         userId: userId,
         travelMethod: _travelMethods[_travelTypeIndex],
@@ -289,12 +287,13 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
         toCountryId: _toCountry!.id,
         toCityId: _toCity!.id,
         departureDate: departureStr,
-        pricePerKg: _minTripPrice,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
         canPickupInCurrentCountry: _canPickupInCurrentCountry,
         canDeliverInOtherCountry: _canDeliverInOtherCountry,
         canReturnOnCancel: _canReturnOnCancel,
         returnBeforeDays: _canReturnOnCancel ? _returnBeforeDays.clamp(1, 30) : null,
+        passportImageBase64: passportB64,
+        flightTicketImageBase64: ticketB64,
       );
       if (!mounted) return;
       await LocalNotificationService.showNotification(
@@ -736,11 +735,17 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
 void showAddTripFormFromBottom(
   BuildContext context, {
   VoidCallback? onTripAdded,
+  Uint8List? passportImageBytes,
+  Uint8List? flightTicketImageBytes,
 }) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => AddTripFormScreen(onTripAdded: onTripAdded),
+    builder: (ctx) => AddTripFormScreen(
+      onTripAdded: onTripAdded,
+      passportImageBytes: passportImageBytes,
+      flightTicketImageBytes: flightTicketImageBytes,
+    ),
   );
 }

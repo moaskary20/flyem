@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\RequiresActiveAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Currency;
@@ -18,6 +19,8 @@ use Illuminate\Validation\Rule;
 
 class ShipmentController extends Controller
 {
+    use RequiresActiveAccount;
+
     /**
      * List shipments for search (mobile). Optional filters: from_country_id, to_country_id, etc.
      */
@@ -194,6 +197,14 @@ class ShipmentController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $auth = $request->user();
+        if (! $auth) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -208,6 +219,10 @@ class ShipmentController extends Controller
             'type' => ['nullable', Rule::in(['documents', 'fragile', 'electronics', 'clothing', 'food', 'other'])],
             'price_min' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        if ((int) $auth->id !== (int) $validated['user_id']) {
+            return response()->json(['message' => 'غير مصرح.'], 403);
+        }
 
         $currency = Currency::where('is_default', true)->first() ?? Currency::first();
         $shipment = Shipment::create([
@@ -236,6 +251,14 @@ class ShipmentController extends Controller
      */
     public function update(Request $request, Shipment $shipment): JsonResponse
     {
+        $auth = $request->user();
+        if (! $auth || (int) $auth->id !== (int) $shipment->user_id) {
+            return response()->json(['message' => 'غير مصرح.'], 403);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -270,9 +293,17 @@ class ShipmentController extends Controller
     /**
      * Delete a shipment (حذف الشحنة).
      */
-    public function destroy(Shipment $shipment): JsonResponse
+    public function destroy(Request $request, Shipment $shipment): JsonResponse
     {
+        $auth = $request->user();
+        if (! $auth || (int) $auth->id !== (int) $shipment->user_id) {
+            return response()->json(['message' => 'غير مصرح.'], 403);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
         $shipment->delete();
+
         return response()->json(['message' => 'deleted']);
     }
 
@@ -284,6 +315,9 @@ class ShipmentController extends Controller
         $user = $request->user();
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
         }
 
         if ((int) $shipment->user_id === (int) $user->id) {
@@ -335,6 +369,9 @@ class ShipmentController extends Controller
         $user = $request->user();
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
         }
 
         if ((int) $shipment->user_id === (int) $user->id) {

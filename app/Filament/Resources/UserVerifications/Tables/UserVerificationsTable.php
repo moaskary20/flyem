@@ -19,6 +19,10 @@ class UserVerificationsTable
             ->columns([
                 TextColumn::make('id')->label('#')->sortable(),
                 TextColumn::make('user.name')->label('المستخدم')->searchable()->sortable(),
+                TextColumn::make('user.email')->label('البريد')->searchable()->toggleable(),
+                TextColumn::make('user.phone')->label('الهاتف')->toggleable(),
+                TextColumn::make('user.home_phone')->label('هاتف الأم')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user.travel_phone')->label('هاتف السفر')->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('id_document')->label('وثيقة الهوية')->circular(false),
                 ImageColumn::make('selfie_image')->label('السيلفي')->circular(),
                 BadgeColumn::make('status')

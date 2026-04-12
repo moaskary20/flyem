@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -340,6 +341,9 @@ class _DetailsContent extends StatelessWidget {
                 onPressed: alreadyRequested
                     ? null
                     : () async {
+                        if (!await ensureAccountActiveForMarketplace(context)) {
+                          return;
+                        }
                         if (!travelerHasTrip) {
                           await _showTripRequiredBeforeRequest(context);
                           return;

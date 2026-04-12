@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Trips\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -82,6 +83,20 @@ class TripForm
                             ]),
                         Textarea::make('notes')->label('ملاحظات')->rows(3)->columnSpanFull(),
                     ]),
+                Section::make('جواز السفر وتذكرة الطيران')
+                    ->schema([
+                        FileUpload::make('passport_image')
+                            ->label('صورة جواز السفر')
+                            ->image()
+                            ->directory('trips/verification')
+                            ->visibility('public'),
+                        FileUpload::make('flight_ticket_image')
+                            ->label('صورة تذكرة الطيران')
+                            ->image()
+                            ->directory('trips/verification')
+                            ->visibility('public'),
+                    ])
+                    ->columns(2),
             ]);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\RequiresActiveAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Request as RequestModel;
-use App\Models\Setting;
 use App\Models\Shipment;
 use App\Models\Trip;
 use App\Services\PayPalService;
@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 
 class PayPalOrderController extends Controller
 {
+    use RequiresActiveAccount;
+
     /**
      * إنشاء طلب PayPal لدفع طلب رحلة (يفتح التطبيق رابط الموافقة).
      */
@@ -21,6 +23,9 @@ class PayPalOrderController extends Controller
         $user = $request->user();
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
         }
 
         if ((int) $trip->user_id === (int) $user->id) {
@@ -71,6 +76,9 @@ class PayPalOrderController extends Controller
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
+        if ($deny = $this->rejectUnlessActiveAccount($request)) {
+            return $deny;
+        }
 
         if ((int) $shipment->user_id === (int) $user->id) {
             return response()->json(['message' => 'لا يمكن إرسال طلب على شحنتك.'], 422);
@@ -113,15 +121,7 @@ class PayPalOrderController extends Controller
 
     private function tripPayAmount(Trip $trip): float
     {
-        $minTripPriceSetting = Setting::where('key', 'min_trip_price')->first();
-        $minTripPrice = $minTripPriceSetting && filled($minTripPriceSetting->value)
-            ? (float) $minTripPriceSetting->value
-            : null;
-
         $amount = (float) ($trip->price_per_kg ?? 0);
-        if ($minTripPrice !== null && $minTripPrice > 0) {
-            $amount = $amount > 0 ? max($amount, $minTripPrice) : $minTripPrice;
-        }
         if ($amount <= 0) {
             $amount = 1;
         }

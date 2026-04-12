@@ -37,7 +37,7 @@ class AuthController extends Controller
         $user->forceFill(['api_token' => hash('sha256', $token)])->save();
 
         return response()->json([
-            'user' => $user->only(['id', 'name', 'email', 'phone']),
+            'user' => $user->only(['id', 'name', 'email', 'phone', 'status']),
             'token' => $token,
         ]);
     }
@@ -72,6 +72,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'api_token' => hash('sha256', $token = Str::random(80)),
             'verification_status' => 'pending',
+            'status' => 'inactive',
         ]);
 
         UserVerification::create([
@@ -80,7 +81,7 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'user' => $user->only(['id', 'name', 'email', 'phone']),
+            'user' => $user->only(['id', 'name', 'email', 'phone', 'status']),
             'token' => $token,
         ], 201);
     }
@@ -144,6 +145,7 @@ class AuthController extends Controller
                 'bank_account_holder' => $user->bank_account_holder,
                 'home_phone' => $user->home_phone,
                 'travel_phone' => $user->travel_phone,
+                'status' => $user->status ?? 'active',
                 'payout_accounts' => Schema::hasTable('user_payout_accounts')
                     ? $user->payoutAccounts->sortByDesc('is_primary')->values()->map(fn ($a) => [
                         'id' => $a->id,

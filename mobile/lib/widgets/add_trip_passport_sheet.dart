@@ -20,13 +20,16 @@ void showAddTripPassportThenTripForm(
   Future<void> run() async {
     final loggedIn = await ensureLoggedIn(hostContext);
     if (!loggedIn || !hostContext.mounted) return;
+    if (!await ensureAccountActiveForMarketplace(hostContext) || !hostContext.mounted) {
+      return;
+    }
     if (!hostContext.mounted) return;
     showModalBottomSheet<void>(
       context: hostContext,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => AddTripPassportSheet(
-        onContinue: () {
+        onContinue: (passportBytes, ticketBytes) {
           Navigator.of(sheetCtx).pop();
           Future.microtask(() {
             if (!hostContext.mounted) return;
@@ -34,7 +37,11 @@ void showAddTripPassportThenTripForm(
               Navigator.of(hostContext)
                   .push<bool>(
                     MaterialPageRoute<bool>(
-                      builder: (_) => AddTripFormScreen(onTripAdded: onTripAdded),
+                      builder: (_) => AddTripFormScreen(
+                        onTripAdded: onTripAdded,
+                        passportImageBytes: passportBytes,
+                        flightTicketImageBytes: ticketBytes,
+                      ),
                     ),
                   )
                   .then((ok) {
@@ -50,6 +57,8 @@ void showAddTripPassportThenTripForm(
                   onTripAdded?.call();
                   onTripCreated?.call(true);
                 },
+                passportImageBytes: passportBytes,
+                flightTicketImageBytes: ticketBytes,
               );
             }
           });
@@ -65,7 +74,7 @@ void showAddTripPassportThenTripForm(
 class AddTripPassportSheet extends StatefulWidget {
   const AddTripPassportSheet({super.key, required this.onContinue});
 
-  final VoidCallback onContinue;
+  final void Function(Uint8List passport, Uint8List ticket) onContinue;
 
   @override
   State<AddTripPassportSheet> createState() => _AddTripPassportSheetState();
@@ -138,7 +147,7 @@ class _AddTripPassportSheetState extends State<AddTripPassportSheet> {
 
   void _onContinue() {
     if (_passportImageBytes == null || _flightTicketImageBytes == null) return;
-    widget.onContinue();
+    widget.onContinue(_passportImageBytes!, _flightTicketImageBytes!);
   }
 
   Widget _buildImageSlot({
