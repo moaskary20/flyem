@@ -52,6 +52,9 @@ class EditUserVerification extends EditRecord
                 'rejected' => 'rejected',
                 default => 'pending',
             };
+            if ($record->status === 'approved' && $user->status !== 'banned') {
+                $user->status = 'active';
+            }
             $formState = $this->form->getState();
             if (array_key_exists('phone_verified', $formState)) {
                 $user->phone_verified = (bool) $formState['phone_verified'];

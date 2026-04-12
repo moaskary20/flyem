@@ -13,9 +13,18 @@ trait RequiresActiveAccount
         if (! $user) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
-        if ($user->status !== 'active') {
+        if ($user->status === 'banned') {
             return response()->json([
-                'message' => 'حسابك غير مُفعّل بعد. لا يمكن إنشاء إعلانات أو إرسال طلبات حتى يتم تفعيل الحساب من الإدارة.',
+                'message' => 'هذا الحساب محظور ولا يمكنه استخدام التطبيق.',
+            ], 422);
+        }
+
+        $verified = ($user->verification_status ?? '') === 'verified';
+        $active = ($user->status ?? '') === 'active';
+
+        if (! $active && ! $verified) {
+            return response()->json([
+                'message' => 'لا يمكنك إنشاء إعلانات أو إرسال طلبات حتى يُفعَّل حسابك أو يُوثَّق من الإدارة.',
             ], 422);
         }
 

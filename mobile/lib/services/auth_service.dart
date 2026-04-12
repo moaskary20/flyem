@@ -312,7 +312,7 @@ class UserProfile {
   final String? bankAccountHolder;
   final String? homePhone;
   final String? travelPhone;
-  /// active | inactive | banned — من الخادم؛ الميزات التجارية تتطلب active.
+  /// active | inactive | banned — من الخادم.
   final String accountStatus;
 
   UserProfile({
@@ -346,6 +346,10 @@ class UserProfile {
   });
 
   bool get accountActive => accountStatus == 'active';
+
+  /// يطابق الـ API: غير المحظور + (نشط أو موثّق وثائقياً).
+  bool get canUseMarketplace =>
+      accountStatus != 'banned' && (accountStatus == 'active' || documentsVerified);
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(

@@ -181,8 +181,8 @@ class AppStrings {
   static String get profit => _en ? 'Profit' : 'مكسب';
   static String get confirmedDeals => _en ? 'Confirmed deals' : 'الصفقات المؤكدة';
   static String get accountNotActiveForMarketplace => _en
-      ? 'Your account is not activated yet. You cannot post listings or send requests until the admin activates your account.'
-      : 'حسابك غير مُفعّل بعد. لا يمكنك نشر إعلانات أو إرسال طلبات حتى يتم تفعيل حسابك من الإدارة.';
+      ? 'Your account is not ready yet. You need an active account or completed verification from the admin to post or send requests.'
+      : 'حسابك غير جاهز بعد. يلزم تنشيط الحساب أو اكتمال التوثيق من الإدارة لنشر إعلانات أو إرسال طلبات.';
   static String get pickupDeliveryOptionsTitle =>
       _en ? 'Pickup & delivery options' : 'خيارات الاستلام والتسليم';
   static String get canPickupInCurrentCountry =>

@@ -20,10 +20,10 @@ Future<bool> ensureLoggedIn(BuildContext context) async {
   return result == true;
 }
 
-/// بعد تسجيل الدخول: يمنع إنشاء إعلانات أو إرسال طلبات إن كان الحساب غير مُفعّل من الإدارة.
+/// بعد تسجيل الدخول: يمنع السوق إن كان الحساب محظوراً أو غير مُفعّل وغير موثّق.
 Future<bool> ensureAccountActiveForMarketplace(BuildContext context) async {
   final profile = await AuthService.getCurrentUser();
-  if (profile != null && profile.accountActive) {
+  if (profile != null && profile.canUseMarketplace) {
     return true;
   }
   if (context.mounted) {
