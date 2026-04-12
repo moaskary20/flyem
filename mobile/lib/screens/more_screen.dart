@@ -4,12 +4,14 @@ import 'package:flyem_app/core/app_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/screens/personal_profile_screen.dart';
 import 'package:flyem_app/screens/wallet_screen.dart';
 import 'package:flyem_app/screens/suggest_feedback_screen.dart';
 import 'package:flyem_app/screens/technical_support_screen.dart';
 import 'package:flyem_app/screens/faq_screen.dart';
 import 'package:flyem_app/screens/privacy_terms_screen.dart';
+import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/screens/login_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 
@@ -34,6 +36,7 @@ class MoreScreen extends StatefulWidget {
 class _MoreScreenState extends State<MoreScreen> {
   UserProfile? _user;
   bool _loading = true;
+  bool _signedIn = false;
 
   @override
   void initState() {
@@ -42,11 +45,15 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   Future<void> _loadUser() async {
-    final user = await AuthService.getCurrentUser();
-    if (mounted) setState(() {
-      _user = user;
-      _loading = false;
-    });
+    final signedIn = await AuthService.isLoggedIn();
+    final user = signedIn ? await AuthService.getCurrentUser() : null;
+    if (mounted) {
+      setState(() {
+        _signedIn = signedIn;
+        _user = user;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -74,7 +81,11 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   Widget _buildProfileHeader(BuildContext context) {
-    final name = _loading ? '...' : (_user?.name.isNotEmpty == true ? _user!.name : 'المستخدم');
+    final name = _loading
+        ? '...'
+        : (!_signedIn
+            ? AppStrings.guestUserLabel
+            : (_user?.name.isNotEmpty == true ? _user!.name : 'المستخدم'));
     return Column(
       children: [
         Row(
@@ -100,12 +111,20 @@ class _MoreScreenState extends State<MoreScreen> {
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
+            onPressed: () async {
+              if (!_signedIn) {
+                await Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+                );
+                if (context.mounted) await _loadUser();
+                return;
+              }
+              await Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
                   builder: (_) => const PersonalProfileScreen(),
                 ),
               );
+              if (context.mounted) await _loadUser();
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primaryYellow,
@@ -115,7 +134,7 @@ class _MoreScreenState extends State<MoreScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: Text(AppStrings.personalPage),
+            child: Text(_signedIn ? AppStrings.personalPage : AppStrings.signInTitle),
           ),
         ),
       ],
@@ -168,7 +187,7 @@ class _MoreScreenState extends State<MoreScreen> {
     );
   }
 
-  void _onMoreAction(BuildContext context, _MoreAction action) {
+  Future<void> _onMoreAction(BuildContext context, _MoreAction action) async {
     switch (action) {
       case _MoreAction.suggest:
         Navigator.of(context).push(
@@ -177,6 +196,7 @@ class _MoreScreenState extends State<MoreScreen> {
       case _MoreAction.language:
         _showLanguagePicker();
       case _MoreAction.wallet:
+        if (!await ensureLoggedIn(context) || !context.mounted) return;
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const WalletScreen()),
         );
@@ -239,6 +259,9 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   Widget _buildLogoutSection(BuildContext context) {
+    if (!_signedIn) {
+      return const SizedBox.shrink();
+    }
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
@@ -246,7 +269,7 @@ class _MoreScreenState extends State<MoreScreen> {
           await AuthService.logout();
           if (!context.mounted) return;
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
             (route) => false,
           );
           ScaffoldMessenger.of(context).showSnackBar(

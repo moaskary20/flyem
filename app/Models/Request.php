@@ -22,10 +22,14 @@ class Request extends Model
         'currency_id',
         'message',
         'status',
+        'custody_confirmed_at',
+        'delivery_confirmed_at',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'custody_confirmed_at' => 'datetime',
+        'delivery_confirmed_at' => 'datetime',
     ];
 
     public function requester(): BelongsTo
@@ -79,6 +83,36 @@ class Request extends Model
             ->where(function ($q) use ($listingOwnerUserId) {
                 $q->whereHas('shipment', fn ($s) => $s->where('user_id', $listingOwnerUserId))
                     ->orWhereHas('trip', fn ($t) => $t->where('user_id', $listingOwnerUserId));
+            })
+            ->exists();
+    }
+
+    /**
+     * هل يشارك المستخدمان طلباً مدفوعاً نشطاً (قيد التنفيذ أو مُسلَّم) — لعرض بيانات تواصل في الملف العام.
+     */
+    public static function trustedPeersShareActiveDeal(int $userAId, int $userBId): bool
+    {
+        if ($userAId === $userBId) {
+            return false;
+        }
+
+        return static::query()
+            ->whereHas('payment', fn ($q) => $q->where('payment_status', 'paid'))
+            ->whereIn('status', ['in_progress', 'delivered'])
+            ->where(function ($q) use ($userAId, $userBId) {
+                $q->where(function ($q2) use ($userAId, $userBId) {
+                    $q2->where('requester_id', $userAId)
+                        ->where(function ($q3) use ($userBId) {
+                            $q3->whereHas('shipment', fn ($s) => $s->where('user_id', $userBId))
+                                ->orWhereHas('trip', fn ($t) => $t->where('user_id', $userBId));
+                        });
+                })->orWhere(function ($q2) use ($userAId, $userBId) {
+                    $q2->where('requester_id', $userBId)
+                        ->where(function ($q3) use ($userAId) {
+                            $q3->whereHas('shipment', fn ($s) => $s->where('user_id', $userAId))
+                                ->orWhereHas('trip', fn ($t) => $t->where('user_id', $userAId));
+                        });
+                });
             })
             ->exists();
     }

@@ -5,6 +5,7 @@ import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/widgets/shipment_detail_content.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/screens/add_shipment_screen.dart' as flyem_app_add_shipment;
 import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
@@ -105,7 +106,8 @@ class _TabsContent extends StatelessWidget {
           centerTitle: true,
           actions: [
             TextButton.icon(
-              onPressed: () {
+              onPressed: () async {
+                if (!await ensureLoggedIn(context) || !context.mounted) return;
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const flyem_app_add_shipment.AddShipmentScreen()),
                 );

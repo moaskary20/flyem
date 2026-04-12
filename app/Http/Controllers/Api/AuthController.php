@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\UserVerification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +64,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $request->first_name . ' ' . $request->last_name,
+            'name' => $request->first_name.' '.$request->last_name,
             'email' => $request->email,
             'phone' => $request->home_phone,
             'home_phone' => $request->home_phone,
@@ -245,6 +244,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
         if ($user) {
+            $user->deviceTokens()->delete();
             $user->forceFill(['api_token' => null])->save();
         }
 

@@ -68,7 +68,7 @@ class ApiClient {
         case 'PUT':
           return await client.put(uri, headers: headers, body: body);
         case 'DELETE':
-          return await client.delete(uri, headers: headers);
+          return await client.delete(uri, headers: headers, body: body);
         case 'PATCH':
           return await client.patch(uri, headers: headers, body: body);
         default:
@@ -112,7 +112,7 @@ class ApiClient {
               case 'PUT':
                 return await client.put(fallbackUri, headers: headers, body: body);
               case 'DELETE':
-                return await client.delete(fallbackUri, headers: headers);
+                return await client.delete(fallbackUri, headers: headers, body: body);
               case 'PATCH':
                 return await client.patch(fallbackUri, headers: headers, body: body);
               default:
@@ -146,8 +146,9 @@ class ApiClient {
     Map<String, String>? headers,
     String? body,
     Map<String, String>? queryParams,
+    bool preventDuplicate = true,
   }) =>
-      request('POST', path, headers: headers, body: body, queryParams: queryParams);
+      request('POST', path, headers: headers, body: body, queryParams: queryParams, preventDuplicate: preventDuplicate);
 
   static Future<http.Response> put(
     String path, {
@@ -161,8 +162,10 @@ class ApiClient {
     String path, {
     Map<String, String>? headers,
     Map<String, String>? queryParams,
+    String? body,
+    bool preventDuplicate = true,
   }) =>
-      request('DELETE', path, headers: headers, queryParams: queryParams);
+      request('DELETE', path, headers: headers, body: body, queryParams: queryParams, preventDuplicate: preventDuplicate);
 
   static Future<http.Response> patch(
     String path, {

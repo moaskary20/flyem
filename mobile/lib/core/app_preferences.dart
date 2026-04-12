@@ -10,6 +10,7 @@ class AppPreferences {
   static const String _keyUserId = 'user_id';
   static const String _keyNotifyShippingTrips = 'notify_shipping_trips';
   static const String _keyNotifyChat = 'notify_chat';
+  static const String _keyFcmTokenCached = 'fcm_token_cached';
 
   static Future<bool> isOnboardingDone() async {
     final prefs = await SharedPreferences.getInstance();
@@ -41,6 +42,7 @@ class AppPreferences {
     if (userId == null || token == null) {
       await prefs.remove(_keyUserId);
       await prefs.remove(_keyAuthToken);
+      await prefs.remove(_keyFcmTokenCached);
     } else {
       await prefs.setInt(_keyUserId, userId);
       await prefs.setString(_keyAuthToken, token);
@@ -75,5 +77,19 @@ class AppPreferences {
   static Future<void> setNotifyChat(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyNotifyChat, value);
+  }
+
+  static Future<String?> getCachedFcmToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyFcmTokenCached);
+  }
+
+  static Future<void> setCachedFcmToken(String? token) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (token == null || token.isEmpty) {
+      await prefs.remove(_keyFcmTokenCached);
+    } else {
+      await prefs.setString(_keyFcmTokenCached, token);
+    }
   }
 }

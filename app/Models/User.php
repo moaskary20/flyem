@@ -174,4 +174,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(UserPayoutAccount::class);
     }
+
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(UserDeviceToken::class);
+    }
 }

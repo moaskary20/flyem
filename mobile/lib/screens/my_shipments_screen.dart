@@ -11,6 +11,7 @@ import 'package:flyem_app/screens/my_shipment_tabs_screen.dart';
 import 'package:flyem_app/screens/trip_details_screen.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/widgets/shipment_result_card.dart';
 import 'package:flyem_app/widgets/trip_result_card.dart';
 
@@ -70,6 +71,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
   }
 
   Future<void> _openAddShipment() async {
+    if (!await ensureLoggedIn(context) || !mounted) return;
     final added = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AddShipmentScreen()),
     );
@@ -339,6 +341,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
               );
             },
             onMenuEdit: () async {
+              if (!await ensureLoggedIn(context) || !context.mounted) return;
               showDialog(
                 context: context,
                 barrierDismissible: false,

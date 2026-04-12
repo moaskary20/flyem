@@ -5,8 +5,9 @@ import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/services/auth_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// ملف عام لمستخدم آخر: الاسم الأول، تقييم، دولتان؛ صورة واسم العائلة مشوشان ولا يُعرض رقم.
+/// ملف عام لمستخدم آخر؛ عند وجود اتفاق مدفوع نشط معه يُعرض رقم التواصل والصورة دون تشويش.
 class PublicUserProfileScreen extends StatefulWidget {
   const PublicUserProfileScreen({super.key, required this.userId});
 
@@ -79,20 +80,7 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Center(
-                              child: ImageFiltered(
-                                imageFilter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                                child: ClipOval(
-                                  child: Container(
-                                    width: 100,
-                                    height: 100,
-                                    color: Colors.grey[400],
-                                    alignment: Alignment.center,
-                                    child: Icon(Icons.person, size: 52, color: Colors.grey[100]),
-                                  ),
-                                ),
-                              ),
-                            ),
+                            Center(child: _buildAvatar(_profile!)),
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -151,6 +139,24 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
                                 ),
                               ],
                             ),
+                            if (_profile!.revealsContact &&
+                                _profile!.contactPhone != null &&
+                                _profile!.contactPhone!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              _countryCard(
+                                AppStrings.publicProfilePhoneLabel,
+                                _profile!.contactPhone!.trim(),
+                                onTap: () async {
+                                  final digits =
+                                      _profile!.contactPhone!.replaceAll(RegExp(r'\D'), '');
+                                  if (digits.isEmpty) return;
+                                  final uri = Uri.parse('https://wa.me/$digits');
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                              ),
+                            ],
                             const SizedBox(height: 32),
                             _countryCard(
                               AppStrings.homeCountryLabel,
@@ -168,8 +174,40 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
     );
   }
 
-  Widget _countryCard(String label, String value) {
-    return Container(
+  Widget _buildAvatar(PublicUserProfile p) {
+    final url = AuthService.resolveProfilePhotoUrl(p.profilePhotoUrl);
+    final showPhoto = p.revealsContact && url != null && url.isNotEmpty;
+    if (showPhoto) {
+      return ClipOval(
+        child: Image.network(
+          url,
+          width: 100,
+          height: 100,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _blurredAvatarPlaceholder(),
+        ),
+      );
+    }
+    return _blurredAvatarPlaceholder();
+  }
+
+  Widget _blurredAvatarPlaceholder() {
+    return ImageFiltered(
+      imageFilter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+      child: ClipOval(
+        child: Container(
+          width: 100,
+          height: 100,
+          color: Colors.grey[400],
+          alignment: Alignment.center,
+          child: Icon(Icons.person, size: 52, color: Colors.grey[100]),
+        ),
+      ),
+    );
+  }
+
+  Widget _countryCard(String label, String value, {VoidCallback? onTap}) {
+    final inner = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -183,6 +221,15 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen> {
           const SizedBox(height: 6),
           Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+    if (onTap == null) return inner;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: inner,
       ),
     );
   }

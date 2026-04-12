@@ -8,8 +8,12 @@ import 'package:flyem_app/services/auth_service.dart';
 
 /// شاشة تسجيل الدخول: البريد الإلكتروني + كلمة المرور.
 /// إذا لم تكن مسجلاً: رابط للانتقال إلى شاشة الاشتراك.
+///
+/// [popOnSuccess] عند true: بعد نجاح الدخول يُغلق المسار ويعيد `true` (مثل طلب تسجيل دخول قبل إضافة شحنة/رحلة).
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.popOnSuccess = false});
+
+  final bool popOnSuccess;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -55,9 +59,13 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await AuthService.login(email, password);
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      if (widget.popOnSuccess) {
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
     } on AuthException catch (e) {
       if (mounted) setState(() {
         _error = e.message;
@@ -98,6 +106,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                if (widget.popOnSuccess)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+                      onPressed: () => Navigator.of(context).pop(false),
+                    ),
+                  ),
                 Center(
                   child: Image.asset(
                     'assets/images/logo.png',

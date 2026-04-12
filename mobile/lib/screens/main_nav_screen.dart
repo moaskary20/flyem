@@ -7,7 +7,8 @@ import 'package:flyem_app/screens/search_screen.dart';
 import 'package:flyem_app/screens/my_shipments_screen.dart';
 import 'package:flyem_app/screens/trips_screen.dart';
 import 'package:flyem_app/screens/chat_screen.dart';
-import 'package:flyem_app/screens/messages_screen.dart';
+import 'package:flyem_app/screens/requests_hub_screen.dart';
+import 'package:flyem_app/services/push_messaging_service.dart';
 import 'package:flyem_app/screens/more_screen.dart';
 import 'package:flyem_app/widgets/rive_nav_item.dart';
 
@@ -40,7 +41,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
       SearchScreen(),
       MyShipmentsScreen(),
       TripsScreen(),
-      MessagesScreen(),
+      RequestsHubScreen(),
       MoreScreen(),
     ];
   }
@@ -70,6 +71,9 @@ class _MainNavScreenState extends State<MainNavScreen> {
         );
       });
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushMessagingService.syncTokenWithBackend();
+    });
   }
 
   @override
@@ -129,12 +133,12 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     fallbackIcon: Icons.luggage_outlined,
                   ),
                   RiveNavItem(
-                    label: AppStrings.navMessages,
+                    label: AppStrings.navRequests,
                     isSelected: _currentIndex == 3,
                     onTap: () => setState(() => _currentIndex = 3),
                     riveAsset: _useRiveIcons ? _riveSingleFile : null,
                     artboardName: _useRiveIcons ? 'messages' : null,
-                    fallbackIcon: Icons.mail_outline,
+                    fallbackIcon: Icons.assignment_turned_in_outlined,
                   ),
                   RiveNavItem(
                     label: AppStrings.navMore,

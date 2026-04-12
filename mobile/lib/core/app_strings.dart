@@ -19,6 +19,7 @@ class AppStrings {
   static String get navShipmentsTab => _en ? 'My shipments' : 'شحناتي';
   static String get navTrips => _en ? 'Trips' : 'رحلات';
   static String get navMessages => _en ? 'Messages' : 'الرسائل';
+  static String get navRequests => _en ? 'Requests' : 'الطلبات';
   static String get tabNews => _en ? 'News' : 'الاخبار';
   static String get tabMatches => _en ? 'Matches' : 'تطابقات';
   static String get tabAgreements => _en ? 'Agreements' : 'اتفاقات';
@@ -101,6 +102,29 @@ class AppStrings {
   static String get accept => _en ? 'Accept' : 'قبول';
   static String get reject => _en ? 'Reject' : 'رفض';
   static String get noRequests => _en ? 'No requests' : 'لا توجد طلبات';
+  static String get tabIncomingRequests => _en ? 'Incoming' : 'وارد';
+  static String get tabOutgoingRequests => _en ? 'Outgoing' : 'صادر';
+  static String get tabPendingPayment => _en ? 'Pending pay' : 'قيد الدفع';
+  static String get tabPaidRequests => _en ? 'Paid' : 'مدفوع';
+  static String get listingTypeShipment => _en ? 'Shipment' : 'شحنة';
+  static String get listingTypeTrip => _en ? 'Trip' : 'رحلة';
+  static String get requestPartyRequester => _en ? 'Requester' : 'مرسل الطلب';
+  static String get requestPartyTraveler => _en ? 'Traveler' : 'المسافر';
+  static String get requestPartySender => _en ? 'Sender' : 'الراسل';
+  static String get requestPartyListingOwner => _en ? 'Listing owner' : 'صاحب الإعلان';
+  static String get menuDeleteRequest => _en ? 'Delete request' : 'حذف الطلب';
+  static String get menuCancelRequest => _en ? 'Cancel request' : 'إلغاء الطلب';
+  static String get confirmDeleteRequestTitle => _en ? 'Delete this request?' : 'حذف هذا الطلب؟';
+  static String get confirmCancelRequestTitle => _en ? 'Cancel this request?' : 'إلغاء هذا الطلب؟';
+  static String get openChat => _en ? 'Chat' : 'تواصل';
+  static String get counterpartyDetails => _en ? 'Contact details' : 'بيانات الطرف الآخر';
+  static String get openWhatsapp => _en ? 'WhatsApp' : 'واتساب';
+  static String get noPhoneForWhatsapp => _en ? 'No phone number' : 'لا يوجد رقم';
+  static String get custodyConfirmPrompt =>
+      _en ? 'Confirm you received the shipment into your custody?' : 'هل استلمت الشحنة وأصبحت في عهدتك؟';
+  static String get deliveryConfirmPrompt =>
+      _en ? 'Confirm the shipment was delivered successfully?' : 'هل تم توصيل الشحنة بنجاح؟';
+  static String get confirmYes => _en ? 'Yes, confirm' : 'نعم، تأكيد';
 
   // Filter
   static String get filterTitle => _en ? 'Filter' : 'فلتر';
@@ -256,6 +280,8 @@ class AppStrings {
   static String get languageOptionEnglish => _en ? 'English' : 'الإنجليزية';
   static String get logout => _en ? 'Log out' : 'تسجيل الخروج';
   static String get logoutSuccess => _en ? 'Signed out' : 'تم تسجيل الخروج';
+  static String get signInTitle => _en ? 'Sign in' : 'تسجيل الدخول';
+  static String get guestUserLabel => _en ? 'Guest' : 'زائر';
   /// بند المزيد وشاشة إدارة حسابات السحب.
   static String get paymentDetails =>
       _en ? 'Withdrawal details' : 'تفاصيل سحب الأموال';
@@ -313,6 +339,7 @@ class AppStrings {
       ? 'Sign in to view this user’s public profile'
       : 'سجّل الدخول لعرض الملف العام للمستخدم';
   static String get publicProfileTitle => _en ? 'Public profile' : 'الملف العام';
+  static String get publicProfilePhoneLabel => _en ? 'Phone / WhatsApp' : 'الهاتف / واتساب';
   static String get homeCountryLabel => _en ? 'Country (home)' : 'البلد (المنزل)';
   static String get travelCountryLabel => _en ? 'Country (travel)' : 'البلد (السفر)';
   static String get lastNameHidden => _en ? 'Last name' : 'اسم العائلة';
@@ -424,6 +451,9 @@ class AppStrings {
       : '$currencySymbol$amount — المبلغ';
   static String get statusInProgress => _en ? 'In progress' : 'قيد التنفيذ';
   static String get statusDelivered => _en ? 'Delivered' : 'تم التوصيل';
+  static String get statusCancelled => _en ? 'Cancelled' : 'ملغى';
+  static String get confirmAction => _en ? 'Confirm' : 'تأكيد';
+  static String get loadFailedGeneric => _en ? 'Could not load' : 'تعذّر التحميل';
   static String get requestAccepted => _en ? 'Request accepted' : 'تم قبول الطلب';
   static String get requestRejected => _en ? 'Request rejected' : 'تم رفض الطلب';
   static String get shipmentGeneric => _en ? 'Shipment' : 'شحنة';

@@ -139,13 +139,21 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
         }
       }
 
-      final result = widget.requestId != null
-          ? await RequestsService.payRequest(widget.requestId!, _selectedMethodId!)
-          : await ShipmentsService.sendRequest(
-              shipmentId: widget.shipmentId,
-              paymentMethodId: _selectedMethodId!,
-              paypalOrderId: _paypalOrderId,
-            );
+      late final int conversationId;
+      late final String otherUserName;
+      if (widget.requestId != null) {
+        final paid = await RequestsService.payRequest(widget.requestId!, _selectedMethodId!);
+        conversationId = paid.conversationId;
+        otherUserName = paid.otherUserName;
+      } else {
+        final sent = await ShipmentsService.sendRequest(
+          shipmentId: widget.shipmentId,
+          paymentMethodId: _selectedMethodId!,
+          paypalOrderId: _paypalOrderId,
+        );
+        conversationId = sent.conversationId;
+        otherUserName = sent.otherUserName;
+      }
       if (!mounted) return;
       setState(() => _paying = false);
       await LocalNotificationService.showNotification(
@@ -158,8 +166,8 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
         MaterialPageRoute(
           builder: (_) => MainNavScreen(
             initialIndex: 3,
-            openConversationId: result.conversationId,
-            openConversationName: result.otherUserName,
+            openConversationId: conversationId,
+            openConversationName: otherUserName,
           ),
         ),
         (_) => false,

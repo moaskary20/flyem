@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,16 +10,27 @@ import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
+import 'package:flyem_app/firebase_background.dart';
 import 'package:flyem_app/screens/splash_screen.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
+import 'package:flyem_app/services/push_messaging_service.dart';
+
+/// مفتاح التنقل لاستخدامه من إشعارات FCM/المحلية لفتح تبويب الطلبات.
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> _initApp() async {
   await LocalNotificationService.initialize();
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    await PushMessagingService.initialize(appNavigatorKey);
+  }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   runZonedGuarded(() async {
     String localeCode = 'ar';
@@ -86,6 +98,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: AppStrings.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,

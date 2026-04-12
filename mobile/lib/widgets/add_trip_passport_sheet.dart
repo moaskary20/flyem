@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/screens/add_trip_form_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -16,41 +17,48 @@ void showAddTripPassportThenTripForm(
   /// يُستدعى عند إتمام إضافة الرحلة بنجاح (قيمة true)؛ اختياري عند الإلغاء.
   ValueChanged<bool>? onTripCreated,
 }) {
-  showModalBottomSheet<void>(
-    context: hostContext,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (sheetCtx) => AddTripPassportSheet(
-      onContinue: () {
-        Navigator.of(sheetCtx).pop();
-        Future.microtask(() {
-          if (!hostContext.mounted) return;
-          if (useFullScreenForm) {
-            Navigator.of(hostContext)
-                .push<bool>(
-                  MaterialPageRoute<bool>(
-                    builder: (_) => AddTripFormScreen(onTripAdded: onTripAdded),
-                  ),
-                )
-                .then((ok) {
-                  if (!hostContext.mounted) return;
-                  if (ok == true) {
-                    onTripCreated?.call(true);
-                  }
-                });
-          } else {
-            showAddTripFormFromBottom(
-              hostContext,
-              onTripAdded: () {
-                onTripAdded?.call();
-                onTripCreated?.call(true);
-              },
-            );
-          }
-        });
-      },
-    ),
-  );
+  Future<void> run() async {
+    final loggedIn = await ensureLoggedIn(hostContext);
+    if (!loggedIn || !hostContext.mounted) return;
+    if (!hostContext.mounted) return;
+    showModalBottomSheet<void>(
+      context: hostContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => AddTripPassportSheet(
+        onContinue: () {
+          Navigator.of(sheetCtx).pop();
+          Future.microtask(() {
+            if (!hostContext.mounted) return;
+            if (useFullScreenForm) {
+              Navigator.of(hostContext)
+                  .push<bool>(
+                    MaterialPageRoute<bool>(
+                      builder: (_) => AddTripFormScreen(onTripAdded: onTripAdded),
+                    ),
+                  )
+                  .then((ok) {
+                    if (!hostContext.mounted) return;
+                    if (ok == true) {
+                      onTripCreated?.call(true);
+                    }
+                  });
+            } else {
+              showAddTripFormFromBottom(
+                hostContext,
+                onTripAdded: () {
+                  onTripAdded?.call();
+                  onTripCreated?.call(true);
+                },
+              );
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  run();
 }
 
 /// شيت رفع صورة جواز السفر وتذكرة الطيران قبل إدخال بيانات الرحلة.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
+import 'package:flyem_app/core/auth_guard.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/screens/add_shipment_screen.dart' as flyem_app_add_shipment;
@@ -179,6 +180,7 @@ class ShipmentDetailContent extends StatelessWidget {
             PopupMenuButton<String>(
               onSelected: (value) async {
                 if (value == AppStrings.editShipment) {
+                  if (!await ensureLoggedIn(context) || !context.mounted) return;
                   final added = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
                       builder: (_) => flyem_app_add_shipment.AddShipmentScreen(

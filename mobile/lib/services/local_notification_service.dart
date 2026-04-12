@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/services/push_navigation.dart';
 
 /// خدمة الإشعارات المحلية — عرض إشعارات في شريط إشعارات أندرويد عند الأحداث داخل التطبيق.
 class LocalNotificationService {
@@ -53,8 +54,8 @@ class LocalNotificationService {
   static void _onDidReceiveNotificationResponse(NotificationResponse response) {
     final payload = response.payload;
     if (payload == null || payload.isEmpty) return;
-    // يمكن لاحقاً استخدام payload للتوجيه (مثلاً screen=shipments&id=1)
     if (kDebugMode) debugPrint('LocalNotificationService payload: $payload');
+    PushNavigation.handlePayload(payload);
   }
 
   /// عرض إشعار فوري. [id] فريد لتجنب استبدال إشعار بآخر.

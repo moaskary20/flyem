@@ -4,7 +4,6 @@ import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/services/currencies_service.dart';
 import 'package:flyem_app/screens/home_screen.dart';
-import 'package:flyem_app/screens/login_screen.dart';
 
 /// شاشة اختيار اللغة والعملة — تظهر مرة واحدة فقط عند أول تشغيل للتطبيق بعد التثبيت.
 /// بعد الضغط على «متابعة» لا تُعرض مرة أخرى إلا بحذف بيانات التطبيق أو إعادة التثبيت.
@@ -81,7 +80,7 @@ class _LanguageCurrencyScreenState extends State<LanguageCurrencyScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => LoginScreen()),
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 

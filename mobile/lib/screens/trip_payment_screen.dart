@@ -6,6 +6,7 @@ import 'package:flyem_app/screens/main_nav_screen.dart';
 import 'package:flyem_app/services/content_service.dart';
 import 'package:flyem_app/services/payment_methods_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/services/requests_service.dart';
 import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
@@ -14,10 +15,17 @@ import 'package:url_launcher/url_launcher.dart';
 /// شاشة الدفع لإرسال طلب على رحلة: اختيار وسيلة الدفع ثم إتمام الدفع.
 /// بعد النجاح يتم التوجيه إلى شاشة الرسائل وفتح المحادثة مع صاحب الرحلة.
 class TripPaymentScreen extends StatefulWidget {
-  const TripPaymentScreen({super.key, required this.tripId, required this.trip});
+  const TripPaymentScreen({
+    super.key,
+    required this.tripId,
+    required this.trip,
+    this.requestId,
+  });
 
   final int tripId;
   final TripDetails trip;
+  /// دفع لطلب رحلة مقبول مسبقاً (من مركز الطلبات).
+  final int? requestId;
 
   @override
   State<TripPaymentScreen> createState() => _TripPaymentScreenState();
@@ -65,7 +73,20 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
       if (mounted) setState(() {
         _methods = list;
         _loading = false;
-        if (list.isNotEmpty && _selectedMethodId == null) _selectedMethodId = list.first.id;
+        if (list.isNotEmpty && _selectedMethodId == null) {
+          if (widget.requestId != null) {
+            PaymentMethodItem? pick;
+            for (final m in list) {
+              if (m.code == 'card' || m.code == 'wallet') {
+                pick = m;
+                break;
+              }
+            }
+            _selectedMethodId = pick?.id;
+          } else {
+            _selectedMethodId = list.first.id;
+          }
+        }
       });
     } catch (_) {
       if (mounted) setState(() {
@@ -82,6 +103,20 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
     return null;
   }
 
+  List<PaymentMethodItem> get _methodsForDisplay {
+    if (widget.requestId != null) {
+      return _methods.where((m) => m.code == 'card' || m.code == 'wallet').toList();
+    }
+    return _methods;
+  }
+
+  String _methodLabel(PaymentMethodItem m) {
+    if (widget.requestId != null && m.code == 'wallet') {
+      return AppStrings.paymentMethodFlyEmWallet;
+    }
+    return AppStrings.isArabic ? m.nameAr : m.nameEn;
+  }
+
   Future<void> _onPay() async {
     if (_selectedMethodId == null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.selectPaymentMethod)));
@@ -93,7 +128,7 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
     });
     try {
       final method = _selectedMethod();
-      if (method != null && method.code == 'paypal') {
+      if (widget.requestId == null && method != null && method.code == 'paypal') {
         if (_paypalOrderId == null || _paypalOrderId!.isEmpty) {
           final order = await TripsService.createPayPalOrderForTrip(widget.tripId);
           if (!mounted) return;
@@ -120,11 +155,21 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
         }
       }
 
-      final result = await TripsService.sendRequest(
-        tripId: widget.tripId,
-        paymentMethodId: _selectedMethodId!,
-        paypalOrderId: _paypalOrderId,
-      );
+      late final int conversationId;
+      late final String otherUserName;
+      if (widget.requestId != null) {
+        final paid = await RequestsService.payRequest(widget.requestId!, _selectedMethodId!);
+        conversationId = paid.conversationId;
+        otherUserName = paid.otherUserName;
+      } else {
+        final sent = await TripsService.sendRequest(
+          tripId: widget.tripId,
+          paymentMethodId: _selectedMethodId!,
+          paypalOrderId: _paypalOrderId,
+        );
+        conversationId = sent.conversationId;
+        otherUserName = sent.otherUserName;
+      }
       if (!mounted) return;
       setState(() => _paying = false);
       await LocalNotificationService.showNotification(
@@ -137,8 +182,8 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
         MaterialPageRoute(
           builder: (_) => MainNavScreen(
             initialIndex: 3,
-            openConversationId: result.conversationId,
-            openConversationName: result.otherUserName,
+            openConversationId: conversationId,
+            openConversationName: otherUserName,
           ),
         ),
         (_) => false,
@@ -254,7 +299,7 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                 const SizedBox(height: 12),
                 if (_loading)
                   const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
-                else if (_error != null && _methods.isEmpty)
+                else if (_error != null && _methodsForDisplay.isEmpty)
                   Center(
                     child: Column(
                       children: [
@@ -265,19 +310,19 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                     ),
                   )
                 else
-                  ..._methods.map((m) => _PaymentMethodTile(
-                        name: m.nameAr,
+                  ..._methodsForDisplay.map((m) => _PaymentMethodTile(
+                        name: _methodLabel(m),
                         isSelected: _selectedMethodId == m.id,
                         onTap: () => setState(() {
                           _selectedMethodId = m.id;
                           if (m.code != 'paypal') _paypalOrderId = null;
                         }),
                       )),
-                if (_error != null && _methods.isNotEmpty) ...[
+                if (_error != null && _methodsForDisplay.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
                 ],
-                if (_selectedMethod()?.code == 'paypal') ...[
+                if (widget.requestId == null && _selectedMethod()?.code == 'paypal') ...[
                   const SizedBox(height: 12),
                   Text(
                     _paypalOrderId == null || _paypalOrderId!.isEmpty
@@ -304,7 +349,8 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            _selectedMethod()?.code == 'paypal' &&
+                            widget.requestId == null &&
+                                    _selectedMethod()?.code == 'paypal' &&
                                     (_paypalOrderId == null || _paypalOrderId!.isEmpty)
                                 ? AppStrings.continueToPayPal
                                 : AppStrings.completePayment,

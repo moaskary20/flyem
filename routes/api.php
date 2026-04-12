@@ -1,22 +1,23 @@
 <?php
 
+use App\Http\Controllers\Api\AppRequestController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BannerController;
-use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\CityController;
-use App\Http\Controllers\Api\CurrencyController;
-use App\Http\Controllers\Api\PlaceController;
-use App\Http\Controllers\Api\SupportTicketController;
-use App\Http\Controllers\Api\UserPublicProfileController;
+use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\CountryController;
+use App\Http\Controllers\Api\CurrencyController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\FaqController;
-use App\Http\Controllers\Api\AppRequestController;
-use App\Http\Controllers\Api\PayPalOrderController;
 use App\Http\Controllers\Api\PaymentMethodController;
-use App\Http\Controllers\Api\UserPayoutAccountController;
+use App\Http\Controllers\Api\PayPalOrderController;
+use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\ShipmentController;
+use App\Http\Controllers\Api\SupportTicketController;
 use App\Http\Controllers\Api\TripController;
+use App\Http\Controllers\Api\UserPayoutAccountController;
+use App\Http\Controllers\Api\UserPublicProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -31,6 +32,8 @@ Route::middleware('auth.api_token')->group(function () {
     Route::delete('/user/payout-accounts/{payoutAccount}', [UserPayoutAccountController::class, 'destroy']);
     Route::post('/user/payout-accounts/{payoutAccount}/primary', [UserPayoutAccountController::class, 'setPrimary']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/user/fcm-token', [DeviceTokenController::class, 'store']);
+    Route::delete('/user/fcm-token', [DeviceTokenController::class, 'destroy']);
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::post('/conversations', [ConversationController::class, 'store']);
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show']);
@@ -41,10 +44,15 @@ Route::middleware('auth.api_token')->group(function () {
     Route::post('/shipments/{shipment}/send-request', [ShipmentController::class, 'sendRequest']);
     Route::post('/shipments/{shipment}/paypal-order', [PayPalOrderController::class, 'forShipment']);
     Route::get('/requests', [AppRequestController::class, 'index']);
+    Route::get('/requests/{req}/counterparty', [AppRequestController::class, 'counterparty']);
     Route::patch('/requests/{req}/accept', [AppRequestController::class, 'accept']);
     Route::patch('/requests/{req}/reject', [AppRequestController::class, 'reject']);
+    Route::patch('/requests/{req}/cancel', [AppRequestController::class, 'cancel']);
     Route::post('/requests/{req}/pay', [AppRequestController::class, 'payRequest']);
     Route::post('/requests/{req}/rate', [AppRequestController::class, 'rate']);
+    Route::post('/requests/{req}/confirm-custody', [AppRequestController::class, 'confirmCustody']);
+    Route::post('/requests/{req}/confirm-delivery', [AppRequestController::class, 'confirmDelivery']);
+    Route::delete('/requests/{req}', [AppRequestController::class, 'destroy']);
     Route::post('/support-tickets', [SupportTicketController::class, 'store']);
     Route::get('/users/{user}/public-profile', [UserPublicProfileController::class, 'show']);
 });

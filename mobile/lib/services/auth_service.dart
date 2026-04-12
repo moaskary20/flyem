@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -5,6 +6,7 @@ import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/api_http_client.dart';
 import 'package:flyem_app/core/app_preferences.dart';
+import 'package:flyem_app/services/push_messaging_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -25,6 +27,7 @@ class AuthService {
     final userId = user['id'] as int?;
     if (userId != null && token.isNotEmpty) {
       await AppPreferences.setAuth(userId, token);
+      unawaited(PushMessagingService.syncTokenWithBackend());
     }
     return AuthResult(userId: userId, token: token);
   }
@@ -67,11 +70,13 @@ class AuthService {
     final userId = user['id'] as int?;
     if (userId != null && token.isNotEmpty) {
       await AppPreferences.setAuth(userId, token);
+      unawaited(PushMessagingService.syncTokenWithBackend());
     }
     return AuthResult(userId: userId, token: token);
   }
 
   static Future<void> logout() async {
+    await PushMessagingService.unregisterFromBackend();
     final token = await AppPreferences.getAuthToken();
     if (token != null && token.isNotEmpty) {
       try {
@@ -428,6 +433,9 @@ class PublicUserProfile {
   final double rating;
   final String homeCountryName;
   final String travelCountryName;
+  final bool revealsContact;
+  final String? contactPhone;
+  final String? profilePhotoUrl;
 
   PublicUserProfile({
     required this.id,
@@ -436,16 +444,22 @@ class PublicUserProfile {
     required this.rating,
     required this.homeCountryName,
     required this.travelCountryName,
+    this.revealsContact = false,
+    this.contactPhone,
+    this.profilePhotoUrl,
   });
 
   factory PublicUserProfile.fromJson(Map<String, dynamic> json) {
     return PublicUserProfile(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       firstName: json['first_name'] as String? ?? 'مستخدم',
       hasLastName: json['has_last_name'] as bool? ?? false,
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
       homeCountryName: json['home_country_name'] as String? ?? '',
       travelCountryName: json['travel_country_name'] as String? ?? '',
+      revealsContact: json['reveals_contact'] as bool? ?? false,
+      contactPhone: json['contact_phone'] as String?,
+      profilePhotoUrl: json['profile_photo_url'] as String?,
     );
   }
 }

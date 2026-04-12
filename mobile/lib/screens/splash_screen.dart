@@ -4,8 +4,6 @@ import 'package:video_player/video_player.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/screens/language_currency_screen.dart';
-import 'package:flyem_app/screens/login_screen.dart';
-import 'package:flyem_app/services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -68,10 +66,8 @@ class _SplashScreenState extends State<SplashScreen> {
     if (_navigating || !mounted) return;
     _navigating = true;
     bool onboardingDone = false;
-    bool loggedIn = false;
     try {
       onboardingDone = await AppPreferences.isOnboardingDone();
-      loggedIn = await AuthService.isLoggedIn();
     } catch (e) {
       debugPrint('Splash _goToNext error: $e');
     }
@@ -79,8 +75,6 @@ class _SplashScreenState extends State<SplashScreen> {
     Widget next;
     if (!onboardingDone) {
       next = const LanguageCurrencyScreen();
-    } else if (!loggedIn) {
-      next = const LoginScreen();
     } else {
       next = const HomeScreen();
     }
