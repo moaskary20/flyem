@@ -21,11 +21,19 @@ const String _riveSingleFile = 'rive/nav_icons.riv';
 bool get _useRiveIcons => !kIsWeb;
 
 class MainNavScreen extends StatefulWidget {
-  const MainNavScreen({super.key, this.initialIndex = 0, this.openConversationId, this.openConversationName});
+  const MainNavScreen({
+    super.key,
+    this.initialIndex = 0,
+    this.openConversationId,
+    this.openConversationName,
+    this.initialRequestsTabIndex,
+  });
 
   final int initialIndex;
   final int? openConversationId;
   final String? openConversationName;
+  /// تبويب مركز الطلبات عند فتح الشاشة (0–4). يُستخدم مع [initialIndex] == 3.
+  final int? initialRequestsTabIndex;
 
   @override
   State<MainNavScreen> createState() => _MainNavScreenState();
@@ -37,11 +45,12 @@ class _MainNavScreenState extends State<MainNavScreen> {
   late List<Widget> _screens;
 
   void _initScreens() {
+    final requestsTab = (widget.initialRequestsTabIndex ?? 0).clamp(0, 4);
     _screens = [
       SearchScreen(),
       MyShipmentsScreen(),
       TripsScreen(),
-      RequestsHubScreen(),
+      RequestsHubScreen(initialTabIndex: requestsTab),
       MoreScreen(),
     ];
   }

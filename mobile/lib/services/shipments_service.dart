@@ -89,7 +89,7 @@ class ShipmentsService {
     );
   }
 
-  /// إنشاء طلب على شحنة فقط (بدون دفع). يظهر في تطابقات حتى يقبل صاحب الشحنة.
+  /// إنشاء طلب على شحنة فقط (بدون دفع). يظهر في مركز الطلبات ← صادر حتى يقبل صاحب الشحنة.
   static Future<CreateRequestResult> createShipmentRequest(int shipmentId, {String? message}) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');

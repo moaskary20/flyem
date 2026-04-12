@@ -18,15 +18,24 @@ class PushNavigation {
       map[k] = v;
     }
     if (map['tab'] == 'requests') {
-      openRequestsTab();
+      final sub = map['requests_sub'];
+      final idx = int.tryParse(sub ?? '');
+      openRequestsTab(requestsTabIndex: idx);
     }
   }
 
-  static void openRequestsTab() {
+  /// [requestsTabIndex] تبويب داخل مركز الطلبات (0–4)، أو null للافتراضي 0.
+  static void openRequestsTab({int? requestsTabIndex}) {
     final nav = navigatorKey?.currentState;
     if (nav == null) return;
+    final idx = (requestsTabIndex ?? 0).clamp(0, 4);
     nav.pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const MainNavScreen(initialIndex: 3)),
+      MaterialPageRoute<void>(
+        builder: (_) => MainNavScreen(
+          initialIndex: 3,
+          initialRequestsTabIndex: idx,
+        ),
+      ),
       (_) => false,
     );
   }

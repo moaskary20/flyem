@@ -54,8 +54,9 @@ class AppStrings {
       _en ? 'You cannot send a request on your own listing' : 'لا يمكن إرسال طلب على إعلانك الخاص';
   static String get sendingRequest => _en ? 'Sending request…' : 'جاري إرسال الطلب...';
   static String get requestSentMatches => _en
-      ? 'Request sent. It will appear in matches until the shipper accepts.'
-      : 'تم إرسال الطلب. ستظهر في تطابقات حتى يقبل صاحب الشحنة.';
+      ? 'Request sent. Open Requests → Outgoing; it stays pending until the shipper accepts.'
+      : 'تم إرسال الطلب. تجده في الطلبات ← تبويب «صادر» حتى يقبل صاحب الشحنة.';
+  static String get viewRequestsOutgoing => _en ? 'Open outgoing' : 'فتح صادر';
   static String get tripRequiredGateTitle =>
       _en ? 'Add your trip first' : 'أضف رحلتك أولاً';
   static String get tripRequiredGateBody => _en

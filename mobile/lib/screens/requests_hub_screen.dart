@@ -14,7 +14,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// مركز الطلبات: وارد، صادر، قيد الدفع، مدفوع، محادثات.
 class RequestsHubScreen extends StatefulWidget {
-  const RequestsHubScreen({super.key});
+  const RequestsHubScreen({super.key, this.initialTabIndex = 0});
+
+  /// 0 وارد، 1 صادر، 2 قيد الدفع، 3 مدفوع، 4 محادثات
+  final int initialTabIndex;
 
   @override
   State<RequestsHubScreen> createState() => _RequestsHubScreenState();
@@ -32,7 +35,8 @@ class _RequestsHubScreenState extends State<RequestsHubScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    final tab = widget.initialTabIndex.clamp(0, 4);
+    _tabController = TabController(length: 5, initialIndex: tab, vsync: this);
     _load();
   }
 

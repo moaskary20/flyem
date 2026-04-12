@@ -321,7 +321,7 @@ class ShipmentController extends Controller
         return response()->json([
             'data' => [
                 'request_id' => $req->id,
-                'message' => 'تم إرسال الطلب. ستظهر في تطابقات حتى يقبل صاحب الشحنة.',
+                'message' => 'تم إرسال الطلب. تجده في الطلبات (تبويب صادر) حتى يقبل صاحب الشحنة.',
             ],
         ], 201);
     }

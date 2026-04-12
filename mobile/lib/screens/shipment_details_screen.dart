@@ -7,6 +7,7 @@ import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/screens/main_nav_screen.dart';
 import 'package:flyem_app/widgets/add_trip_passport_sheet.dart';
 import 'package:flyem_app/widgets/user_profile_link.dart';
 
@@ -76,6 +77,7 @@ class _ShipmentDetailsScreenState extends State<ShipmentDetailsScreen> {
               currentUserId: currentUserId,
               travelerHasTrip: travelerHasTrip,
               onTripRegistered: () => setState(() => _reloadKey++),
+              onRequestSent: () => setState(() => _reloadKey++),
             );
           },
         ),
@@ -90,12 +92,14 @@ class _DetailsContent extends StatelessWidget {
     required this.travelerHasTrip,
     this.currentUserId,
     this.onTripRegistered,
+    this.onRequestSent,
   });
 
   final ShipmentDetails shipment;
   final int? currentUserId;
   final bool travelerHasTrip;
   final VoidCallback? onTripRegistered;
+  final VoidCallback? onRequestSent;
 
   bool get _isOwner =>
       currentUserId != null &&
@@ -324,74 +328,6 @@ class _DetailsContent extends StatelessWidget {
         ),
       );
     }
-    if (!travelerHasTrip) {
-      return Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        color: Colors.white,
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                AppStrings.tripRequiredToRequestShipment,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey[800], height: 1.35),
-              ),
-              const SizedBox(height: 14),
-              FilledButton(
-                onPressed: () {
-                  showAddTripPassportThenTripForm(
-                    context,
-                    useFullScreenForm: true,
-                    onTripCreated: (added) {
-                      if (added) {
-                        onTripRegistered?.call();
-                      }
-                    },
-                  );
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryYellow,
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  AppStrings.tripRequiredAddTripAction,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        AppStrings.travelerProfit,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                      Text(
-                        '${shipment.currencySymbol}${shipment.priceMin}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    }
     final alreadyRequested = shipment.userHasRequested;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -404,6 +340,10 @@ class _DetailsContent extends StatelessWidget {
                 onPressed: alreadyRequested
                     ? null
                     : () async {
+                        if (!travelerHasTrip) {
+                          await _showTripRequiredBeforeRequest(context);
+                          return;
+                        }
                         final messenger = ScaffoldMessenger.of(context);
                         messenger.showSnackBar(
                           SnackBar(content: Text(AppStrings.sendingRequest)),
@@ -413,16 +353,34 @@ class _DetailsContent extends StatelessWidget {
                           if (!context.mounted) {
                             return;
                           }
+                          onRequestSent?.call();
                           await LocalNotificationService.showNotification(
                             id: LocalNotificationService.uniqueNotificationId(),
                             title: AppStrings.notificationRequestSent,
-                            body: AppStrings.notificationRequestSent,
+                            body: AppStrings.requestSentMatches,
+                            payload: const {'tab': 'requests', 'requests_sub': '1'},
                           );
                           if (!context.mounted) {
                             return;
                           }
                           messenger.showSnackBar(
-                            SnackBar(content: Text(AppStrings.requestSentMatches)),
+                            SnackBar(
+                              content: Text(AppStrings.requestSentMatches),
+                              action: SnackBarAction(
+                                label: AppStrings.viewRequestsOutgoing,
+                                onPressed: () {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const MainNavScreen(
+                                        initialIndex: 3,
+                                        initialRequestsTabIndex: 1,
+                                      ),
+                                    ),
+                                    (_) => false,
+                                  );
+                                },
+                              ),
+                            ),
                           );
                         } catch (e) {
                           if (context.mounted) {
@@ -468,6 +426,47 @@ class _DetailsContent extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// يُعرض فقط عند الضغط على «إرسال طلب» وليس عند فتح الشاشة.
+  Future<void> _showTripRequiredBeforeRequest(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(AppStrings.tripRequiredGateTitle),
+        content: SingleChildScrollView(
+          child: Text(
+            AppStrings.tripRequiredGateBody,
+            style: TextStyle(fontSize: 14, height: 1.4, color: Colors.grey[800]),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(AppStrings.tripRequiredLater),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              showAddTripPassportThenTripForm(
+                context,
+                useFullScreenForm: true,
+                onTripCreated: (added) {
+                  if (added) {
+                    onTripRegistered?.call();
+                  }
+                },
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primaryYellow,
+              foregroundColor: Colors.black87,
+            ),
+            child: Text(AppStrings.tripRequiredAddTripAction),
+          ),
+        ],
       ),
     );
   }
