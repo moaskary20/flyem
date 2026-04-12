@@ -12,8 +12,11 @@ import 'package:flyem_app/screens/edit_profile_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
 /// شاشة الصفحة الشخصية: بيانات المستخدم من قاعدة البيانات (API).
+/// [openedFromMarketplaceGate] يُضبط عند الفتح من حوار «الحساب غير جاهز» قبل إرسال طلب.
 class PersonalProfileScreen extends StatefulWidget {
-  const PersonalProfileScreen({super.key});
+  const PersonalProfileScreen({super.key, this.openedFromMarketplaceGate = false});
+
+  final bool openedFromMarketplaceGate;
 
   @override
   State<PersonalProfileScreen> createState() => _PersonalProfileScreenState();
@@ -91,6 +94,103 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     }
   }
 
+  String _documentVerificationLabel(UserProfile u) {
+    if (u.documentsVerified) {
+      return AppStrings.documentsVerified;
+    }
+    switch (u.verificationStatus) {
+      case 'rejected':
+        return AppStrings.documentsRejectedShort;
+      case 'pending':
+        return AppStrings.pendingVerification;
+      default:
+        return AppStrings.documentsVerificationIncomplete;
+    }
+  }
+
+  Widget _buildMarketplaceStatusCard() {
+    final u = _user;
+    if (u == null) {
+      return const SizedBox.shrink();
+    }
+    final ok = u.canUseMarketplace;
+    final banned = u.isBanned;
+    Color borderColor;
+    Color bg;
+    IconData icon;
+    if (ok) {
+      borderColor = Colors.green.shade300;
+      bg = Colors.green.shade50;
+      icon = Icons.check_circle_outline;
+    } else if (banned) {
+      borderColor = Colors.red.shade300;
+      bg = Colors.red.shade50;
+      icon = Icons.block;
+    } else {
+      borderColor = Colors.orange.shade300;
+      bg = Colors.orange.shade50;
+      icon = Icons.info_outline;
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: Colors.black87, size: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  AppStrings.accountAndVerificationSectionTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            banned
+                ? AppStrings.accountStatusLabelBanned
+                : u.accountActive
+                    ? AppStrings.accountStatusLabelActive
+                    : AppStrings.accountStatusLabelInactive,
+            style: TextStyle(fontSize: 14, height: 1.35, color: Colors.grey[900]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _documentVerificationLabel(u),
+            style: TextStyle(fontSize: 14, height: 1.35, color: Colors.grey[800]),
+          ),
+          if (!ok) ...[
+            const SizedBox(height: 10),
+            Text(
+              AppStrings.marketplaceBlockedCardBodyGeneric,
+              style: TextStyle(fontSize: 13, height: 1.4, color: Colors.grey[700]),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              AppStrings.marketplaceReadyCardBody,
+              style: TextStyle(fontSize: 13, height: 1.4, color: Colors.grey[800]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -125,6 +225,8 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              const SizedBox(height: 16),
+                              _buildMarketplaceStatusCard(),
                               const SizedBox(height: 24),
                               _buildBasicInfoSection(),
                               const SizedBox(height: 24),
@@ -205,9 +307,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                         color: _user?.documentsVerified == true ? Colors.grey[700] : Colors.grey[600],
                       ),
                       Text(
-                        _user?.documentsVerified == true
-                            ? AppStrings.documentsVerified
-                            : AppStrings.pendingVerification,
+                        _user != null
+                            ? _documentVerificationLabel(_user!)
+                            : AppStrings.documentsVerificationIncomplete,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,

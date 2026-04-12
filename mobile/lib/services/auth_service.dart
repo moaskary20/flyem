@@ -314,6 +314,8 @@ class UserProfile {
   final String? travelPhone;
   /// active | inactive | banned — من الخادم.
   final String accountStatus;
+  /// إن وُجد من `/api/user` يُستخدم كمصدر حقيقة لصلاحية السوق.
+  final bool? canUseMarketplaceFromApi;
 
   UserProfile({
     required this.id,
@@ -343,13 +345,21 @@ class UserProfile {
     this.homePhone,
     this.travelPhone,
     this.accountStatus = 'active',
+    this.canUseMarketplaceFromApi,
   });
 
   bool get accountActive => accountStatus == 'active';
 
-  /// يطابق الـ API: غير المحظور + (نشط أو موثّق وثائقياً).
-  bool get canUseMarketplace =>
-      accountStatus != 'banned' && (accountStatus == 'active' || documentsVerified);
+  bool get isBanned => accountStatus == 'banned';
+
+  /// يطابق الـ API عند توفّر [canUseMarketplaceFromApi]؛ وإلا نفس قاعدة الخادم محلياً.
+  bool get canUseMarketplace {
+    if (canUseMarketplaceFromApi != null) {
+      return canUseMarketplaceFromApi!;
+    }
+    return accountStatus != 'banned' &&
+        (accountStatus == 'active' || documentsVerified);
+  }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -380,6 +390,9 @@ class UserProfile {
       homePhone: UserProfile._readStringOrNull(json['home_phone']),
       travelPhone: UserProfile._readStringOrNull(json['travel_phone']),
       accountStatus: UserProfile._readString(json['status'], fallback: 'active'),
+      canUseMarketplaceFromApi: json.containsKey('can_use_marketplace')
+          ? UserProfile._readBool(json['can_use_marketplace'])
+          : null,
     );
   }
 

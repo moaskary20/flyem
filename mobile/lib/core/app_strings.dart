@@ -183,6 +183,30 @@ class AppStrings {
   static String get accountNotActiveForMarketplace => _en
       ? 'Your account is not ready yet. You need an active account or completed verification from the admin to post or send requests.'
       : 'حسابك غير جاهز بعد. يلزم تنشيط الحساب أو اكتمال التوثيق من الإدارة لنشر إعلانات أو إرسال طلبات.';
+  static String get marketplaceBlockedDialogTitle =>
+      _en ? 'Account not ready' : 'الحساب غير جاهز للطلبات';
+  static String get marketplaceBlockedDialogBody => _en
+      ? 'Open your profile to see account status and document verification. After the admin approves verification, your account is activated and you can send requests.'
+      : 'افتح الصفحة الشخصية لمعرفة حالة الحساب وتوثيق الوثائق. بعد موافقة الإدارة على التوثيق يُفعَّل حسابك ويمكنك إرسال الطلبات.';
+  static String get openAccountVerificationPage =>
+      _en ? 'Open profile & verification' : 'فتح الصفحة الشخصية والتوثيق';
+  static String get accountAndVerificationSectionTitle =>
+      _en ? 'Account & verification (requests)' : 'الحساب والتوثيق (الطلبات والإعلانات)';
+  static String get marketplaceReadyCardBody => _en
+      ? 'You can post trips and shipments and send requests.'
+      : 'يمكنك نشر الرحلات والشحنات وإرسال الطلبات.';
+  static String get accountStatusLabelActive => _en ? 'Account: active' : 'حالة الحساب: نشط';
+  static String get accountStatusLabelInactive =>
+      _en ? 'Account: not activated yet' : 'حالة الحساب: غير مُفعّل بعد';
+  static String get accountStatusLabelBanned => _en ? 'Account: banned' : 'حالة الحساب: محظور';
+  static String get documentsRejectedShort =>
+      _en ? 'Documents rejected' : 'الوثائق مرفوضة — راجع الدعم';
+  static String get documentsVerificationIncomplete => _en
+      ? 'Documents not verified yet'
+      : 'لم يُعتمد التوثيق بعد';
+  static String get marketplaceBlockedCardBodyGeneric => _en
+      ? 'Sending requests requires an active account or approved verification by the admin. Status is shown below.'
+      : 'إرسال الطلبات يتطلب حساباً مُفعّلاً أو توثيقاً معتمداً من الإدارة. تظهر التفاصيل أدناه في الصفحة الشخصية.';
   static String get pickupDeliveryOptionsTitle =>
       _en ? 'Pickup & delivery options' : 'خيارات الاستلام والتسليم';
   static String get canPickupInCurrentCountry =>

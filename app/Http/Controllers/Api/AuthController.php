@@ -146,6 +146,8 @@ class AuthController extends Controller
                 'home_phone' => $user->home_phone,
                 'travel_phone' => $user->travel_phone,
                 'status' => $user->status ?? 'active',
+                'can_use_marketplace' => ($user->status ?? '') !== 'banned'
+                    && (($user->status ?? '') === 'active' || ($user->verification_status ?? '') === 'verified'),
                 'payout_accounts' => Schema::hasTable('user_payout_accounts')
                     ? $user->payoutAccounts->sortByDesc('is_primary')->values()->map(fn ($a) => [
                         'id' => $a->id,
