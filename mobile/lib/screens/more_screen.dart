@@ -13,12 +13,14 @@ import 'package:flyem_app/screens/privacy_terms_screen.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/screens/login_screen.dart';
 import 'package:flyem_app/screens/settings_screen.dart';
+import 'package:flyem_app/screens/payment_details_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 
 enum _MoreAction {
   settings,
   suggest,
   wallet,
+  bankAccount,
   faq,
   privacy,
   support,
@@ -146,6 +148,7 @@ class _MoreScreenState extends State<MoreScreen> {
       (_MoreAction.settings, AppStrings.settings, Icons.settings_outlined),
       (_MoreAction.suggest, AppStrings.suggestToUs, Icons.lightbulb_outline),
       (_MoreAction.wallet, AppStrings.walletProfileTitle, Icons.account_balance_wallet_outlined),
+      (_MoreAction.bankAccount, AppStrings.moreBankAccount, Icons.account_balance_outlined),
       (_MoreAction.faq, AppStrings.faq, Icons.chat_bubble_outline),
       (_MoreAction.privacy, AppStrings.privacyAndTerms, Icons.description_outlined),
       (_MoreAction.support, AppStrings.technicalSupport, Icons.help_outline),
@@ -203,6 +206,12 @@ class _MoreScreenState extends State<MoreScreen> {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const WalletScreen()),
         );
+      case _MoreAction.bankAccount:
+        if (!await ensureLoggedIn(context) || !context.mounted) return;
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(builder: (_) => const PaymentDetailsScreen()),
+        );
+        if (mounted) await _loadUser();
       case _MoreAction.faq:
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const FaqScreen()),

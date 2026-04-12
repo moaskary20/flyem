@@ -309,6 +309,8 @@ class AppStrings {
   static String get logoutSuccess => _en ? 'Signed out' : 'تم تسجيل الخروج';
   static String get signInTitle => _en ? 'Sign in' : 'تسجيل الدخول';
   static String get guestUserLabel => _en ? 'Guest' : 'زائر';
+  /// بند المزيد — يفتح شاشة الآيبان/حسابات السحب مباشرة.
+  static String get moreBankAccount => _en ? 'Bank account' : 'الحساب البنكي';
   /// بند المزيد وشاشة إدارة حسابات السحب.
   static String get paymentDetails =>
       _en ? 'Withdrawal details' : 'تفاصيل سحب الأموال';
