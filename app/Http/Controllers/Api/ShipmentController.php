@@ -299,8 +299,10 @@ class ShipmentController extends Controller
         if (! $auth || (int) $auth->id !== (int) $shipment->user_id) {
             return response()->json(['message' => 'غير مصرح.'], 403);
         }
-        if ($deny = $this->rejectUnlessActiveAccount($request)) {
-            return $deny;
+        if (($auth->status ?? '') === 'banned') {
+            return response()->json([
+                'message' => 'هذا الحساب محظور ولا يمكنه استخدام التطبيق.',
+            ], 422);
         }
         $shipment->delete();
 

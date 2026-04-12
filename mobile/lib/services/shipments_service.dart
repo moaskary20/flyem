@@ -8,7 +8,6 @@ import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/models/shipment_list_item.dart';
 import 'package:flyem_app/services/trips_service.dart';
-import 'package:http/http.dart' as http;
 
 class ShipmentsService {
   static Future<ShipmentsListResponse> getShipments({
@@ -180,9 +179,23 @@ class ShipmentsService {
   }
 
   static Future<void> deleteShipment(int id) async {
-    final response = await ApiClient.delete('/api/shipments/$id');
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('يجب تسجيل الدخول أولاً');
+    }
+    final response = await ApiClient.delete(
+      '/api/shipments/$id',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 401) {
+      throw Exception('يجب تسجيل الدخول');
+    }
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('API error: ${response.statusCode}');
+      final m = jsonDecode(response.body) as Map<String, dynamic>?;
+      throw Exception(m?['message'] as String? ?? 'API error: ${response.statusCode}');
     }
   }
 

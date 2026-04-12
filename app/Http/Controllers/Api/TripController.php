@@ -14,6 +14,7 @@ use App\Services\PayPalService;
 use App\Support\StoresBase64ImageToPublicDisk;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class TripController extends Controller
 {
@@ -269,21 +270,23 @@ class TripController extends Controller
             'status' => 'active',
         ]);
 
-        $passportPath = $this->storeBase64ImageToPublicDisk(
-            $validated['passport_image_base64'] ?? null,
-            'trips/'.$trip->id,
-            'passport_image_base64',
-        );
-        $ticketPath = $this->storeBase64ImageToPublicDisk(
-            $validated['flight_ticket_image_base64'] ?? null,
-            'trips/'.$trip->id,
-            'flight_ticket_image_base64',
-        );
-        if ($passportPath !== null || $ticketPath !== null) {
-            $trip->update([
-                'passport_image' => $passportPath ?? $trip->passport_image,
-                'flight_ticket_image' => $ticketPath ?? $trip->flight_ticket_image,
-            ]);
+        if (Schema::hasColumn('trips', 'passport_image') && Schema::hasColumn('trips', 'flight_ticket_image')) {
+            $passportPath = $this->storeBase64ImageToPublicDisk(
+                $validated['passport_image_base64'] ?? null,
+                'trips/'.$trip->id,
+                'passport_image_base64',
+            );
+            $ticketPath = $this->storeBase64ImageToPublicDisk(
+                $validated['flight_ticket_image_base64'] ?? null,
+                'trips/'.$trip->id,
+                'flight_ticket_image_base64',
+            );
+            if ($passportPath !== null || $ticketPath !== null) {
+                $trip->update([
+                    'passport_image' => $passportPath ?? $trip->passport_image,
+                    'flight_ticket_image' => $ticketPath ?? $trip->flight_ticket_image,
+                ]);
+            }
         }
 
         return response()->json(['message' => 'created', 'id' => $trip->id], 201);
@@ -298,8 +301,10 @@ class TripController extends Controller
         if (! $auth || (int) $auth->id !== (int) $trip->user_id) {
             return response()->json(['message' => 'غير مصرح.'], 403);
         }
-        if ($deny = $this->rejectUnlessActiveAccount($request)) {
-            return $deny;
+        if (($auth->status ?? '') === 'banned') {
+            return response()->json([
+                'message' => 'هذا الحساب محظور ولا يمكنه استخدام التطبيق.',
+            ], 422);
         }
         $trip->delete();
 

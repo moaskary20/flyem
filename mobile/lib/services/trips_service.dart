@@ -111,9 +111,23 @@ class TripsService {
   }
 
   static Future<void> deleteTrip(int id) async {
-    final response = await ApiClient.delete('/api/trips/$id');
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('يجب تسجيل الدخول أولاً');
+    }
+    final response = await ApiClient.delete(
+      '/api/trips/$id',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 401) {
+      throw Exception('يجب تسجيل الدخول');
+    }
     if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('API error: ${response.statusCode}');
+      final m = jsonDecode(response.body) as Map<String, dynamic>?;
+      throw Exception(m?['message'] as String? ?? 'API error: ${response.statusCode}');
     }
   }
 

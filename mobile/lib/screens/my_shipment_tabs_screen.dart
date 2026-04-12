@@ -157,10 +157,13 @@ class _TabsContent extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('تم حذف الشحنة')),
                   );
-                } catch (_) {
+                } catch (e) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('فشل حذف الشحنة'), backgroundColor: Colors.red),
+                    SnackBar(
+                      content: Text(e.toString().replaceFirst('Exception: ', '')),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               },
