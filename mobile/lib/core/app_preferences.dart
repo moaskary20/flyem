@@ -8,6 +8,8 @@ class AppPreferences {
   static const String _keyAppLocale = 'app_locale';
   static const String _keyAuthToken = 'auth_token';
   static const String _keyUserId = 'user_id';
+  static const String _keyNotifyShippingTrips = 'notify_shipping_trips';
+  static const String _keyNotifyChat = 'notify_chat';
 
   static Future<bool> isOnboardingDone() async {
     final prefs = await SharedPreferences.getInstance();
@@ -53,5 +55,25 @@ class AppPreferences {
   static Future<bool> isLoggedIn() async {
     final token = await getAuthToken();
     return token != null && token.isNotEmpty;
+  }
+
+  static Future<bool> getNotifyShippingTrips() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyNotifyShippingTrips) ?? false;
+  }
+
+  static Future<void> setNotifyShippingTrips(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyNotifyShippingTrips, value);
+  }
+
+  static Future<bool> getNotifyChat() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyNotifyChat) ?? true;
+  }
+
+  static Future<void> setNotifyChat(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyNotifyChat, value);
   }
 }

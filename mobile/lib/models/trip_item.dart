@@ -16,6 +16,8 @@ class TripItem {
   final String status;
   final int confirmedDeals;
   final String? userName;
+  /// مالك الرحلة (لمنع «إرسال طلب» على رحلتك من البحث).
+  final int? userId;
   final bool canPickupInCurrentCountry;
   final bool canDeliverInOtherCountry;
   final bool canReturnOnCancel;
@@ -38,6 +40,7 @@ class TripItem {
     this.status = 'active',
     this.confirmedDeals = 0,
     this.userName,
+    this.userId,
     this.canPickupInCurrentCountry = false,
     this.canDeliverInOtherCountry = false,
     this.canReturnOnCancel = false,
@@ -62,6 +65,7 @@ class TripItem {
       status: json['status'] as String? ?? 'active',
       confirmedDeals: (json['confirmed_deals'] as num?)?.toInt() ?? 0,
       userName: json['user_name'] as String?,
+      userId: (json['user_id'] as num?)?.toInt(),
       canPickupInCurrentCountry: json['can_pickup_in_current_country'] as bool? ?? false,
       canDeliverInOtherCountry: json['can_deliver_in_other_country'] as bool? ?? false,
       canReturnOnCancel: json['can_return_on_cancel'] as bool? ?? false,

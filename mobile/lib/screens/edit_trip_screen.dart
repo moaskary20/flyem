@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
@@ -318,7 +319,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLocale.textDirection,
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
@@ -332,7 +333,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
     }
     if (_error != null || _trip == null) {
       return Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLocale.textDirection,
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
@@ -365,7 +366,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -491,7 +492,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                hint: const Text(AppStrings.cityCountryHint),
+                hint: Text(AppStrings.cityCountryHint),
                 items: _countries
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),
@@ -558,7 +559,7 @@ class _EditTripScreenState extends State<EditTripScreen> {
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                hint: const Text(AppStrings.cityCountryHint),
+                hint: Text(AppStrings.cityCountryHint),
                 items: _countries
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),

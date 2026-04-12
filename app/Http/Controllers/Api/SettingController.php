@@ -17,9 +17,15 @@ class SettingController extends Controller
     {
         $settings = Cache::remember('api_settings', 300, function () {
             $arr = [];
+            $neverExpose = ['paypal_client_secret'];
+
             foreach (Setting::all() as $s) {
+                if (in_array($s->key, $neverExpose, true)) {
+                    continue;
+                }
                 $arr[$s->key] = $s->value;
             }
+
             return $arr;
         });
 

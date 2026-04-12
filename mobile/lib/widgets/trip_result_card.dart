@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
+import 'package:flyem_app/widgets/user_profile_link.dart';
 
 /// بطاقة رحلة في نتائج البحث (تبويب رحلات).
 /// يعرض الحد الأدنى لسعر الرحلة (من لوحة التحكم) إن وُجد، وإلا سعر الرحلة.
@@ -37,27 +38,90 @@ class TripResultCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Text(
-                    item.fromDisplay,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+              Text(
+                AppStrings.appTripNumber(item.id),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 6),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppStrings.routeLabelFrom,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            item.fromDisplay,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (item.fromCountry.isNotEmpty &&
+                              item.fromCity.isNotEmpty &&
+                              item.fromDisplay != item.fromCountry)
+                            Text(
+                              item.fromCountry,
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Icon(Icons.flight, size: 18, color: Colors.grey[600]),
-                  ),
-                  Text(
-                    item.toDisplay,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, left: 4, right: 4),
+                      child: Icon(Icons.arrow_forward, size: 20, color: AppColors.primaryYellow),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            AppStrings.routeLabelTo,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            item.toDisplay,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
+                          ),
+                          if (item.toCountry.isNotEmpty &&
+                              item.toCity.isNotEmpty &&
+                              item.toDisplay != item.toCountry)
+                            Text(
+                              item.toCountry,
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (item.departureFormatted != null || item.departureDate != null) ...[
                 const SizedBox(height: 6),
@@ -71,8 +135,9 @@ class TripResultCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   if (item.userName != null && item.userName!.isNotEmpty)
-                    Text(
-                      item.userName!,
+                    TappableUserName(
+                      userId: item.userId,
+                      displayName: item.userName!,
                       style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                     ),
                 ],

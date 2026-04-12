@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flyem_app/core/app_preferences.dart';
+import 'package:flyem_app/core/app_locale.dart';
+import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/screens/signup_screen.dart';
@@ -15,7 +16,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String _locale = 'ar';
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
@@ -32,15 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   static const String _noAccountAr = 'إذا لم تكن مسجلاً عليك بالاشتراك';
   static const String _noAccountEn = "If you don't have an account, sign up";
 
-  bool get _isAr => _locale == 'ar';
-
-  @override
-  void initState() {
-    super.initState();
-    AppPreferences.getAppLocale().then((l) {
-      if (mounted) setState(() => _locale = l);
-    });
-  }
+  bool get _isAr => AppStrings.isArabic;
 
   @override
   void dispose() {
@@ -87,9 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isRtl = _locale == 'ar';
     return Directionality(
-      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
@@ -123,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
-                  textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                  textAlign: _isAr ? TextAlign.right : TextAlign.left,
                 ),
                 const SizedBox(height: 28),
                 TextField(
@@ -153,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     _error!,
                     style: const TextStyle(color: Colors.red, fontSize: 13),
-                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                    textAlign: _isAr ? TextAlign.right : TextAlign.left,
                   ),
                 ],
                 const SizedBox(height: 24),

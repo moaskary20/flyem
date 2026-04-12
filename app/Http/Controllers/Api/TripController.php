@@ -10,6 +10,7 @@ use App\Models\Request as RequestModel;
 use App\Models\Setting;
 use App\Models\Trip;
 use App\Models\User;
+use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -143,7 +144,10 @@ class TripController extends Controller
             $user = User::where('api_token', $hashed)->first();
             if ($user) {
                 $existing = RequestModel::where('trip_id', $trip->id)->where('requester_id', $user->id)->first();
-                $payload['user_has_requested'] = (bool) $existing;
+                $ownerId = (int) $trip->user_id;
+                $blockedByOtherListing = $existing === null
+                    && RequestModel::hasBlockingRequestWithListingOwner((int) $user->id, $ownerId);
+                $payload['user_has_requested'] = (bool) $existing || $blockedByOtherListing;
                 $payload['existing_request_id'] = $existing?->id;
             }
         }
@@ -270,6 +274,12 @@ class TripController extends Controller
             return response()->json(['message' => 'لقد أرسلت طلباً على هذه الرحلة مسبقاً.'], 422);
         }
 
+        if (RequestModel::hasBlockingRequestWithListingOwner((int) $user->id, (int) $trip->user_id)) {
+            return response()->json([
+                'message' => 'لديك طلب مفتوح مع صاحب هذه الرحلة على إعلان آخر؛ أنهِ الطلب السابق أو انتظر حتى يُرفض قبل إرسال طلب جديد لنفس الشخص.',
+            ], 422);
+        }
+
         $request->validate([
             'payment_method_id' => 'required|exists:payment_methods,id',
             'message' => 'nullable|string|max:500',
@@ -280,6 +290,10 @@ class TripController extends Controller
         $paymentMethod = PaymentMethod::find($request->payment_method_id);
         if (! $paymentMethod || ! $paymentMethod->is_active) {
             return response()->json(['message' => 'وسيلة الدفع غير متاحة.'], 422);
+        }
+
+        if ($paymentMethod->code === 'paypal' && ! app(PayPalService::class)->isReady()) {
+            return response()->json(['message' => 'PayPal غير متاح حالياً.'], 422);
         }
 
         $minTripPriceSetting = Setting::where('key', 'min_trip_price')->first();
@@ -295,6 +309,20 @@ class TripController extends Controller
             $amount = 1;
         }
 
+        $transactionReference = '';
+        if ($paymentMethod->code === 'paypal') {
+            $request->validate([
+                'paypal_order_id' => 'required|string|max:120',
+            ], [], [
+                'paypal_order_id' => 'رقم طلب PayPal',
+            ]);
+            $capture = app(PayPalService::class)->captureOrder($request->paypal_order_id);
+            if (! ($capture['ok'] ?? false)) {
+                return response()->json(['message' => $capture['message'] ?? 'فشل التحقق من دفع PayPal'], 422);
+            }
+            $transactionReference = $capture['capture_id'] ?? $request->paypal_order_id;
+        }
+
         $req = RequestModel::create([
             'trip_id' => $trip->id,
             'requester_id' => $user->id,
@@ -304,6 +332,10 @@ class TripController extends Controller
             'status' => 'pending',
         ]);
 
+        if ($paymentMethod->code !== 'paypal') {
+            $transactionReference = 'req-'.$req->id.'-'.time();
+        }
+
         Payment::create([
             'request_id' => $req->id,
             'user_id' => $user->id,
@@ -311,7 +343,7 @@ class TripController extends Controller
             'currency_id' => $trip->currency_id,
             'payment_method' => $paymentMethod->code,
             'payment_status' => 'paid',
-            'transaction_reference' => 'req-' . $req->id . '-' . time(),
+            'transaction_reference' => $transactionReference,
         ]);
 
         $conversation = Conversation::where('trip_id', $trip->id)

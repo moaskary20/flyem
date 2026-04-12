@@ -4,9 +4,24 @@ import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/models/trip_item.dart';
-import 'package:http/http.dart' as http;
+import 'package:flyem_app/services/auth_service.dart';
 
 class TripsService {
+  /// هل لدى المستخدم الحالي رحلة واحدة على الأقل (للمسافر قبل طلب شحنة).
+  /// الضيوف يُعاد لهم `true` حتى لا يُمنع عرض البحث.
+  static Future<bool> currentUserHasAtLeastOneTrip() async {
+    final id = await AuthService.getUserId();
+    if (id == null) {
+      return true;
+    }
+    try {
+      final res = await getMyTrips(userId: id, perPage: 1);
+      return res.total > 0 || res.data.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// كل الرحلات النشطة (شاشة البحث - تبويب رحلات) مع فلتر اختياري
   static Future<TripsListResponse> getTripsForSearch({
     int? fromCountryId,
@@ -107,11 +122,15 @@ class TripsService {
     required int tripId,
     required int paymentMethodId,
     String? message,
+    String? paypalOrderId,
   }) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
     final bodyMap = <String, dynamic>{'payment_method_id': paymentMethodId};
     if (message != null && message.isNotEmpty) bodyMap['message'] = message;
+    if (paypalOrderId != null && paypalOrderId.isNotEmpty) {
+      bodyMap['paypal_order_id'] = paypalOrderId;
+    }
     final response = await ApiClient.post(
       '/api/trips/$tripId/send-request',
       headers: {
@@ -127,10 +146,37 @@ class TripsService {
       throw Exception(msg);
     }
     final map = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = map['data'] as Map<String, dynamic>? ?? map;
     return SendRequestResult(
-      requestId: (map['request_id'] as num).toInt(),
-      conversationId: (map['conversation_id'] as num).toInt(),
-      otherUserName: map['other_user_name'] as String? ?? '',
+      requestId: (data['request_id'] as num).toInt(),
+      conversationId: (data['conversation_id'] as num).toInt(),
+      otherUserName: data['other_user_name'] as String? ?? '',
+    );
+  }
+
+  /// يبدأ دفع PayPal: يفتح التطبيق [approveUrl] ثم يُستدعى [sendRequest] مع [paypalOrderId] نفس [orderId].
+  static Future<PayPalOrderResult> createPayPalOrderForTrip(int tripId) async {
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
+    final response = await ApiClient.post(
+      '/api/trips/$tripId/paypal-order',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, dynamic>{}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final map = jsonDecode(response.body) as Map<String, dynamic>?;
+      final msg = map?['message'] as String? ?? response.body;
+      throw Exception(msg);
+    }
+    final map = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = map['data'] as Map<String, dynamic>? ?? map;
+    return PayPalOrderResult(
+      orderId: data['order_id'] as String,
+      approveUrl: data['approve_url'] as String,
     );
   }
 
@@ -273,4 +319,10 @@ class SendRequestResult {
     required this.conversationId,
     required this.otherUserName,
   });
+}
+
+class PayPalOrderResult {
+  final String orderId;
+  final String approveUrl;
+  PayPalOrderResult({required this.orderId, required this.approveUrl});
 }

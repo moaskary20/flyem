@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/trip_payment_screen.dart';
 import 'package:flyem_app/services/trips_service.dart';
+import 'package:flyem_app/services/auth_service.dart';
+import 'package:flyem_app/widgets/user_profile_link.dart';
 
 /// شاشة تفاصيل الرحلة — تصميم موحد مع شاشة تفاصيل الشحنة.
 class TripDetailsScreen extends StatefulWidget {
-  const TripDetailsScreen({super.key, required this.tripId});
+  const TripDetailsScreen({
+    super.key,
+    required this.tripId,
+    /// عند الفتح من «رحلاتي»: لا يُعرض زر إرسال الطلب (رحلتك الخاصة).
+    this.openedFromMyTrips = false,
+  });
 
   final int tripId;
+  final bool openedFromMyTrips;
 
   @override
   State<TripDetailsScreen> createState() => _TripDetailsScreenState();
@@ -17,6 +26,7 @@ class TripDetailsScreen extends StatefulWidget {
 
 class _TripDetailsScreenState extends State<TripDetailsScreen> {
   TripDetails? _trip;
+  int? _myUserId;
   bool _loading = true;
   String? _error;
 
@@ -32,15 +42,21 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       _error = null;
     });
     try {
-      final t = await TripsService.getTrip(widget.tripId);
-      if (mounted) setState(() {
-        _trip = t;
-        _loading = false;
-      });
+      final results = await Future.wait<dynamic>([
+        TripsService.getTrip(widget.tripId),
+        AuthService.getUserId(),
+      ]);
+      if (mounted) {
+        setState(() {
+          _trip = results[0] as TripDetails;
+          _myUserId = results[1] as int?;
+          _loading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() {
         _loading = false;
-        _error = 'فشل تحميل تفاصيل الرحلة';
+        _error = AppStrings.loadFailedTrip;
       });
     }
   }
@@ -69,7 +85,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: _loading
@@ -83,7 +99,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                         children: [
                           Text(_error!, textAlign: TextAlign.center),
                           const SizedBox(height: 16),
-                          FilledButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+                          FilledButton(onPressed: _load, child: Text(AppStrings.retry)),
                         ],
                       ),
                     ),
@@ -104,21 +120,14 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                     icon: const Icon(Icons.arrow_back_ios_new),
                                     onPressed: () => Navigator.of(context).pop(),
                                   ),
-                                  title: Text(
-                                    _trip!.fromDisplay,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  actions: [
-                                    Icon(Icons.flight, color: AppColors.primaryYellow, size: 22),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _trip!.toDisplay,
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                  title: Directionality(
+                                    textDirection: TextDirection.ltr,
+                                    child: Text(
+                                      '${_trip!.fromDisplay} → ${_trip!.toDisplay}',
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(width: 12),
-                                  ],
+                                  ),
                                 ),
                                 SliverToBoxAdapter(
                                   child: Padding(
@@ -127,12 +136,17 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.stretch,
                                       children: [
                                         _buildOriginDestination(),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          AppStrings.appTripNumber(_trip!.id),
+                                          style: TextStyle(fontSize: 13, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                                        ),
                                         const SizedBox(height: 20),
                                         _buildInfoCard(
-                                          title: 'وسيلة السفر',
+                                          title: AppStrings.detailTravelMethod,
                                           children: [
                                             _buildDetailRow(
-                                              label: 'نوع الرحلة',
+                                              label: AppStrings.detailTripType,
                                               value: _trip!.travelMethodLabel,
                                               icon: Icons.directions_transit,
                                             ),
@@ -140,41 +154,41 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                         ),
                                         const SizedBox(height: 16),
                                         _buildInfoCard(
-                                          title: 'التواريخ',
+                                          title: AppStrings.detailDates,
                                           children: [
                                             _buildDetailRow(
-                                              label: 'تاريخ المغادرة',
+                                              label: AppStrings.detailDepartureDate,
                                               value: _formatDateTime(_trip!.departureDate),
                                               icon: Icons.calendar_today,
                                             ),
                                             const SizedBox(height: 12),
                                             _buildDetailRow(
-                                              label: 'تاريخ الوصول',
+                                              label: AppStrings.detailArrivalDate,
                                               value: _formatDateTime(_trip!.returnDate),
                                               icon: Icons.event,
                                             ),
                                             const SizedBox(height: 12),
                                             _buildDetailRow(
-                                              label: 'الفترة المتاحة لتسليم الشحنة',
+                                              label: AppStrings.detailDeliveryWindow,
                                               value: _trip!.departureDate != null || _trip!.returnDate != null
                                                   ? '${_formatDateTime(_trip!.departureDate)} — ${_formatDateTime(_trip!.returnDate)}'
-                                                  : 'غير محدد',
+                                                  : AppStrings.unspecified,
                                               icon: Icons.schedule,
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 16),
                                         _buildInfoCard(
-                                          title: 'مناطق تسلم الشحنة',
+                                          title: AppStrings.detailPickupAreas,
                                           children: [
                                             _buildDetailRow(
-                                              label: 'من',
+                                              label: AppStrings.labelFrom,
                                               value: _trip!.fromDisplay,
                                               icon: Icons.location_on,
                                             ),
                                             const SizedBox(height: 12),
                                             _buildDetailRow(
-                                              label: 'إلى',
+                                              label: AppStrings.labelTo,
                                               value: _trip!.toDisplay,
                                               icon: Icons.place,
                                             ),
@@ -186,13 +200,13 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                           children: [
                                             _buildDetailRow(
                                               label: AppStrings.canPickupInCurrentCountry,
-                                              value: _trip!.canPickupInCurrentCountry ? 'نعم' : 'لا',
+                                              value: _trip!.canPickupInCurrentCountry ? AppStrings.yes : AppStrings.no,
                                               icon: Icons.inventory_2_outlined,
                                             ),
                                             const SizedBox(height: 12),
                                             _buildDetailRow(
                                               label: AppStrings.canDeliverInOtherCountry,
-                                              value: _trip!.canDeliverInOtherCountry ? 'نعم' : 'لا',
+                                              value: _trip!.canDeliverInOtherCountry ? AppStrings.yes : AppStrings.no,
                                               icon: Icons.local_shipping_outlined,
                                             ),
                                             const SizedBox(height: 12),
@@ -201,8 +215,8 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                               value: _trip!.canReturnOnCancel
                                                   ? (_trip!.returnBeforeDays != null
                                                       ? AppStrings.returnBeforeDaysLabel(_trip!.returnBeforeDays!)
-                                                      : 'نعم')
-                                                  : 'لا',
+                                                      : AppStrings.yes)
+                                                  : AppStrings.no,
                                               icon: Icons.reply_outlined,
                                             ),
                                           ],
@@ -210,7 +224,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                                         if (_trip!.notes != null && _trip!.notes!.isNotEmpty) ...[
                                           const SizedBox(height: 16),
                                           _buildInfoCard(
-                                            title: 'ملاحظات',
+                                            title: AppStrings.detailNotes,
                                             children: [
                                               Text(
                                                 _trip!.notes!,
@@ -237,53 +251,70 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   }
 
   Widget _buildOriginDestination() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              _trip!.fromCity.isNotEmpty ? _trip!.fromCity : _trip!.fromCountry,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+    final fromMain = _trip!.fromCity.isNotEmpty ? _trip!.fromCity : _trip!.fromCountry;
+    final toMain = _trip!.toCity.isNotEmpty ? _trip!.toCity : _trip!.toCountry;
+    final caption = TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      color: Colors.grey[600],
+    );
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppStrings.routeLabelFrom, style: caption),
+                Text(
+                  fromMain,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  _trip!.fromCountry,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              _trip!.fromCountry,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(height: 3, width: 40, color: AppColors.primaryYellow),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.flight, color: AppColors.primaryYellow, size: 28),
-              ),
-              Container(height: 3, width: 40, color: AppColors.primaryYellow),
-            ],
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              _trip!.toCity.isNotEmpty ? _trip!.toCity : _trip!.toCountry,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+          Padding(
+            padding: const EdgeInsets.only(top: 14, left: 4, right: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 12, height: 2, color: AppColors.primaryYellow),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Icon(Icons.arrow_forward, color: AppColors.primaryYellow, size: 26),
+                ),
+                Container(width: 12, height: 2, color: AppColors.primaryYellow),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              _trip!.toCountry,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(AppStrings.routeLabelTo, style: caption),
+                Text(
+                  toMain,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.end,
+                ),
+                Text(
+                  _trip!.toCountry,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  textAlign: TextAlign.end,
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -353,8 +384,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
         const SizedBox(width: 8),
         Icon(Icons.person_outline, size: 20, color: Colors.grey[600]),
         const SizedBox(width: 6),
-        Text(
-          _trip!.userName ?? '—',
+        TappableUserName(
+          userId: _trip!.userId,
+          displayName: _trip!.userName ?? '—',
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -366,7 +398,39 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   }
 
   Widget _buildBottomBar() {
-    final alreadyRequested = _trip?.userHasRequested ?? false;
+    final trip = _trip;
+    if (trip == null) return const SizedBox.shrink();
+
+    if (widget.openedFromMyTrips) {
+      return const SizedBox.shrink();
+    }
+
+    final isOwner =
+        _myUserId != null && trip.userId != null && trip.userId == _myUserId;
+    if (isOwner) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Text(
+            AppStrings.cannotRequestOwnListing,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.35),
+          ),
+        ),
+      );
+    }
+
+    final alreadyRequested = trip.userHasRequested;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
@@ -394,7 +458,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
             ),
           ),
           child: Text(
-            alreadyRequested ? 'تم إرسال طلب مسبقاً' : 'إرسال طلب',
+            alreadyRequested ? AppStrings.requestAlreadySent : AppStrings.sendRequest,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),

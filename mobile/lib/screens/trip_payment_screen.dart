@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/models/trip_item.dart';
 import 'package:flyem_app/screens/main_nav_screen.dart';
@@ -8,6 +9,7 @@ import 'package:flyem_app/services/trips_service.dart';
 import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// شاشة الدفع لإرسال طلب على رحلة: اختيار وسيلة الدفع ثم إتمام الدفع.
 /// بعد النجاح يتم التوجيه إلى شاشة الرسائل وفتح المحادثة مع صاحب الرحلة.
@@ -30,6 +32,9 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
 
   /// الحد الأدنى لسعر الرحلة من لوحة التحكم — يُعرض ويُطبّق في الدفع.
   double? _minTripPrice;
+
+  /// بعد إنشاء طلب PayPal من الخادم؛ يُمرَّر لـ [TripsService.sendRequest] عند الالتقاط.
+  String? _paypalOrderId;
 
   @override
   void initState() {
@@ -65,14 +70,21 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
     } catch (_) {
       if (mounted) setState(() {
         _loading = false;
-        _error = 'فشل تحميل وسائل الدفع';
+        _error = AppStrings.loadFailedPaymentMethods;
       });
     }
   }
 
+  PaymentMethodItem? _selectedMethod() {
+    for (final m in _methods) {
+      if (m.id == _selectedMethodId) return m;
+    }
+    return null;
+  }
+
   Future<void> _onPay() async {
     if (_selectedMethodId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اختر وسيلة الدفع')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.selectPaymentMethod)));
       return;
     }
     setState(() {
@@ -80,17 +92,47 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
       _error = null;
     });
     try {
+      final method = _selectedMethod();
+      if (method != null && method.code == 'paypal') {
+        if (_paypalOrderId == null || _paypalOrderId!.isEmpty) {
+          final order = await TripsService.createPayPalOrderForTrip(widget.tripId);
+          if (!mounted) return;
+          setState(() {
+            _paypalOrderId = order.orderId;
+            _paying = false;
+          });
+          final uri = Uri.parse(order.approveUrl);
+          final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (mounted) {
+            if (!launched) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppStrings.cannotOpenBrowserTryCopy)),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppStrings.paypalCompleteSnack),
+                ),
+              );
+            }
+          }
+          return;
+        }
+      }
+
       final result = await TripsService.sendRequest(
         tripId: widget.tripId,
         paymentMethodId: _selectedMethodId!,
+        paypalOrderId: _paypalOrderId,
       );
       if (!mounted) return;
       setState(() => _paying = false);
       await LocalNotificationService.showNotification(
-        id: LocalNotificationService.idForEvent('request_sent'),
+        id: LocalNotificationService.uniqueNotificationId(),
         title: AppStrings.notificationRequestSent,
         body: AppStrings.notificationRequestSent,
       );
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => MainNavScreen(
@@ -118,14 +160,14 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
         ? _minTripPrice!
         : (t.pricePerKg > 0 ? t.pricePerKg : 1.0);
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
           backgroundColor: AppColors.navBarBackground,
           foregroundColor: Colors.white,
           elevation: 0,
-          title: const Text('شاشة الدفع', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          title: Text(AppStrings.paymentScreenTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new),
             onPressed: () => Navigator.of(context).pop(),
@@ -154,23 +196,59 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('ملخص الرحلة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
+                      Text(AppStrings.tripSummary, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: Text(t.fromDisplay, style: const TextStyle(fontWeight: FontWeight.w600))),
-                          Icon(Icons.flight, size: 20, color: AppColors.primaryYellow),
-                          Expanded(child: Text(t.toDisplay, style: const TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.end)),
-                        ],
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    AppStrings.routeLabelFrom,
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                                  ),
+                                  Text(t.fromDisplay, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
+                              child: Icon(Icons.arrow_forward, size: 22, color: AppColors.primaryYellow),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    AppStrings.routeLabelTo,
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                                  ),
+                                  Text(
+                                    t.toDisplay,
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    textAlign: TextAlign.end,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      Text('${t.currencySymbol}${amount.toStringAsFixed(1)} — المبلغ التقريبي', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                      Text(
+                        AppStrings.paymentApproximateAmount(t.currencySymbol, amount.toStringAsFixed(1)),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'وسيلة الدفع',
+                  AppStrings.paymentMethod,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800]),
                 ),
                 const SizedBox(height: 12),
@@ -182,7 +260,7 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                       children: [
                         Text(_error!, textAlign: TextAlign.center),
                         const SizedBox(height: 12),
-                        TextButton(onPressed: _loadMethods, child: const Text('إعادة المحاولة')),
+                        TextButton(onPressed: _loadMethods, child: Text(AppStrings.retry)),
                       ],
                     ),
                   )
@@ -190,11 +268,23 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                   ..._methods.map((m) => _PaymentMethodTile(
                         name: m.nameAr,
                         isSelected: _selectedMethodId == m.id,
-                        onTap: () => setState(() => _selectedMethodId = m.id),
+                        onTap: () => setState(() {
+                          _selectedMethodId = m.id;
+                          if (m.code != 'paypal') _paypalOrderId = null;
+                        }),
                       )),
                 if (_error != null && _methods.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                ],
+                if (_selectedMethod()?.code == 'paypal') ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _paypalOrderId == null || _paypalOrderId!.isEmpty
+                        ? AppStrings.paypalOpenHint
+                        : AppStrings.paypalCompleteHintTrip,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.35),
+                  ),
                 ],
                 const SizedBox(height: 32),
                 SizedBox(
@@ -213,7 +303,13 @@ class _TripPaymentScreenState extends State<TripPaymentScreen> {
                             width: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('إتمام الدفع', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : Text(
+                            _selectedMethod()?.code == 'paypal' &&
+                                    (_paypalOrderId == null || _paypalOrderId!.isEmpty)
+                                ? AppStrings.continueToPayPal
+                                : AppStrings.completePayment,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/content_service.dart';
@@ -51,7 +52,7 @@ class _FaqScreenState extends State<FaqScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: _contentBg,
         appBar: AppBar(
@@ -59,9 +60,9 @@ class _FaqScreenState extends State<FaqScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             AppStrings.faq,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
           ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new),
@@ -80,7 +81,7 @@ class _FaqScreenState extends State<FaqScreen> {
                           children: [
                             Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red[700])),
                             const SizedBox(height: 12),
-                            FilledButton(onPressed: _loadFaqs, child: const Text('إعادة المحاولة')),
+                            FilledButton(onPressed: _loadFaqs, child: Text(AppStrings.retry)),
                           ],
                         ),
                       ),

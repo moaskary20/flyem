@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -8,7 +9,18 @@ import 'package:flyem_app/screens/settings_screen.dart';
 import 'package:flyem_app/screens/technical_support_screen.dart';
 import 'package:flyem_app/screens/faq_screen.dart';
 import 'package:flyem_app/screens/privacy_terms_screen.dart';
+import 'package:flyem_app/screens/login_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
+
+enum _MoreAction {
+  settings,
+  withdrawalPayout,
+  faq,
+  privacy,
+  support,
+  share,
+  about,
+}
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -38,7 +50,7 @@ class _MoreScreenState extends State<MoreScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         body: SafeArea(
@@ -49,6 +61,8 @@ class _MoreScreenState extends State<MoreScreen> {
                 _buildProfileHeader(context),
                 const SizedBox(height: 24),
                 _buildOptionsCard(context),
+                const SizedBox(height: 20),
+                _buildLogoutSection(context),
               ],
             ),
           ),
@@ -99,7 +113,7 @@ class _MoreScreenState extends State<MoreScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(AppStrings.personalPage),
+            child: Text(AppStrings.personalPage),
           ),
         ),
       ],
@@ -107,14 +121,14 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   Widget _buildOptionsCard(BuildContext context) {
-    final options = [
-      (AppStrings.settings, Icons.settings),
-      (AppStrings.paymentDetails, Icons.account_balance_outlined),
-      (AppStrings.faq, Icons.chat_bubble_outline),
-      (AppStrings.privacyAndTerms, Icons.description_outlined),
-      (AppStrings.technicalSupport, Icons.help_outline),
-      (AppStrings.shareApp, Icons.share_outlined),
-      (AppStrings.aboutApp, Icons.info_outline),
+    final options = <(_MoreAction, String, IconData)>[
+      (_MoreAction.settings, AppStrings.settings, Icons.settings),
+      (_MoreAction.withdrawalPayout, AppStrings.paymentDetails, Icons.credit_card_outlined),
+      (_MoreAction.faq, AppStrings.faq, Icons.chat_bubble_outline),
+      (_MoreAction.privacy, AppStrings.privacyAndTerms, Icons.description_outlined),
+      (_MoreAction.support, AppStrings.technicalSupport, Icons.help_outline),
+      (_MoreAction.share, AppStrings.shareApp, Icons.share_outlined),
+      (_MoreAction.about, AppStrings.aboutApp, Icons.info_outline),
     ];
 
     return Container(
@@ -134,47 +148,9 @@ class _MoreScreenState extends State<MoreScreen> {
         children: [
           for (int i = 0; i < options.length; i++) ...[
             _OptionTile(
-              label: options[i].$1,
-              icon: options[i].$2,
-              onTap: () {
-                if (options[i].$1 == AppStrings.paymentDetails) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const PaymentDetailsScreen(),
-                    ),
-                  );
-                } else if (options[i].$1 == AppStrings.settings) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SettingsScreen(),
-                    ),
-                  );
-                } else if (options[i].$1 == AppStrings.shareApp) {
-                  Share.share(
-                    'جرب تطبيق فلاي إم - منصة الشحن بين المسافرين 🧳✈️\n'
-                    'https://play.google.com/store/apps/details?id=com.flyem.app',
-                    subject: 'تطبيق فلاي إم',
-                  );
-                } else if (options[i].$1 == AppStrings.technicalSupport) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const TechnicalSupportScreen(),
-                    ),
-                  );
-                } else if (options[i].$1 == AppStrings.faq) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const FaqScreen(),
-                    ),
-                  );
-                } else if (options[i].$1 == AppStrings.privacyAndTerms) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const PrivacyTermsScreen(),
-                    ),
-                  );
-                }
-              },
+              label: options[i].$2,
+              icon: options[i].$3,
+              onTap: () => _onMoreAction(context, options[i].$1),
             ),
             if (i < options.length - 1)
               Divider(
@@ -185,6 +161,73 @@ class _MoreScreenState extends State<MoreScreen> {
               ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _onMoreAction(BuildContext context, _MoreAction action) {
+    switch (action) {
+      case _MoreAction.settings:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
+      case _MoreAction.withdrawalPayout:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PaymentDetailsScreen()),
+        );
+      case _MoreAction.faq:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FaqScreen()),
+        );
+      case _MoreAction.privacy:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PrivacyTermsScreen()),
+        );
+      case _MoreAction.support:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const TechnicalSupportScreen()),
+        );
+      case _MoreAction.share:
+        Share.share(
+          'جرب تطبيق فلاي إم - منصة الشحن بين المسافرين 🧳✈️\n'
+          'https://play.google.com/store/apps/details?id=com.flyem.app',
+          subject: 'تطبيق فلاي إم',
+        );
+      case _MoreAction.about:
+        break;
+    }
+  }
+
+  Widget _buildLogoutSection(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: () async {
+          await AuthService.logout();
+          if (!context.mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.logoutSuccess)),
+          );
+        },
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primaryYellow,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Text(
+          AppStrings.logout,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }

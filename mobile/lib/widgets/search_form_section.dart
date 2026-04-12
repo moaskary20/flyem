@@ -1,10 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
+import 'package:flyem_app/models/city.dart';
+import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/models/place.dart';
-import 'package:flyem_app/services/places_service.dart';
+import 'package:flyem_app/services/shipments_service.dart';
 
 enum SearchType { shipments, trips }
 
@@ -37,6 +37,178 @@ class SearchFormSection extends StatefulWidget {
 }
 
 class _SearchFormSectionState extends State<SearchFormSection> {
+  List<Country> _countries = [];
+  bool _loadingCountries = true;
+
+  Country? _fromCountry;
+  List<City> _fromCities = [];
+  City? _fromCity;
+
+  Country? _toCountry;
+  List<City> _toCities = [];
+  City? _toCity;
+
+  bool _syncingFromParent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCountries();
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchFormSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.fromPlace != oldWidget.fromPlace || widget.toPlace != oldWidget.toPlace) {
+      _applyPlacesFromParent();
+    }
+  }
+
+  Future<void> _loadCountries() async {
+    try {
+      final list = await ShipmentsService.getCountries();
+      if (!mounted) return;
+      setState(() {
+        _countries = list;
+        _loadingCountries = false;
+      });
+      _applyPlacesFromParent();
+    } catch (_) {
+      if (mounted) setState(() => _loadingCountries = false);
+    }
+  }
+
+  Future<void> _applyPlacesFromParent() async {
+    if (_countries.isEmpty || _loadingCountries) return;
+    final fp = widget.fromPlace;
+    final tp = widget.toPlace;
+    _syncingFromParent = true;
+    try {
+      if (fp == null) {
+        if (mounted) {
+          setState(() {
+            _fromCountry = null;
+            _fromCities = [];
+            _fromCity = null;
+          });
+        }
+      } else {
+        Country? fc;
+        try {
+          fc = _countries.firstWhere((c) => c.id == fp.countryId);
+        } catch (_) {
+          fc = null;
+        }
+        if (fc != null) {
+          final cities = await ShipmentsService.getCities(fc.id);
+          if (!mounted) return;
+          City? fcity;
+          if (fp.cityId != null) {
+            try {
+              fcity = cities.firstWhere((c) => c.id == fp.cityId);
+            } catch (_) {}
+          }
+          setState(() {
+            _fromCountry = fc;
+            _fromCities = cities;
+            _fromCity = fcity;
+          });
+        }
+      }
+      if (tp == null) {
+        if (mounted) {
+          setState(() {
+            _toCountry = null;
+            _toCities = [];
+            _toCity = null;
+          });
+        }
+      } else {
+        Country? tc;
+        try {
+          tc = _countries.firstWhere((c) => c.id == tp.countryId);
+        } catch (_) {
+          tc = null;
+        }
+        if (tc != null) {
+          final cities = await ShipmentsService.getCities(tc.id);
+          if (!mounted) return;
+          City? tcity;
+          if (tp.cityId != null) {
+            try {
+              tcity = cities.firstWhere((c) => c.id == tp.cityId);
+            } catch (_) {}
+          }
+          setState(() {
+            _toCountry = tc;
+            _toCities = cities;
+            _toCity = tcity;
+          });
+        }
+      }
+    } finally {
+      _syncingFromParent = false;
+    }
+  }
+
+  void _emitFromPlace() {
+    if (_syncingFromParent) return;
+    if (_fromCountry == null) {
+      widget.onFromPlaceSelected?.call(null);
+      return;
+    }
+    final display = _fromCity != null
+        ? '${_fromCity!.displayName}، ${_fromCountry!.displayName}'
+        : _fromCountry!.displayName;
+    widget.onFromPlaceSelected?.call(Place(
+      countryId: _fromCountry!.id,
+      cityId: _fromCity?.id,
+      display: display,
+    ));
+  }
+
+  void _emitToPlace() {
+    if (_syncingFromParent) return;
+    if (_toCountry == null) {
+      widget.onToPlaceSelected?.call(null);
+      return;
+    }
+    final display = _toCity != null
+        ? '${_toCity!.displayName}، ${_toCountry!.displayName}'
+        : _toCountry!.displayName;
+    widget.onToPlaceSelected?.call(Place(
+      countryId: _toCountry!.id,
+      cityId: _toCity?.id,
+      display: display,
+    ));
+  }
+
+  Future<void> _onFromCountryChanged(Country? c) async {
+    setState(() {
+      _fromCountry = c;
+      _fromCities = [];
+      _fromCity = null;
+    });
+    if (c != null) {
+      final list = await ShipmentsService.getCities(c.id);
+      if (mounted) setState(() => _fromCities = list);
+    }
+    _emitFromPlace();
+  }
+
+  Future<void> _onToCountryChanged(Country? c) async {
+    setState(() {
+      _toCountry = c;
+      _toCities = [];
+      _toCity = null;
+    });
+    if (c != null) {
+      final list = await ShipmentsService.getCities(c.id);
+      if (mounted) setState(() => _toCities = list);
+    }
+    _emitToPlace();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -51,19 +223,56 @@ class _SearchFormSectionState extends State<SearchFormSection> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _PlaceAutocomplete(
-              hint: AppStrings.fromHint,
-              icon: Icons.flight_takeoff,
-              selected: widget.fromPlace,
-              onSelected: widget.onFromPlaceSelected,
+            Row(
+              children: [
+                Icon(Icons.flight_takeoff, size: 20, color: Colors.black87),
+                const SizedBox(width: 8),
+                Text(
+                  AppStrings.fromCityCountry,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[800], fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            _PlaceAutocomplete(
-              hint: AppStrings.toHint,
-              icon: Icons.flight_land,
-              selected: widget.toPlace,
-              onSelected: widget.onToPlaceSelected,
+            const SizedBox(height: 8),
+            if (_loadingCountries)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            else
+              _buildCountryCityRow(
+                country: _fromCountry,
+                cities: _fromCities,
+                city: _fromCity,
+                onCountry: _onFromCountryChanged,
+                onCity: (City? c) {
+                  setState(() => _fromCity = c);
+                  _emitFromPlace();
+                },
+              ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.flight_land, size: 20, color: Colors.black87),
+                const SizedBox(width: 8),
+                Text(
+                  AppStrings.toCityCountry,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[800], fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+            if (!_loadingCountries)
+              _buildCountryCityRow(
+                country: _toCountry,
+                cities: _toCities,
+                city: _toCity,
+                onCountry: _onToCountryChanged,
+                onCity: (City? c) {
+                  setState(() => _toCity = c);
+                  _emitToPlace();
+                },
+              ),
             const SizedBox(height: 12),
             _buildDateChip(),
             const SizedBox(height: 16),
@@ -79,6 +288,63 @@ class _SearchFormSectionState extends State<SearchFormSection> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCountryCityRow({
+    required Country? country,
+    required List<City> cities,
+    required City? city,
+    required ValueChanged<Country?> onCountry,
+    required ValueChanged<City?> onCity,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<Country>(
+            value: country,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: AppStrings.searchCountryLabel,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            hint: Text(AppStrings.searchCountryHint),
+            items: _countries
+                .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName, overflow: TextOverflow.ellipsis)))
+                .toList(),
+            onChanged: onCountry,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: DropdownButtonFormField<City?>(
+            value: city,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: AppStrings.searchCityLabel,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            hint: Text(AppStrings.searchCityHint),
+            items: [
+              DropdownMenuItem<City?>(
+                value: null,
+                child: Text(AppStrings.allCitiesSearch, overflow: TextOverflow.ellipsis),
+              ),
+              ...cities.map(
+                (c) => DropdownMenuItem(value: c, child: Text(c.displayName, overflow: TextOverflow.ellipsis)),
+              ),
+            ],
+            onChanged: country == null ? null : onCity,
+          ),
+        ),
+      ],
     );
   }
 
@@ -161,11 +427,11 @@ class _SearchFormSectionState extends State<SearchFormSection> {
       child: InkWell(
         onTap: widget.onSearchPressed,
         borderRadius: BorderRadius.circular(10),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Text(
             AppStrings.search,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.primaryYellow,
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -173,148 +439,6 @@ class _SearchFormSectionState extends State<SearchFormSection> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _PlaceAutocomplete extends StatefulWidget {
-  const _PlaceAutocomplete({
-    required this.hint,
-    required this.icon,
-    this.selected,
-    this.onSelected,
-  });
-
-  final String hint;
-  final IconData icon;
-  final Place? selected;
-  final ValueChanged<Place?>? onSelected;
-
-  @override
-  State<_PlaceAutocomplete> createState() => _PlaceAutocompleteState();
-}
-
-class _PlaceAutocompleteState extends State<_PlaceAutocomplete> {
-  final TextEditingController _controller = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
-  List<Place> _suggestions = [];
-  bool _loading = false;
-  Timer? _debounce;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.selected != null) _controller.text = widget.selected!.display;
-    _controller.addListener(_onTextChanged);
-  }
-
-  @override
-  void didUpdateWidget(covariant _PlaceAutocomplete oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.selected != oldWidget.selected) {
-      _controller.text = widget.selected?.display ?? '';
-    }
-  }
-
-  void _onTextChanged() {
-    _debounce?.cancel();
-    final q = _controller.text.trim();
-    if (q.isEmpty) {
-      setState(() {
-        _suggestions = [];
-        widget.onSelected?.call(null);
-      });
-      return;
-    }
-    _debounce = Timer(const Duration(milliseconds: 300), () => _fetchPlaces(q));
-  }
-
-  Future<void> _fetchPlaces(String q) async {
-    setState(() => _loading = true);
-    try {
-      final list = await PlacesService.getPlaces(q);
-      if (mounted) setState(() {
-        _suggestions = list;
-        _loading = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() {
-        _suggestions = [];
-        _loading = false;
-      });
-    }
-  }
-
-  void _selectPlace(Place place) {
-    _controller.text = place.display;
-    _focusNode.unfocus();
-    setState(() => _suggestions = []);
-    widget.onSelected?.call(place);
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          decoration: InputDecoration(
-            hintText: widget.hint,
-            hintStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
-            prefixIcon: Icon(widget.icon, size: 20, color: Colors.black87),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          ),
-          onTap: () {
-            if (_controller.text.trim().isNotEmpty && _suggestions.isEmpty && !_loading) {
-              _fetchPlaces(_controller.text.trim());
-            }
-          },
-        ),
-        if (_suggestions.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 220),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _suggestions.length,
-                itemBuilder: (_, i) {
-                  final p = _suggestions[i];
-                  return ListTile(
-                    dense: true,
-                    title: Text(p.display, style: const TextStyle(fontSize: 14)),
-                    onTap: () => _selectPlace(p),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-        if (_loading) const Padding(
-          padding: EdgeInsets.only(top: 8),
-          child: SizedBox(height: 24, child: Center(child: LinearProgressIndicator())),
-        ),
-      ],
     );
   }
 }

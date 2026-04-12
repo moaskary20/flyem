@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/models/city.dart';
 
 /// عرض ورقة اختيار المدينة من قائمة مع إمكانية البحث.
@@ -67,7 +68,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Container(
         height: MediaQuery.of(context).size.height * 0.6,
         padding: EdgeInsets.only(

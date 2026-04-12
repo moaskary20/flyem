@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_preferences.dart';
+import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/screens/splash_screen.dart';
 import 'package:flyem_app/screens/home_screen.dart';
@@ -18,15 +21,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   runZonedGuarded(() async {
-    await _initApp();
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFF2C2C2E),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-    );
     String localeCode = 'ar';
     try {
       localeCode = await AppPreferences.getAppLocale().timeout(
@@ -39,13 +33,32 @@ void main() async {
         debugPrintStack(stackTrace: st);
       }
     }
+    AppStrings.setLanguageCode(localeCode);
+    AppLocale.notifier.value = Locale(localeCode);
+    await _initApp();
+    if (!kIsWeb && Platform.isAndroid) {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF2C2C2E),
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
     if (!kIsWeb) {
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
       ]);
     }
-    runApp(MyApp(localeCode: localeCode));
+    runApp(
+      ListenableBuilder(
+        listenable: AppLocale.notifier,
+        builder: (_, __) => const MyApp(),
+      ),
+    );
   }, (error, stack) {
     final msg = error.toString();
     if (kDebugMode) {
@@ -68,17 +81,15 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, this.localeCode = 'ar'});
-
-  final String localeCode;
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'فلاي إم',
+      title: AppStrings.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      locale: Locale(localeCode),
+      locale: AppLocale.locale,
       supportedLocales: const [
         Locale('ar'),
         Locale('en'),

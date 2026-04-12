@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/support_ticket_service.dart';
@@ -28,7 +29,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: _contentBg,
         appBar: AppBar(
@@ -36,9 +37,9 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             AppStrings.technicalSupport,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -159,7 +160,7 @@ class _TechnicalSupportScreenState extends State<TechnicalSupportScreen> {
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        child: const Text(AppStrings.send),
+        child: Text(AppStrings.send),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_preferences.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/services/currencies_service.dart';
@@ -74,6 +75,7 @@ class _LanguageCurrencyScreenState extends State<LanguageCurrencyScreen> {
     if (_currencies.isEmpty || _selectedCurrencyId == null) return;
     setState(() => _saving = true);
     await AppPreferences.setAppLocale(_locale);
+    AppLocale.setLocale(Locale(_locale));
     await CurrenciesService.setSelectedCurrencyId(_selectedCurrencyId);
     await AppPreferences.setOnboardingDone(true);
     if (!mounted) return;

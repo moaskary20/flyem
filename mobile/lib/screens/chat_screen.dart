@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
+import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/services/conversations_service.dart';
+import 'package:flyem_app/widgets/user_profile_link.dart';
 
 /// شاشة محادثة واحدة: عرض الرسائل وإرسال رسالة جديدة.
 class ChatScreen extends StatefulWidget {
@@ -8,10 +11,12 @@ class ChatScreen extends StatefulWidget {
     super.key,
     required this.conversationId,
     required this.otherUserName,
+    this.otherUserId,
   });
 
   final int conversationId;
   final String otherUserName;
+  final int? otherUserId;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -24,10 +29,13 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _loading = true;
   bool _sending = false;
   String? _error;
+  /// يُحدَّث من الـ API عند فتح المحادثة (مثلاً بعد الدفع بدون تمرير معرف).
+  int? _otherUserIdForTitle;
 
   @override
   void initState() {
     super.initState();
+    _otherUserIdForTitle = widget.otherUserId;
     _load();
   }
 
@@ -48,6 +56,9 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         setState(() {
           _messages = res.messages;
+          if (res.otherUserId != null) {
+            _otherUserIdForTitle = res.otherUserId;
+          }
           _loading = false;
         });
         _scrollToBottom();
@@ -59,7 +70,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (_) {
       if (mounted) setState(() {
-        _error = 'فشل تحميل المحادثة';
+        _error = AppStrings.loadFailedChat;
         _loading = false;
       });
     }
@@ -92,24 +103,35 @@ class _ChatScreenState extends State<ChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (mounted) setState(() => _sending = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('فشل إرسال الرسالة')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppStrings.messageSendFailed)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F7F4),
         appBar: AppBar(
           backgroundColor: const Color(0xFF2C2C2E),
           foregroundColor: Colors.white,
           elevation: 0,
-          title: Text(
-            widget.otherUserName.isNotEmpty ? widget.otherUserName : 'محادثة',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
+          title: _otherUserIdForTitle != null
+              ? InkWell(
+                  onTap: () => openPublicUserProfile(context, _otherUserIdForTitle),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      widget.otherUserName.isNotEmpty ? widget.otherUserName : AppStrings.conversation,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ),
+                )
+              : Text(
+                  widget.otherUserName.isNotEmpty ? widget.otherUserName : AppStrings.conversation,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new),
             onPressed: () => Navigator.of(context).pop(),
@@ -129,7 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               children: [
                                 Text(_error!, textAlign: TextAlign.center),
                                 const SizedBox(height: 16),
-                                FilledButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+                                FilledButton(onPressed: _load, child: Text(AppStrings.retry)),
                               ],
                             ),
                           ),
@@ -137,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       : _messages.isEmpty
                           ? Center(
                               child: Text(
-                                'لا توجد رسائل بعد. ابدأ المحادثة.',
+                                AppStrings.noMessagesYet,
                                 style: TextStyle(color: Colors.grey[600], fontSize: 15),
                               ),
                             )
@@ -172,7 +194,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: TextField(
                         controller: _messageController,
                         decoration: InputDecoration(
-                          hintText: 'اكتب رسالة...',
+                          hintText: AppStrings.typeMessageHint,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),

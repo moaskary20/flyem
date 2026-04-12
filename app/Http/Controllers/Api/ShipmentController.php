@@ -10,6 +10,7 @@ use App\Models\PaymentMethod;
 use App\Models\Request as RequestModel;
 use App\Models\Shipment;
 use App\Models\User;
+use App\Services\PayPalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -43,8 +44,13 @@ class ShipmentController extends Controller
         if ($request->filled('to_city_id')) {
             $query->where('to_city_id', $request->to_city_id);
         }
+        // تاريخ البحث: شحنات يجب تسليمها في أو قبل اليوم المختار (مناسب لمسافر يغادر في ذلك التاريخ).
         if ($request->filled('deadline_after')) {
-            $query->whereDate('deadline_date', '>=', $request->deadline_after);
+            $d = $request->deadline_after;
+            $query->where(function ($q) use ($d) {
+                $q->whereDate('deadline_date', '<=', $d)
+                    ->orWhereNull('deadline_date');
+            });
         }
         if ($request->filled('currency_id')) {
             $query->where('currency_id', $request->currency_id);
@@ -172,7 +178,10 @@ class ShipmentController extends Controller
             $user = User::where('api_token', $hashed)->first();
             if ($user) {
                 $existing = RequestModel::where('shipment_id', $shipment->id)->where('requester_id', $user->id)->first();
-                $payload['user_has_requested'] = (bool) $existing;
+                $ownerId = (int) $shipment->user_id;
+                $blockedByOtherListing = $existing === null
+                    && RequestModel::hasBlockingRequestWithListingOwner((int) $user->id, $ownerId);
+                $payload['user_has_requested'] = (bool) $existing || $blockedByOtherListing;
                 $payload['existing_request_id'] = $existing?->id;
             }
         }
@@ -285,6 +294,12 @@ class ShipmentController extends Controller
             return response()->json(['message' => 'لقد أرسلت طلباً على هذه الشحنة مسبقاً.'], 422);
         }
 
+        if (RequestModel::hasBlockingRequestWithListingOwner((int) $user->id, (int) $shipment->user_id)) {
+            return response()->json([
+                'message' => 'لديك طلب مفتوح مع صاحب هذه الشحنة على إعلان آخر؛ أنهِ الطلب السابق أو انتظر حتى يُرفض قبل إرسال طلب جديد لنفس الشخص.',
+            ], 422);
+        }
+
         $request->validate([
             'message' => 'nullable|string|max:500',
         ]);
@@ -330,6 +345,12 @@ class ShipmentController extends Controller
             return response()->json(['message' => 'لقد أرسلت طلباً على هذه الشحنة مسبقاً.'], 422);
         }
 
+        if (RequestModel::hasBlockingRequestWithListingOwner((int) $user->id, (int) $shipment->user_id)) {
+            return response()->json([
+                'message' => 'لديك طلب مفتوح مع صاحب هذه الشحنة على إعلان آخر؛ أنهِ الطلب السابق أو انتظر حتى يُرفض قبل إرسال طلب جديد لنفس الشخص.',
+            ], 422);
+        }
+
         $request->validate([
             'payment_method_id' => 'required|exists:payment_methods,id',
             'message' => 'nullable|string|max:500',
@@ -342,9 +363,27 @@ class ShipmentController extends Controller
             return response()->json(['message' => 'وسيلة الدفع غير متاحة.'], 422);
         }
 
+        if ($paymentMethod->code === 'paypal' && ! app(PayPalService::class)->isReady()) {
+            return response()->json(['message' => 'PayPal غير متاح حالياً.'], 422);
+        }
+
         $amount = (float) ($shipment->price_min ?? 1);
         if ($amount <= 0) {
             $amount = 1;
+        }
+
+        $transactionReference = '';
+        if ($paymentMethod->code === 'paypal') {
+            $request->validate([
+                'paypal_order_id' => 'required|string|max:120',
+            ], [], [
+                'paypal_order_id' => 'رقم طلب PayPal',
+            ]);
+            $capture = app(PayPalService::class)->captureOrder($request->paypal_order_id);
+            if (! ($capture['ok'] ?? false)) {
+                return response()->json(['message' => $capture['message'] ?? 'فشل التحقق من دفع PayPal'], 422);
+            }
+            $transactionReference = $capture['capture_id'] ?? $request->paypal_order_id;
         }
 
         $req = RequestModel::create([
@@ -356,6 +395,10 @@ class ShipmentController extends Controller
             'status' => 'pending',
         ]);
 
+        if ($paymentMethod->code !== 'paypal') {
+            $transactionReference = 'req-'.$req->id.'-'.time();
+        }
+
         Payment::create([
             'request_id' => $req->id,
             'user_id' => $user->id,
@@ -363,7 +406,7 @@ class ShipmentController extends Controller
             'currency_id' => $shipment->currency_id,
             'payment_method' => $paymentMethod->code,
             'payment_status' => 'paid',
-            'transaction_reference' => 'req-' . $req->id . '-' . time(),
+            'transaction_reference' => $transactionReference,
         ]);
 
         $conversation = Conversation::where('shipment_id', $shipment->id)

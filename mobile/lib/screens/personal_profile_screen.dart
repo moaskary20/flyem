@@ -1,18 +1,17 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/api_http_client.dart';
 import 'package:flyem_app/core/app_theme.dart';
-import 'package:http/http.dart' as http;
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/city.dart';
 import 'package:flyem_app/models/country.dart';
 import 'package:flyem_app/screens/edit_profile_screen.dart';
+import 'package:flyem_app/screens/payment_details_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
-import 'package:flyem_app/widgets/city_picker_sheet.dart';
-
 /// شاشة الصفحة الشخصية: بيانات المستخدم من قاعدة البيانات (API).
 class PersonalProfileScreen extends StatefulWidget {
   const PersonalProfileScreen({super.key});
@@ -38,6 +37,35 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     _loadUser();
   }
 
+  Future<void> _openEditProfilePhoto() async {
+    try {
+      final result = await Navigator.of(context).push<Object>(
+        MaterialPageRoute(
+          builder: (_) => EditProfileScreen(
+            currentPhotoUrl: _user?.profilePhoto,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (result is List && result.length >= 2 && result[0] is String && result[1] is Uint8List) {
+        setState(() {
+          _profilePhotoUrlOverride = result[0] as String;
+          _profilePhotoBytesOverride = result[1] as Uint8List;
+          _photoKey = DateTime.now().millisecondsSinceEpoch;
+        });
+      } else if (result is String) {
+        setState(() {
+          _profilePhotoUrlOverride = result;
+          _profilePhotoBytesOverride = null;
+          _photoKey = DateTime.now().millisecondsSinceEpoch;
+        });
+      }
+      if (result != null) await _loadUser();
+    } catch (_) {
+      if (mounted) _loadUser();
+    }
+  }
+
   Future<void> _loadUser() async {
     try {
       final user = await AuthService.getCurrentUser();
@@ -59,7 +87,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         body: _loading
@@ -75,7 +103,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                           const SizedBox(height: 16),
                           FilledButton(
                             onPressed: _loadUser,
-                            child: const Text('إعادة المحاولة'),
+                            child: Text(AppStrings.retry),
                           ),
                         ],
                       ),
@@ -92,6 +120,8 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                             children: [
                               const SizedBox(height: 24),
                               _buildBasicInfoSection(),
+                              const SizedBox(height: 24),
+                              _buildWalletSection(context),
                               const SizedBox(height: 24),
                               _buildLocationSection(),
                               const SizedBox(height: 24),
@@ -139,44 +169,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      try {
-                        final result = await Navigator.of(context).push<Object>(
-                          MaterialPageRoute(
-                            builder: (_) => EditProfileScreen(
-                              currentPhotoUrl: _user?.profilePhoto,
-                            ),
-                          ),
-                        );
-                      if (!mounted) return;
-                      if (result is List && result.length >= 2 && result[0] is String && result[1] is Uint8List) {
-                        setState(() {
-                          _profilePhotoUrlOverride = result[0] as String;
-                          _profilePhotoBytesOverride = result[1] as Uint8List;
-                          _photoKey = DateTime.now().millisecondsSinceEpoch;
-                        });
-                      } else if (result is String) {
-                        setState(() {
-                          _profilePhotoUrlOverride = result;
-                          _profilePhotoBytesOverride = null;
-                          _photoKey = DateTime.now().millisecondsSinceEpoch;
-                        });
-                      }
-                      if (result != null) await _loadUser();
-                      } catch (_) {
-                        if (mounted) _loadUser();
-                      }
-                    },
-                    child: const Text(
-                      AppStrings.edit,
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -185,7 +178,14 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProfileAvatar(),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _openEditProfilePhoto,
+                      customBorder: const CircleBorder(),
+                      child: _buildProfileAvatar(),
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -414,7 +414,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
           return Directionality(
-            textDirection: TextDirection.rtl,
+            textDirection: AppLocale.textDirection,
             child: Container(
               padding: EdgeInsets.only(
                 left: 20,
@@ -437,7 +437,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<Country>(
                     value: selectedCountry,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'الدولة',
                       border: OutlineInputBorder(),
                       filled: true,
@@ -461,7 +461,7 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                   if (selectedCountry != null)
                     DropdownButtonFormField<City>(
                       value: selectedCity,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'المدينة',
                         border: OutlineInputBorder(),
                         filled: true,
@@ -504,7 +504,9 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
                                     }
                                     if (mounted) {
                                       _loadUser();
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم الحفظ')));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(AppStrings.profileDataSaved)),
+                                      );
                                     }
                                   } catch (e) {
                                     if (mounted) {
@@ -531,6 +533,98 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
     );
   }
 
+  Future<void> _showPhoneEditor({required bool isHome}) async {
+    if (_user == null) return;
+    final initial = isHome ? (_user!.homePhone ?? '') : (_user!.travelPhone ?? '');
+    final controller = TextEditingController(text: initial);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Directionality(
+          textDirection: AppLocale.textDirection,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            child: Container(
+              margin: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    isHome ? AppStrings.phoneForHomeland : AppStrings.phoneForTravel,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.phoneLabel,
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(AppStrings.cancel),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () async {
+                            final v = controller.text.trim();
+                            Navigator.of(ctx).pop();
+                            try {
+                              if (isHome) {
+                                await AuthService.updateProfile(homePhone: v);
+                              } else {
+                                await AuthService.updateProfile(travelPhone: v);
+                              }
+                              if (mounted) {
+                                await _loadUser();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(AppStrings.profileDataSaved)),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('$e')),
+                                );
+                              }
+                            }
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.primaryYellow,
+                            foregroundColor: Colors.black87,
+                          ),
+                          child: Text(AppStrings.save),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    controller.dispose();
+  }
+
   Widget _buildBasicInfoSection() {
     final email = _user?.email ?? '';
     final homePhone = _user?.homePhone ?? '';
@@ -554,16 +648,86 @@ class _PersonalProfileScreenState extends State<PersonalProfileScreen> {
           verified: true,
         ),
         const SizedBox(height: 14),
-        _InfoRow(
+        _PhoneEditRow(
           label: AppStrings.phoneForHomeland,
-          value: homePhone.isNotEmpty ? homePhone : 'غير محدد',
+          value: homePhone.isNotEmpty ? homePhone : AppStrings.unspecified,
           verified: homePhone.isNotEmpty,
+          onEdit: () => _showPhoneEditor(isHome: true),
         ),
         const SizedBox(height: 10),
-        _InfoRow(
+        _PhoneEditRow(
           label: AppStrings.phoneForTravel,
-          value: travelPhone.isNotEmpty ? travelPhone : 'غير محدد',
+          value: travelPhone.isNotEmpty ? travelPhone : AppStrings.unspecified,
           verified: travelPhone.isNotEmpty,
+          onEdit: () => _showPhoneEditor(isHome: false),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWalletSection(BuildContext context) {
+    final bal = _user?.walletBalance ?? 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          AppStrings.walletProfileTitle,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                AppStrings.walletProfileHint,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                bal.toStringAsFixed(2),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PaymentDetailsScreen(),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.account_balance_wallet_outlined, color: AppColors.primaryYellow),
+                label: Text(
+                  AppStrings.walletWithdrawMyMoney,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryYellow,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -657,6 +821,68 @@ class _StatChip extends StatelessWidget {
   }
 }
 
+class _PhoneEditRow extends StatelessWidget {
+  const _PhoneEditRow({
+    required this.label,
+    required this.value,
+    required this.verified,
+    required this.onEdit,
+  });
+
+  final String label;
+  final String value;
+  final bool verified;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  if (verified)
+                    Icon(Icons.check_circle, size: 18, color: Colors.green[700]),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+        TextButton(
+          onPressed: onEdit,
+          child: Text(
+            AppStrings.edit,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _LocationRow extends StatelessWidget {
   const _LocationRow({
     required this.label,
@@ -695,9 +921,9 @@ class _LocationRow extends StatelessWidget {
         ),
         TextButton(
           onPressed: onEdit,
-          child: const Text(
+          child: Text(
             AppStrings.edit,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.w600,
               fontSize: 15,

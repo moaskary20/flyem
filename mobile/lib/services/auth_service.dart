@@ -109,6 +109,24 @@ class AuthService {
     return UserProfile.fromJson(data);
   }
 
+  /// ملف مستخدم عام (للعرض عند الضغط على الاسم): الاسم الأول، التقييم، دولتان فقط.
+  static Future<PublicUserProfile?> getPublicUserProfile(int userId) async {
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) return null;
+    final response = await ApiClient.get(
+      '/api/users/$userId/public-profile',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode != 200) return null;
+    final map = jsonDecode(response.body) as Map<String, dynamic>?;
+    final data = map?['data'] as Map<String, dynamic>?;
+    if (data == null) return null;
+    return PublicUserProfile.fromJson(data);
+  }
+
   /// تحديث الملف الشخصي (الدولة/المدينة و/أو بيانات السحاب البنكي).
   static Future<void> updateProfile({
     int? homeCountryId,
@@ -194,6 +212,8 @@ class UserProfile {
   final bool documentsVerified;
   final bool phoneVerified;
   final double? rating;
+  /// رصيد المحفظة داخل التطبيق (يُضبط من لوحة التحكم).
+  final double walletBalance;
   final int ratingsCount;
   final int shipmentsCount;
   final int tripsCount;
@@ -221,6 +241,7 @@ class UserProfile {
     this.documentsVerified = false,
     this.phoneVerified = false,
     this.rating,
+    this.walletBalance = 0,
     this.ratingsCount = 0,
     this.shipmentsCount = 0,
     this.tripsCount = 0,
@@ -250,6 +271,7 @@ class UserProfile {
       documentsVerified: json['documents_verified'] as bool? ?? false,
       phoneVerified: json['phone_verified'] as bool? ?? false,
       rating: (json['rating'] as num?)?.toDouble(),
+      walletBalance: (json['wallet_balance'] as num?)?.toDouble() ?? 0,
       ratingsCount: (json['ratings_count'] as num?)?.toInt() ?? 0,
       shipmentsCount: (json['shipments_count'] as num?)?.toInt() ?? 0,
       tripsCount: (json['trips_count'] as num?)?.toInt() ?? 0,
@@ -266,6 +288,35 @@ class UserProfile {
       bankAccountHolder: json['bank_account_holder'] as String?,
       homePhone: json['home_phone'] as String?,
       travelPhone: json['travel_phone'] as String?,
+    );
+  }
+}
+
+class PublicUserProfile {
+  final int id;
+  final String firstName;
+  final bool hasLastName;
+  final double rating;
+  final String homeCountryName;
+  final String travelCountryName;
+
+  PublicUserProfile({
+    required this.id,
+    required this.firstName,
+    required this.hasLastName,
+    required this.rating,
+    required this.homeCountryName,
+    required this.travelCountryName,
+  });
+
+  factory PublicUserProfile.fromJson(Map<String, dynamic> json) {
+    return PublicUserProfile(
+      id: json['id'] as int,
+      firstName: json['first_name'] as String? ?? 'مستخدم',
+      hasLastName: json['has_last_name'] as bool? ?? false,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      homeCountryName: json['home_country_name'] as String? ?? '',
+      travelCountryName: json['travel_country_name'] as String? ?? '',
     );
   }
 }

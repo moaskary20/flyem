@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/place.dart';
+import 'package:flyem_app/screens/add_trip_required_screen.dart';
 import 'package:flyem_app/screens/shipment_details_screen.dart';
 import 'package:flyem_app/screens/trip_details_screen.dart';
 import 'package:flyem_app/services/content_service.dart';
@@ -11,6 +13,7 @@ import 'package:flyem_app/widgets/banner_slider.dart';
 import 'package:flyem_app/widgets/search_form_section.dart';
 import 'package:flyem_app/widgets/shipment_result_card.dart';
 import 'package:flyem_app/widgets/trip_result_card.dart';
+import 'package:flyem_app/services/auth_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -35,11 +38,27 @@ class _SearchScreenState extends State<SearchScreen> {
   /// الحد الأدنى لسعر الرحلة من لوحة التحكم (للعرض على كروت الرحلات).
   double? _minTripPrice;
 
+  int? _currentUserId;
+
+  /// مرة واحدة لكل جلسة: تنبيه المسافر بإضافة رحلة عند تصفح تبويب الشحنات.
+  bool _shipmentsTripGateShownThisSession = false;
+
   @override
   void initState() {
     super.initState();
     _bannersFuture = ContentService.getBanners();
     _loadMinTripPrice();
+    AuthService.getUserId().then((id) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _currentUserId = id);
+      if (_searchType == SearchType.shipments &&
+          _shipmentsResult != null &&
+          !_loading) {
+        _maybeShowTripRequiredGate();
+      }
+    });
     _load();
   }
 
@@ -82,6 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
             _tripsResult = null;
             _loading = false;
           });
+          _maybeShowTripRequiredGate();
         }
       }).catchError((e) {
         if (mounted) {
@@ -124,6 +144,59 @@ class _SearchScreenState extends State<SearchScreen> {
     _load();
   }
 
+  Future<void> _maybeShowTripRequiredGate() async {
+    if (!mounted ||
+        _searchType != SearchType.shipments ||
+        _shipmentsTripGateShownThisSession ||
+        _currentUserId == null) {
+      return;
+    }
+    final hasTrip = await TripsService.currentUserHasAtLeastOneTrip();
+    if (!mounted || hasTrip) {
+      return;
+    }
+    _shipmentsTripGateShownThisSession = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          fullscreenDialog: true,
+          builder: (_) => const AddTripRequiredScreen(),
+        ),
+      );
+    });
+  }
+
+  Future<void> _openShipmentDetails(int shipmentId) async {
+    if (_currentUserId != null) {
+      final hasTrip = await TripsService.currentUserHasAtLeastOneTrip();
+      if (!mounted) {
+        return;
+      }
+      if (!hasTrip) {
+        final added = await Navigator.of(context).push<bool>(
+          MaterialPageRoute<bool>(
+            fullscreenDialog: true,
+            builder: (_) => const AddTripRequiredScreen(),
+          ),
+        );
+        if (added != true || !mounted) {
+          return;
+        }
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ShipmentDetailsScreen(shipmentId: shipmentId),
+      ),
+    );
+  }
+
   void _onSearchPressed() {
     _load();
   }
@@ -131,7 +204,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         body: CustomScrollView(
@@ -170,9 +243,18 @@ class _SearchScreenState extends State<SearchScreen> {
                 fromPlace: _fromPlace,
                 toPlace: _toPlace,
                 selectedDate: _selectedDate,
-                onFromPlaceSelected: (p) => setState(() => _fromPlace = p),
-                onToPlaceSelected: (p) => setState(() => _toPlace = p),
-                onDateSelected: (d) => setState(() => _selectedDate = d),
+                onFromPlaceSelected: (p) {
+                  setState(() => _fromPlace = p);
+                  _load();
+                },
+                onToPlaceSelected: (p) {
+                  setState(() => _toPlace = p);
+                  _load();
+                },
+                onDateSelected: (d) {
+                  setState(() => _selectedDate = d);
+                  _load();
+                },
               ),
             ),
             if (_loading)
@@ -193,7 +275,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       const SizedBox(height: 12),
                       FilledButton(
                         onPressed: _load,
-                        child: const Text('إعادة المحاولة'),
+                        child: Text(AppStrings.retry),
                       ),
                     ],
                   ),
@@ -232,10 +314,10 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         if (list.isEmpty)
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('لا توجد شحنات')),
+              padding: const EdgeInsets.all(24),
+              child: Center(child: Text(AppStrings.noShipmentsInSearch)),
             ),
           )
         else
@@ -243,6 +325,9 @@ class _SearchScreenState extends State<SearchScreen> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final item = list[index];
+                final isOwn = _currentUserId != null &&
+                    item.user?.id != null &&
+                    item.user!.id == _currentUserId;
                 return ShipmentResultCard(
                   productName: item.title,
                   fromCode: item.fromCode,
@@ -254,13 +339,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   imageUrl: item.imageUrl,
                   userPhotoUrl: item.user?.profilePhoto,
                   shipmentId: item.id,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ShipmentDetailsScreen(shipmentId: item.id),
-                      ),
-                    );
-                  },
+                  appListingNumber: item.id,
+                  publisherUserId: item.user?.id,
+                  isOwner: isOwn,
+                  onTap: () => _openShipmentDetails(item.id),
                 );
               },
               childCount: list.length,
@@ -279,7 +361,7 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
-              '${list.length} رحلة',
+              AppStrings.tripsFoundWithCount(list.length),
               style: TextStyle(
                 fontSize: 15,
                 color: Colors.grey[700],
@@ -289,10 +371,10 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         if (list.isEmpty)
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('لا توجد رحلات')),
+              padding: const EdgeInsets.all(24),
+              child: Center(child: Text(AppStrings.noTripsInSearch)),
             ),
           )
         else

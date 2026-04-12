@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/api_config.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -139,7 +140,7 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         body: Container(
           height: MediaQuery.of(context).size.height * 0.92,
@@ -384,7 +385,7 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                hint: const Text(AppStrings.cityCountryHint),
+                hint: Text(AppStrings.cityCountryHint),
                 items: _countries
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),
@@ -451,7 +452,7 @@ class _AddTripFormScreenState extends State<AddTripFormScreen> {
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                hint: const Text(AppStrings.cityCountryHint),
+                hint: Text(AppStrings.cityCountryHint),
                 items: _countries
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),

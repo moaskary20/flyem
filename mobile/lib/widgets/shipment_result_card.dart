@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/widgets/api_client_image.dart';
+import 'package:flyem_app/widgets/user_profile_link.dart';
 
 class ShipmentResultCard extends StatelessWidget {
   final String productName;
@@ -15,8 +16,18 @@ class ShipmentResultCard extends StatelessWidget {
   final String? userPhotoUrl;
   final int? shipmentId;
   final VoidCallback? onTap;
+  /// زر أسفل الكارت (مثلاً «إرسال طلب»). يُخفى تلقائياً عند تفعيل القائمة أو عند [isOwner].
   final String? actionButtonText;
   final VoidCallback? onActionButtonTap;
+  /// إن كانت شحنة المستخدم الحالي لا يُعرض زر الإجراء الأسفلي.
+  final bool isOwner;
+  /// قائمة ⋮ بجانب العنوان: تعديل / حذف (شاشة شحناتي — تبويب التفاصيل).
+  final VoidCallback? onMenuEdit;
+  final VoidCallback? onMenuDelete;
+  /// صاحب الإعلان (للفتح عند الضغط على الاسم).
+  final int? publisherUserId;
+  /// رقم العرض في التطبيق (معرّف الشحنة).
+  final int? appListingNumber;
 
   const ShipmentResultCard({
     super.key,
@@ -33,12 +44,24 @@ class ShipmentResultCard extends StatelessWidget {
     this.onTap,
     this.actionButtonText,
     this.onActionButtonTap,
+    this.isOwner = false,
+    this.onMenuEdit,
+    this.onMenuDelete,
+    this.publisherUserId,
+    this.appListingNumber,
   });
 
   static String? _sanitizeUrl(String? url) {
     if (url == null || url.isEmpty) return null;
     final s = url.replaceAll(RegExp(r'\s'), '').trim();
     return s.isEmpty ? null : s;
+  }
+
+  bool get _hasCardMenu => onMenuEdit != null || onMenuDelete != null;
+
+  bool get _showBottomButton {
+    if (isOwner || _hasCardMenu) return false;
+    return true;
   }
 
   @override
@@ -85,28 +108,118 @@ class ShipmentResultCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        productName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.flight, size: 14, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$fromCode → $toCode',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[700],
+                          Expanded(
+                            child: Text(
+                              productName,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (_hasCardMenu)
+                            PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == AppStrings.editShipment) {
+                                  onMenuEdit?.call();
+                                } else if (value == AppStrings.deleteShipment) {
+                                  onMenuDelete?.call();
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                if (onMenuEdit != null)
+                                  PopupMenuItem(
+                                    value: AppStrings.editShipment,
+                                    child: Text(AppStrings.editShipment, style: const TextStyle(color: Colors.black87)),
+                                  ),
+                                if (onMenuDelete != null)
+                                  PopupMenuItem(
+                                    value: AppStrings.deleteShipment,
+                                    child: Text(AppStrings.deleteShipment, style: const TextStyle(color: Colors.black87)),
+                                  ),
+                              ],
+                              icon: Icon(Icons.more_vert, color: Colors.grey[700], size: 22),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                            ),
                         ],
+                      ),
+                      const SizedBox(height: 6),
+                      if (appListingNumber != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            AppStrings.appShipmentNumber(appListingNumber!),
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    AppStrings.routeLabelFrom,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    fromCode,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
+                              child: Icon(
+                                Icons.arrow_forward,
+                                size: 18,
+                                color: AppColors.primaryYellow,
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    AppStrings.routeLabelTo,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    toCode,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                    textAlign: TextAlign.end,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -156,8 +269,9 @@ class ShipmentResultCard extends StatelessWidget {
                                 ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              userName,
+                            child: TappableUserName(
+                              userId: publisherUserId,
+                              displayName: userName,
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -178,22 +292,24 @@ class ShipmentResultCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: onActionButtonTap ?? onTap,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.primaryYellow,
-                            foregroundColor: Colors.black87,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                      if (_showBottomButton) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: onActionButtonTap ?? onTap,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primaryYellow,
+                              foregroundColor: Colors.black87,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
+                            child: Text(actionButtonText ?? AppStrings.sendRequest),
                           ),
-                          child: Text(actionButtonText ?? AppStrings.sendRequest),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

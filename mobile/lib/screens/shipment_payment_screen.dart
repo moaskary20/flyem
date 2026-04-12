@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/models/shipment_details.dart';
 import 'package:flyem_app/screens/main_nav_screen.dart';
@@ -8,6 +9,7 @@ import 'package:flyem_app/services/shipments_service.dart';
 import 'package:flyem_app/core/api_client.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// شاشة الدفع لإرسال طلب على شحنة أو دفع لطلب مقبول (من تطابقات).
 /// بعد النجاح يتم التوجيه إلى شاشة الرسائل وفتح المحادثة مع صاحب الشحنة.
@@ -34,6 +36,7 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
   bool _paying = false;
   String? _error;
   int? _selectedMethodId;
+  String? _paypalOrderId;
 
   @override
   void initState() {
@@ -48,17 +51,54 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
     });
     try {
       final list = await PaymentMethodsService.getPaymentMethods();
-      if (mounted) setState(() {
-        _methods = list;
-        _loading = false;
-        if (list.isNotEmpty && _selectedMethodId == null) _selectedMethodId = list.first.id;
-      });
+      if (mounted) {
+        setState(() {
+          _methods = list;
+          _loading = false;
+          if (list.isNotEmpty && _selectedMethodId == null) {
+            if (widget.requestId != null) {
+              PaymentMethodItem? pick;
+              for (final m in list) {
+                if (m.code == 'card' || m.code == 'wallet') {
+                  pick = m;
+                  break;
+                }
+              }
+              _selectedMethodId = pick?.id;
+            } else {
+              _selectedMethodId = list.first.id;
+            }
+          }
+        });
+      }
     } catch (_) {
       if (mounted) setState(() {
         _loading = false;
-        _error = 'فشل تحميل وسائل الدفع';
+        _error = AppStrings.loadFailedPaymentMethods;
       });
     }
+  }
+
+  PaymentMethodItem? _selectedMethod() {
+    for (final m in _methods) {
+      if (m.id == _selectedMethodId) return m;
+    }
+    return null;
+  }
+
+  /// دفع طلب مقبول: بطاقة أو محفظة فلاي إم فقط (بدون تحويل بنكي أو PayPal).
+  List<PaymentMethodItem> get _methodsForDisplay {
+    if (widget.requestId != null) {
+      return _methods.where((m) => m.code == 'card' || m.code == 'wallet').toList();
+    }
+    return _methods;
+  }
+
+  String _methodDisplayLabel(PaymentMethodItem m) {
+    if (widget.requestId != null && m.code == 'wallet') {
+      return AppStrings.paymentMethodFlyEmWallet;
+    }
+    return AppStrings.isArabic ? m.nameAr : m.nameEn;
   }
 
   Future<void> _onPay() async {
@@ -66,24 +106,54 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اختر وسيلة الدفع')));
       return;
     }
+    final method = _selectedMethod();
     setState(() {
       _paying = true;
       _error = null;
     });
     try {
+      if (widget.requestId == null && method != null && method.code == 'paypal') {
+        if (_paypalOrderId == null || _paypalOrderId!.isEmpty) {
+          final order = await ShipmentsService.createPayPalOrderForShipment(widget.shipmentId);
+          if (!mounted) return;
+          setState(() {
+            _paypalOrderId = order.orderId;
+            _paying = false;
+          });
+          final uri = Uri.parse(order.approveUrl);
+          final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (mounted) {
+            if (!launched) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppStrings.cannotOpenBrowser)),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppStrings.paypalCompleteSnack),
+                ),
+              );
+            }
+          }
+          return;
+        }
+      }
+
       final result = widget.requestId != null
           ? await RequestsService.payRequest(widget.requestId!, _selectedMethodId!)
           : await ShipmentsService.sendRequest(
               shipmentId: widget.shipmentId,
               paymentMethodId: _selectedMethodId!,
+              paypalOrderId: _paypalOrderId,
             );
       if (!mounted) return;
       setState(() => _paying = false);
       await LocalNotificationService.showNotification(
-        id: LocalNotificationService.idForEvent('request_sent'),
+        id: LocalNotificationService.uniqueNotificationId(),
         title: AppStrings.notificationRequestSent,
         body: AppStrings.notificationRequestSent,
       );
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => MainNavScreen(
@@ -111,14 +181,14 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
     final toDisplay = s.toCityName != null && s.toCityName!.isNotEmpty ? '${s.toCityName}، ${s.toName}' : s.toName;
     final amount = s.priceMin > 0 ? s.priceMin : 1.0;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
           backgroundColor: AppColors.navBarBackground,
           foregroundColor: Colors.white,
           elevation: 0,
-          title: const Text('شاشة الدفع', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          title: Text(AppStrings.paymentScreenTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new),
             onPressed: () => Navigator.of(context).pop(),
@@ -147,51 +217,99 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('ملخص الشحنة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
+                      Text(AppStrings.shipmentSummary, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800])),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: Text(fromDisplay, style: const TextStyle(fontWeight: FontWeight.w600))),
-                          Icon(Icons.local_shipping_outlined, size: 20, color: AppColors.primaryYellow),
-                          Expanded(child: Text(toDisplay, style: const TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.end)),
-                        ],
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    AppStrings.routeLabelFrom,
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                                  ),
+                                  Text(fromDisplay, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10, left: 4, right: 4),
+                              child: Icon(Icons.arrow_forward, size: 22, color: AppColors.primaryYellow),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    AppStrings.routeLabelTo,
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                                  ),
+                                  Text(
+                                    toDisplay,
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    textAlign: TextAlign.end,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       if (s.title.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(s.title, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
                       ],
                       const SizedBox(height: 8),
-                      Text('${s.currencySymbol}${amount.toStringAsFixed(1)} — المبلغ', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                      Text(
+                        AppStrings.paymentShipmentAmountLine(s.currencySymbol, amount.toStringAsFixed(1)),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'وسيلة الدفع',
+                  AppStrings.paymentMethod,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[800]),
                 ),
                 const SizedBox(height: 12),
                 if (_loading)
                   const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
-                else if (_error != null && _methods.isEmpty)
+                else if (_error != null && _methodsForDisplay.isEmpty)
                   Center(
                     child: Column(
                       children: [
                         Text(_error!, textAlign: TextAlign.center),
                         const SizedBox(height: 12),
-                        TextButton(onPressed: _loadMethods, child: const Text('إعادة المحاولة')),
+                        TextButton(onPressed: _loadMethods, child: Text(AppStrings.retry)),
                       ],
                     ),
                   )
                 else
-                  ..._methods.map((m) => _ShipmentPaymentMethodTile(
-                        name: m.nameAr,
+                  ..._methodsForDisplay.map((m) => _ShipmentPaymentMethodTile(
+                        name: _methodDisplayLabel(m),
                         isSelected: _selectedMethodId == m.id,
-                        onTap: () => setState(() => _selectedMethodId = m.id),
+                        onTap: () => setState(() {
+                          _selectedMethodId = m.id;
+                          if (m.code != 'paypal') _paypalOrderId = null;
+                        }),
                       )),
-                if (_error != null && _methods.isNotEmpty) ...[
+                if (_error != null && _methodsForDisplay.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                ],
+                if (widget.requestId == null && _selectedMethod()?.code == 'paypal') ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _paypalOrderId == null || _paypalOrderId!.isEmpty
+                        ? AppStrings.paypalOpenHint
+                        : AppStrings.paypalCompleteHintShipment,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.35),
+                  ),
                 ],
                 const SizedBox(height: 32),
                 SizedBox(
@@ -210,7 +328,14 @@ class _ShipmentPaymentScreenState extends State<ShipmentPaymentScreen> {
                             width: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('إتمام الدفع', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        : Text(
+                            widget.requestId == null &&
+                                    _selectedMethod()?.code == 'paypal' &&
+                                    (_paypalOrderId == null || _paypalOrderId!.isEmpty)
+                                ? AppStrings.continueToPayPal
+                                : AppStrings.completePayment,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],

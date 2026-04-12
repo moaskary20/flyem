@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
+import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/widgets/api_client_image.dart';
-import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/services/local_notification_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -88,7 +89,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -98,9 +99,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text(
-            'تعديل الملف الشخصي',
-            style: TextStyle(
+          title: Text(
+            AppStrings.editProfileScreenTitle,
+            style: const TextStyle(
               color: Colors.black87,
               fontSize: 18,
               fontWeight: FontWeight.w600,

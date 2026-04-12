@@ -27,4 +27,14 @@ class SupportTicketService {
       throw Exception(map?['message'] as String? ?? 'فشل إرسال الرسالة');
     }
   }
+
+  /// اقتراحات المستخدمين — تظهر في لوحة التحكم كتذاكر دعم (نفس الجدول).
+  static Future<void> sendSuggestion(String message) async {
+    final trimmed = message.trim();
+    if (trimmed.isEmpty) throw Exception('اكتب نص الاقتراح');
+    await sendTicket(
+      subject: 'اقتراح / ملاحظة من التطبيق',
+      message: trimmed,
+    );
+  }
 }

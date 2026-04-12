@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/trip_item.dart';
@@ -74,7 +75,7 @@ class _TripsScreenState extends State<TripsScreen> {
   Widget build(BuildContext context) {
     final hasTrips = _trips.isNotEmpty;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -277,17 +278,17 @@ class _TripCard extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(AppStrings.deleteTrip),
-        content: const Text(AppStrings.confirmDeleteTrip),
+        title: Text(AppStrings.deleteTrip),
+        content: Text(AppStrings.confirmDeleteTrip),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(AppStrings.cancel),
+            child: Text(AppStrings.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text(AppStrings.delete),
+            child: Text(AppStrings.delete),
           ),
         ],
       ),
@@ -323,7 +324,10 @@ class _TripCard extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => TripDetailsScreen(tripId: item.id),
+              builder: (_) => TripDetailsScreen(
+                tripId: item.id,
+                openedFromMyTrips: true,
+              ),
             ),
           );
         },
@@ -367,37 +371,72 @@ class _TripCard extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      item.fromDisplay,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 17,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primaryYellow.withValues(alpha: 0.2),
-                                          shape: BoxShape.circle,
+                                child: Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              AppStrings.routeLabelFrom,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                            Text(
+                                              item.fromDisplay,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                                color: Colors.black87,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
                                         ),
-                                        child: Icon(Icons.flight_rounded, size: 18, color: AppColors.primaryYellow),
                                       ),
-                                    ),
-                                    Text(
-                                      item.toDisplay,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 17,
-                                        color: Colors.black87,
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 12, left: 6, right: 6),
+                                        child: Icon(
+                                          Icons.arrow_forward,
+                                          size: 22,
+                                          color: AppColors.primaryYellow,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              AppStrings.routeLabelTo,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                            Text(
+                                              item.toDisplay,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                                color: Colors.black87,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.end,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               GestureDetector(
@@ -680,7 +719,7 @@ class _AddTripPassportSheetState extends State<_AddTripPassportSheet> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,

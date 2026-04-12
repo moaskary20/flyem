@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 
 /// شاشة الخصوصية وشروط الاستخدام.
@@ -12,7 +13,7 @@ class PrivacyTermsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -20,9 +21,9 @@ class PrivacyTermsScreen extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             _title,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
           ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new),

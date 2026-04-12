@@ -1,240 +1,487 @@
-/// نصوص التطبيق - العربية (الرئيسية)
+/// نصوص التطبيق — العربية والإنجليزية حسب [setLanguageCode].
 class AppStrings {
   AppStrings._();
 
+  static String _code = 'ar';
+
+  static void setLanguageCode(String c) {
+    _code = c == 'en' ? 'en' : 'ar';
+  }
+
+  static bool get isArabic => _code == 'ar';
+  static bool get isEnglish => _code == 'en';
+
+  static bool get _en => _code == 'en';
+
   // Navbar
-  static const String navSearch = 'البحث';
-  static const String navShipments = 'شحنات';
-  static const String navTrips = 'رحلات';
-  static const String navMessages = 'الرسائل';
-  static const String tabNews = 'الاخبار';
-  static const String tabMatches = 'تطابقات';
-  static const String tabAgreements = 'اتفاقات';
-  static const String tabConversations = 'المحادثات';
-  static const String messagesEmptyState = 'ليس لدينا أي شيء هنا الآن.';
-  static const String navMore = 'المزيد';
+  static String get navSearch => _en ? 'Search' : 'البحث';
+  static String get navShipments => _en ? 'Shipments' : 'شحنات';
+  static String get navShipmentsTab => _en ? 'My shipments' : 'شحناتي';
+  static String get navTrips => _en ? 'Trips' : 'رحلات';
+  static String get navMessages => _en ? 'Messages' : 'الرسائل';
+  static String get tabNews => _en ? 'News' : 'الاخبار';
+  static String get tabMatches => _en ? 'Matches' : 'تطابقات';
+  static String get tabAgreements => _en ? 'Agreements' : 'اتفاقات';
+  static String get tabConversations => _en ? 'Conversations' : 'المحادثات';
+  static String get messagesEmptyState =>
+      _en ? 'Nothing here yet.' : 'ليس لدينا أي شيء هنا الآن.';
+  static String get navMore => _en ? 'More' : 'المزيد';
 
   // Search form
-  static const String fromHint = 'من (المدينة، الدولة)';
-  static const String toHint = 'إلى (المدينة، الدولة)';
-  static const String allDates = 'كل التواريخ';
-  static const String allWeights = 'كل الأوزان';
-  static const String shipments = 'شحنات';
-  static const String trips = 'رحلات';
-  static const String search = 'بحث';
+  static String get fromHint => _en ? 'From (city, country)' : 'من (المدينة، الدولة)';
+  static String get toHint => _en ? 'To (city, country)' : 'إلى (المدينة، الدولة)';
+  static String get searchCountryLabel => _en ? 'Country' : 'الدولة';
+  static String get searchCountryHint => _en ? 'Select country' : 'اختر الدولة';
+  static String get searchCityLabel => _en ? 'City' : 'المدينة';
+  static String get searchCityHint => _en ? 'Select city' : 'اختر المدينة';
+  static String get cityPlaceholder => _en ? 'City' : 'المدينة';
+  static String get allCitiesSearch => _en ? 'All cities' : 'كل المدن';
+  static String get allDates => _en ? 'All dates' : 'كل التواريخ';
+  static String get allWeights => _en ? 'All weights' : 'كل الأوزان';
+  static String get shipments => _en ? 'Shipments' : 'شحنات';
+  static String get trips => _en ? 'Trips' : 'رحلات';
+  static String get search => _en ? 'Search' : 'بحث';
 
   // Results
-  static const String shipmentsFound = 'شحنة موجودة';
-  static const String shipmentsFoundCount = 'شحنة موجودة'; // سيتم استبدال العدد
-  static String shipmentsFoundWithCount(int n) => '$n شحنة موجودة';
-  static const String sendRequest = 'إرسال طلب';
-  static const String sendingRequest = 'جاري إرسال الطلب...';
-  static const String requestSentMatches =
-      'تم إرسال الطلب. ستظهر في تطابقات حتى يقبل صاحب الشحنة.';
-  static const String reward = 'المكافأة';
-  static const String before = 'قبل';
-  static const String deliveryBefore = 'الاستلام قبل';
-  static const String kg = 'كجم';
+  static String get shipmentsFound => _en ? 'Shipment available' : 'شحنة موجودة';
+  static String get shipmentsFoundCount => _en ? 'Shipment available' : 'شحنة موجودة';
+  static String shipmentsFoundWithCount(int n) =>
+      _en ? '$n shipments found' : '$n شحنة موجودة';
+  static String tripsFoundWithCount(int n) => _en ? '$n trips' : '$n رحلة';
+  static String get sendRequest => _en ? 'Send request' : 'إرسال طلب';
+  static String get cannotRequestOwnListing =>
+      _en ? 'You cannot send a request on your own listing' : 'لا يمكن إرسال طلب على إعلانك الخاص';
+  static String get sendingRequest => _en ? 'Sending request…' : 'جاري إرسال الطلب...';
+  static String get requestSentMatches => _en
+      ? 'Request sent. It will appear in matches until the shipper accepts.'
+      : 'تم إرسال الطلب. ستظهر في تطابقات حتى يقبل صاحب الشحنة.';
+  static String get tripRequiredGateTitle =>
+      _en ? 'Add your trip first' : 'أضف رحلتك أولاً';
+  static String get tripRequiredGateBody => _en
+      ? 'To request a shipment you need at least one trip listing. Add your trip details so shippers can match with you.'
+      : 'لإرسال طلب على شحنة يجب أن يكون لديك رحلة مسجّلة على الأقل. أدخل بيانات رحلتك ليتمكن الشاحنون من التوافق معك.';
+  static String get tripRequiredAddTripAction =>
+      _en ? 'Add trip' : 'إدخال بيانات الرحلة';
+  static String get tripRequiredLater => _en ? 'Not now' : 'ليس الآن';
+  static String get tripRequiredToRequestShipment => _en
+      ? 'Add a trip listing before you can send a request on this shipment.'
+      : 'أضف رحلة من قائمة رحلاتي قبل إرسال طلب على هذه الشحنة.';
+  static String get reward => _en ? 'Reward' : 'المكافأة';
+  static String get before => _en ? 'Before' : 'قبل';
+  static String get deliveryBefore => _en ? 'Pickup before' : 'الاستلام قبل';
+  static String get kg => _en ? 'kg' : 'كجم';
 
   // Trip/Shipment details
-  static const String expectedOn = 'متوقع في';
-  static const String allowShippingCompanies = 'السماح للنقل عبر شركات الشحن';
-  static const String postedBy = 'منشور بواسطة';
-  static const String visitLink = 'زيارة الرابط';
-  static const String weightOfSingleItem = 'وزن السلعة الواحدة';
-  static const String productQuantity = 'كمية المنتج';
-  static const String itemCategory = 'فئة السلعة';
-  static const String travelerProfit = 'مكسب المسافر';
-  static const String travelerReward = 'مكافأة المسافر (السعر)';
-  /// تحت حقل مكافأة المسافر: جملة واحدة فيها الحد الأدنى (الرقم من لوحة التحكم) وزيادة فرصة إنجاز العملية.
-  static String minRewardDisclaimer(double minValue) =>
-      'مع العلم أن الحد الأدنى ($minValue) وزيادة التكلفة عنه تزيد من فرصة إنجاز العملية.';
-  static const String minRewardDisclaimerNoMin =
-      'مع العلم أن زيادة التكلفة تزيد من فرصة إنجاز العملية.';
+  /// اتجاه المسار دائماً من اليسار إلى اليمين مع سهم (وضوح: من → إلى).
+  static String get routeLabelFrom => _en ? 'From' : 'من';
+  static String get routeLabelTo => _en ? 'To' : 'إلى';
+  static String get expectedOn => _en ? 'Expected on' : 'متوقع في';
+  static String get allowShippingCompanies =>
+      _en ? 'Allow delivery via shipping companies' : 'السماح للنقل عبر شركات الشحن';
+  static String get postedBy => _en ? 'Posted by' : 'منشور بواسطة';
+  static String get visitLink => _en ? 'Visit link' : 'زيارة الرابط';
+  static String get weightOfSingleItem =>
+      _en ? 'Weight per item' : 'وزن السلعة الواحدة';
+  static String get productQuantity => _en ? 'Product quantity' : 'كمية المنتج';
+  static String get itemCategory => _en ? 'Item category' : 'فئة السلعة';
+  static String get travelerProfit => _en ? 'Traveler earnings' : 'مكسب المسافر';
+  static String get travelerReward => _en ? 'Traveler reward (price)' : 'مكافأة المسافر (السعر)';
+  static String minRewardDisclaimer(double minValue) => _en
+      ? 'Note: the minimum is ($minValue). Offering more improves the chance of completion.'
+      : 'مع العلم أن الحد الأدنى ($minValue) وزيادة التكلفة عنه تزيد من فرصة إنجاز العملية.';
+  static String get minRewardDisclaimerNoMin => _en
+      ? 'Note: a higher reward improves the chance of completion.'
+      : 'مع العلم أن زيادة التكلفة تزيد من فرصة إنجاز العملية.';
 
-  // Requests (تطابقات)
-  static const String requestStatusPending = 'قيد الانتظار';
-  static const String requestStatusAccepted = 'مقبول';
-  static const String requestStatusRejected = 'مرفوض';
-  static const String payNow = 'ادفع الآن';
-  static const String accept = 'قبول';
-  static const String reject = 'رفض';
-  static const String noRequests = 'لا توجد طلبات';
+  // Requests (matches)
+  static String get requestStatusPending => _en ? 'Pending' : 'قيد الانتظار';
+  static String get requestStatusAccepted => _en ? 'Accepted' : 'مقبول';
+  static String get requestStatusRejected => _en ? 'Rejected' : 'مرفوض';
+  static String get payNow => _en ? 'Pay now' : 'ادفع الآن';
+  static String get accept => _en ? 'Accept' : 'قبول';
+  static String get reject => _en ? 'Reject' : 'رفض';
+  static String get noRequests => _en ? 'No requests' : 'لا توجد طلبات';
 
   // Filter
-  static const String filterTitle = 'فلتر';
-  static const String applyFilter = 'تطبيق الفلتر';
-  static const String clearFilter = 'مسح الفلتر';
+  static String get filterTitle => _en ? 'Filter' : 'فلتر';
+  static String get applyFilter => _en ? 'Apply filter' : 'تطبيق الفلتر';
+  static String get clearFilter => _en ? 'Clear filter' : 'مسح الفلتر';
 
   // My Shipments
-  static const String sort = 'تصنيف';
-  static const String noShipments = 'لا يوجد لديك أي شحنات';
-  static const String addNow = 'أضف الآن';
-  static const String addYourShipment = 'أضف شحنتك';
+  static String get sort => _en ? 'Sort' : 'تصنيف';
+  static String get noShipments => _en ? 'You have no shipments' : 'لا يوجد لديك أي شحنات';
+  static String get addNow => _en ? 'Add now' : 'أضف الآن';
+  static String get addYourShipment => _en ? 'Add your shipment' : 'أضف شحنتك';
 
   // Trips (empty state)
-  static const String tripsEmptyLine1 = 'ليس لديك أي رحلات أضف رحلة';
-  static const String tripsEmptyLine2 = 'وابدأ في جني الأموال من السفر';
-  static const String addYourTrip = 'أضف رحلتك';
-  static const String notBookedYet = 'لم تحجز بعد؟';
+  static String get tripsEmptyLine1 =>
+      _en ? 'You have no trips — add a trip' : 'ليس لديك أي رحلات أضف رحلة';
+  static String get tripsEmptyLine2 => _en
+      ? 'and start earning from travel'
+      : 'وابدأ في جني الأموال من السفر';
+  static String get addYourTrip => _en ? 'Add your trip' : 'أضف رحلتك';
+  static String get notBookedYet => _en ? 'Not booked yet?' : 'لم تحجز بعد؟';
 
-  // Add trip - Passport upload bottom sheet
-  static const String passportSheetLine1 = 'لتربح مزيدًا من المال يجب عليك أن تكسب';
-  static const String passportSheetLine2 = 'ثقة الشاحنين';
-  static const String passportSheetLine3 = 'من فضلك قم برفع صورة جواز السفر حتى';
-  static const String passportSheetLine4 = 'تتمكن من استكمال الصفقة بنجاح.';
-  static const String continueBtn = 'إستمرار';
+  // Passport sheet
+  static String get passportSheetLine1 =>
+      _en ? 'To earn more you need to earn' : 'لتربح مزيدًا من المال يجب عليك أن تكسب';
+  static String get passportSheetLine2 => _en ? 'shippers’ trust' : 'ثقة الشاحنين';
+  static String get passportSheetLine3 => _en
+      ? 'Please upload a passport photo so you can'
+      : 'من فضلك قم برفع صورة جواز السفر حتى';
+  static String get passportSheetLine4 =>
+      _en ? 'complete deals successfully.' : 'تتمكن من استكمال الصفقة بنجاح.';
+  static String get continueBtn => _en ? 'Continue' : 'إستمرار';
 
   // Add Trip form
-  static const String tripDetailsSection = 'تفاصيل الرحلة';
-  static const String travelTypeSection = 'نوع السفر';
-  static const String bookingInfoSection = 'معلومات الحجز';
-  static const String availableWeightHint = 'الوزن المتاح';
-  static const String departureHint = 'المغادرة (التاريخ والوقت)';
-  static const String pricePerKgHint = 'السعر للكيلو (اختياري)';
-  static const String priceHintOptional = 'السعر (اختياري)';
-  static const String airlineHint = 'خط الطيران';
-  static const String bookingRefHint = 'مرجع الحجز';
-  static const String firstNameBookingHint = 'الاسم الأول (على بطاقة الحجز)';
-  static const String lastNameBookingHint = 'الاسم الأخير (على بطاقة الحجز)';
-  static const String categoriesDontWantToCarry = 'الفئات التي لا ترغب في حملها';
-  static const String addNewTrip = 'إضافة رحلة جديدة';
-  static const String departsOn = 'يغادر في';
-  static const String profit = 'مكسب';
-  static const String confirmedDeals = 'الصفقات المؤكدة';
-  static const String minTripPriceLabel = 'الحد الأدنى للرحلات';
-  // خيارات الاستلام والتسليم (داخل الرحلة)
-  static const String pickupDeliveryOptionsTitle = 'خيارات الاستلام والتسليم';
-  static const String canPickupInCurrentCountry = 'استلام الشحنة في الدولة الحالية';
-  static const String canDeliverInOtherCountry = 'تسليم الشحنة في الدولة الأخرى';
-  static const String canReturnOnCancel = 'إرجاع الشحنة عند الإلغاء قبل يوم';
-  static String returnBeforeDaysLabel(int days) => 'إرجاع قبل $days يوم';
+  static String get tripDetailsSection => _en ? 'Trip details' : 'تفاصيل الرحلة';
+  static String get travelTypeSection => _en ? 'Travel type' : 'نوع السفر';
+  static String get bookingInfoSection => _en ? 'Booking info' : 'معلومات الحجز';
+  static String get availableWeightHint => _en ? 'Available weight' : 'الوزن المتاح';
+  static String get departureHint =>
+      _en ? 'Departure (date & time)' : 'المغادرة (التاريخ والوقت)';
+  static String get pricePerKgHint =>
+      _en ? 'Price per kg (optional)' : 'السعر للكيلو (اختياري)';
+  static String get priceHintOptional => _en ? 'Price (optional)' : 'السعر (اختياري)';
+  static String get airlineHint => _en ? 'Airline' : 'خط الطيران';
+  static String get bookingRefHint => _en ? 'Booking reference' : 'مرجع الحجز';
+  static String get firstNameBookingHint =>
+      _en ? 'First name (on booking)' : 'الاسم الأول (على بطاقة الحجز)';
+  static String get lastNameBookingHint =>
+      _en ? 'Last name (on booking)' : 'الاسم الأخير (على بطاقة الحجز)';
+  static String get categoriesDontWantToCarry =>
+      _en ? 'Categories you prefer not to carry' : 'الفئات التي لا ترغب في حملها';
+  static String get addNewTrip => _en ? 'Add new trip' : 'إضافة رحلة جديدة';
+  static String get departsOn => _en ? 'Departs on' : 'يغادر في';
+  static String get profit => _en ? 'Profit' : 'مكسب';
+  static String get confirmedDeals => _en ? 'Confirmed deals' : 'الصفقات المؤكدة';
+  static String get minTripPriceLabel => _en ? 'Minimum trip price' : 'الحد الأدنى للرحلات';
+  static String get pickupDeliveryOptionsTitle =>
+      _en ? 'Pickup & delivery options' : 'خيارات الاستلام والتسليم';
+  static String get canPickupInCurrentCountry =>
+      _en ? 'Pick up shipment in current country' : 'استلام الشحنة في الدولة الحالية';
+  static String get canDeliverInOtherCountry =>
+      _en ? 'Deliver shipment in the other country' : 'تسليم الشحنة في الدولة الأخرى';
+  static String get canReturnOnCancel =>
+      _en ? 'Return shipment if cancelled before one day' : 'إرجاع الشحنة عند الإلغاء قبل يوم';
+  static String returnBeforeDaysLabel(int days) =>
+      _en ? 'Return before $days days' : 'إرجاع قبل $days يوم';
 
-  // Add Shipment (step 1)
-  static const String addDetails = 'إضافة التفاصيل';
-  static const String review = 'مراجعة';
-  static const String details = 'التفاصيل';
-  static const String fromCityCountry = 'من (مدينة - بلد)';
-  static const String toCityCountry = 'إلى (مدينة - بلد)';
-  static const String cityCountryHint = 'مدينة - بلد';
-  static const String beforeDate = 'قبل تاريخ';
-  static const String shipmentName = 'اسم الشحنة';
-  static const String notes = 'ملاحظات';
-  static const String shoppingItems = 'سلع التسوق';
-  static const String addNewShipment = 'أضف شحنة جديدة';
-  static const String chooseFromWishlist = 'اختار من قائمة الرغبات';
-  static const String next = 'التالي';
-  static const String cancel = 'إلغاء';
-  static const String confirmAndCreate = 'تأكيد وإنشاء';
-  static const String edit = 'تعديل';
+  // Add Shipment
+  static String get addDetails => _en ? 'Add details' : 'إضافة التفاصيل';
+  static String get review => _en ? 'Review' : 'مراجعة';
+  static String get details => _en ? 'Details' : 'التفاصيل';
+  static String get fromCityCountry => _en ? 'From (city – country)' : 'من (مدينة - بلد)';
+  static String get toCityCountry => _en ? 'To (city – country)' : 'إلى (مدينة - بلد)';
+  static String get cityCountryHint => _en ? 'City – country' : 'مدينة - بلد';
+  static String get beforeDate => _en ? 'Before date' : 'قبل تاريخ';
+  static String get shipmentName => _en ? 'Shipment name' : 'اسم الشحنة';
+  static String get notes => _en ? 'Notes' : 'ملاحظات';
+  static String get shoppingItems => _en ? 'Shopping items' : 'سلع التسوق';
+  static String get addNewShipment => _en ? 'Add new shipment' : 'أضف شحنة جديدة';
+  static String get chooseFromWishlist =>
+      _en ? 'Choose from wishlist' : 'اختار من قائمة الرغبات';
+  static String get next => _en ? 'Next' : 'التالي';
+  static String get cancel => _en ? 'Cancel' : 'إلغاء';
+  static String get confirmAndCreate => _en ? 'Confirm & create' : 'تأكيد وإنشاء';
+  static String get edit => _en ? 'Edit' : 'تعديل';
+  static String get editProfileScreenTitle => _en ? 'Edit profile' : 'تعديل الملف الشخصي';
 
-  // Add Shopping Item (شحنة تسوق)
-  static const String addShoppingShipment = 'إضافة شحنة تسوق';
-  static const String productDetails = 'تفاصيل المنتج';
-  static const String productLinkHint = 'لينك المنتج';
-  static const String productNameHint = 'اسم المنتج';
-  static const String pricePerItem = 'سعر السلعة الواحدة';
-  static const String weightPerItem = 'وزن السلعة الواحدة';
-  static const String total = 'المجموع';
-  static String totalWithCount(int n) => 'المجموع ($n)';
-  static const String category = 'الفئة';
-  static const String selectCategory = 'اختر الفئة';
-  static const String shipmentPhotos = 'صور الشحنة';
-  static const String done = 'تم';
+  // Shopping shipment
+  static String get addShoppingShipment => _en ? 'Add shopping shipment' : 'إضافة شحنة تسوق';
+  static String get productDetails => _en ? 'Product details' : 'تفاصيل المنتج';
+  static String get productLinkHint => _en ? 'Product link' : 'لينك المنتج';
+  static String get productNameHint => _en ? 'Product name' : 'اسم المنتج';
+  static String get pricePerItem => _en ? 'Price per item' : 'سعر السلعة الواحدة';
+  static String get weightPerItem => _en ? 'Weight per item' : 'وزن السلعة الواحدة';
+  static String get total => _en ? 'Total' : 'المجموع';
+  static String totalWithCount(int n) => _en ? 'Total ($n)' : 'المجموع ($n)';
+  static String get category => _en ? 'Category' : 'الفئة';
+  static String get selectCategory => _en ? 'Select category' : 'اختر الفئة';
+  static String get shipmentPhotos => _en ? 'Shipment photos' : 'صور الشحنة';
+  static String get done => _en ? 'Done' : 'تم';
 
-  // My Shipment (after publish) - tabs
-  static const String tabDeals = 'الصفقات';
-  static const String tabSuitableTrips = 'الرحلات المناسبة';
-  static const String tabDetails = 'التفاصيل';
-  static const String editShipment = 'تعديل الشحنة';
-  static const String deleteShipment = 'حذف الشحنة';
-  static const String deleteTrip = 'حذف الرحلة';
-  static const String reportShipment = 'ابلاغ عن الشحنة';
-  static const String confirmDeleteShipment = 'هل تريد حذف هذه الشحنة؟';
-  static const String confirmDeleteTrip = 'هل تريد حذف هذه الرحلة؟';
-  static const String delete = 'حذف';
-  static const String insuranceDisclaimer =
-      'أقر بأن جميع تفاصيل هذه الشحنة صحيحة وأن أي تفاصيل غير صحيحة أو غير واضحة أو مفقودة قد تؤدي إلى أخطاء في عملية التسليم ولا نتحمل نتيجة ذلك.';
-  static const String totalOrdersLabel = 'مجموع الطلبات';
-  static const String totalWeightLabel = 'الوزن الكلي';
-  static const String travelerRewardLabel = 'مكافأة المسافر';
-  static const String companyFeesLabel = 'رسوم الشركة';
-  static const String publishShipment = 'نشر الشحنة';
-  static const String haveQuestions = 'هل عندك استفسارات؟';
-  static const String back = 'رجوع';
+  // My Shipment tabs
+  static String get tabDeals => _en ? 'Deals' : 'الصفقات';
+  static String get tabSuitableTrips => _en ? 'Suitable trips' : 'الرحلات المناسبة';
+  static String get tabDetails => _en ? 'Details' : 'التفاصيل';
+  static String get editShipment => _en ? 'Edit shipment' : 'تعديل الشحنة';
+  static String get deleteShipment => _en ? 'Delete shipment' : 'حذف الشحنة';
+  static String get deleteTrip => _en ? 'Delete trip' : 'حذف الرحلة';
+  static String get reportShipment => _en ? 'Report shipment' : 'ابلاغ عن الشحنة';
+  static String get confirmDeleteShipment =>
+      _en ? 'Delete this shipment?' : 'هل تريد حذف هذه الشحنة؟';
+  static String get confirmDeleteTrip =>
+      _en ? 'Delete this trip?' : 'هل تريد حذف هذه الرحلة؟';
+  static String get delete => _en ? 'Delete' : 'حذف';
+  static String get insuranceDisclaimer => _en
+      ? 'I confirm all shipment details are correct. Incorrect or unclear details may affect delivery; we are not liable for resulting issues.'
+      : 'أقر بأن جميع تفاصيل هذه الشحنة صحيحة وأن أي تفاصيل غير صحيحة أو غير واضحة أو مفقودة قد تؤدي إلى أخطاء في عملية التسليم ولا نتحمل نتيجة ذلك.';
+  static String get totalOrdersLabel => _en ? 'Total orders' : 'مجموع الطلبات';
+  static String get totalWeightLabel => _en ? 'Total weight' : 'الوزن الكلي';
+  static String get travelerRewardLabel => _en ? 'Traveler reward' : 'مكافأة المسافر';
+  static String get companyFeesLabel => _en ? 'Company fees' : 'رسوم الشركة';
+  static String get publishShipment => _en ? 'Publish shipment' : 'نشر الشحنة';
+  static String get haveQuestions => _en ? 'Any questions?' : 'هل عندك استفسارات؟';
+  static String get back => _en ? 'Back' : 'رجوع';
+  static String get goBack => _en ? 'Go back' : 'رجوع';
 
-  // Publish shipment dialog
-  static const String shippingMethodDialogMessage =
-      'قد يقوم المسافر بتسليم طلبك عن طريق شركات الشحن المحلي بدل المقابلة الشخصية '
-      '(مع العلم أنه سيتم تطبيق رسوم إضافية للتوصيل طبقاً للشركة المختارة). هل تفضل هذه الطريقة؟';
-  static const String yes = 'نعم';
-  static const String no = 'لا';
+  // Publish dialog
+  static String get shippingMethodDialogMessage => _en
+      ? 'The traveler may deliver via local shipping companies instead of meeting in person (extra fees may apply). Do you prefer this?'
+      : 'قد يقوم المسافر بتسليم طلبك عن طريق شركات الشحن المحلي بدل المقابلة الشخصية '
+          '(مع العلم أنه سيتم تطبيق رسوم إضافية للتوصيل طبقاً للشركة المختارة). هل تفضل هذه الطريقة؟';
+  static String get yes => _en ? 'Yes' : 'نعم';
+  static String get no => _en ? 'No' : 'لا';
 
-  // More screen
-  static const String personalPage = 'الصفحة الشخصية';
-  static const String settings = 'الإعدادات';
-  static const String notifications = 'التنبيهات';
-  static const String shippingOrTripNotifications = 'تنبيهات الشحنات أو الرحالات المتاحة';
-  static const String chatNotifications = 'إشعارات الدردشة';
-  static const String appCurrency = 'عملة التطبيق';
-  static const String appCurrencyHint = 'عرض الشحنات والرحلات بالعملة المختارة';
-  static const String allCurrencies = 'كل العملات';
-  static const String chooseLanguage = 'اختر اللغة';
-  static const String language = 'اللغة';
-  static const String languageArabic = 'اللغة العربية (Arabic)';
-  static const String logout = 'تسجيل الخروج';
-  static const String paymentDetails = 'تفاصيل الدفع';
-  static const String paymentMethodHint = 'اختر طريقة الدفع المفضلة لديك كمسافر';
-  static const String chooseMethod = 'اختر طريقة';
-  static const String save = 'حفظ';
-  static const String currentCode = 'الكود الحالي:';
-  static const String code = 'الكود';
-  static const String value = 'القيمة';
-  static const String expiresOn = 'ينتهي في';
-  static const String enterPromoCode = 'اكتب الرمز الترويجي';
-  static const String wishlist = 'قائمة الأمنيات';
-  static const String faq = 'الأسئلة الشائعة';
-  static const String privacyAndTerms = 'الخصوصية وشروط الاستخدام';
-  static const String technicalSupport = 'الدعم الفني';
-  static const String supportSubjectLabel = 'النص';
-  static const String supportDetailsHint = 'يرجى كتابة التفاصيل';
-  static const String send = 'إرسال';
-  static const String shareApp = 'شارك التطبيق مع أصدقائك';
-  static const String aboutApp = 'حول التطبيق';
+  // More / settings
+  static String get personalPage => _en ? 'Profile' : 'الصفحة الشخصية';
+  static String get settings => _en ? 'Settings' : 'الإعدادات';
+  static String get notifications => _en ? 'Notifications' : 'التنبيهات';
+  static String get shippingOrTripNotifications => _en
+      ? 'Shipment or trip availability alerts'
+      : 'تنبيهات الشحنات أو الرحلات المتاحة';
+  static String get chatNotifications => _en ? 'Chat notifications' : 'إشعارات الدردشة';
+  static String get appCurrency => _en ? 'App currency' : 'عملة التطبيق';
+  static String get appCurrencyHint => _en
+      ? 'Show shipments and trips in the selected currency'
+      : 'عرض الشحنات والرحلات بالعملة المختارة';
+  static String get allCurrencies => _en ? 'All currencies' : 'كل العملات';
+  static String get chooseLanguage => _en ? 'Choose language' : 'اختر اللغة';
+  static String get language => _en ? 'Language' : 'اللغة';
+  static String get languageArabic => _en ? 'Arabic' : 'اللغة العربية (Arabic)';
+  static String get languageEnglishLabel => _en ? 'English' : 'الإنجليزية (English)';
+  /// عناوين مختصرة لقائمة اختيار اللغة.
+  static String get languageOptionArabic => _en ? 'Arabic' : 'العربية';
+  static String get languageOptionEnglish => _en ? 'English' : 'الإنجليزية';
+  static String get logout => _en ? 'Log out' : 'تسجيل الخروج';
+  static String get logoutSuccess => _en ? 'Signed out' : 'تم تسجيل الخروج';
+  /// بند المزيد وشاشة إدارة حسابات السحب.
+  static String get paymentDetails =>
+      _en ? 'Withdrawal details' : 'تفاصيل سحب الأموال';
+  static String get withdrawalPayoutScreenTitle =>
+      _en ? 'Withdrawal accounts' : 'تفاصيل سحب الأموال';
+  static String get payoutIntroHint => _en
+      ? 'Add one or more payout accounts (IBAN / bank). Mark one as primary for withdrawals.'
+      : 'أضف بطاقة أو أكثر لبيانات السحب (آيبان / بنك). عيّن حساباً رئيسياً لاستلام التحويلات.';
+  static String get payoutEmptyState =>
+      _en ? 'No payout accounts yet. Tap below to add one.' : 'لا توجد بطاقات بعد. اضغط أدناه للإضافة.';
+  static String get payoutAddCardTitle => _en ? 'Add account' : 'إضافة بطاقة';
+  static String get payoutEditCardTitle => _en ? 'Edit account' : 'تعديل البطاقة';
+  static String get payoutCardNickname => _en ? 'Label (optional)' : 'اسم للبطاقة (اختياري)';
+  static String get payoutIbanLabel => _en ? 'IBAN' : 'رقم الآيبان';
+  static String get payoutBankNameLabel => _en ? 'Bank name' : 'اسم البنك';
+  static String get payoutAccountHolderLabel => _en ? 'Account holder' : 'اسم صاحب الحساب';
+  static String get payoutSetAsPrimary => _en ? 'Set as primary' : 'تعيين كحساب رئيسي';
+  static String get payoutPrimaryBadge => _en ? 'Primary' : 'الحساب الرئيسي';
+  static String get payoutUnnamedCard => _en ? 'Payout account' : 'حساب سحب';
+  static String get payoutNeedOneField => _en
+      ? 'Enter at least IBAN, bank name, or account holder.'
+      : 'أدخل على الأقل الآيبان أو اسم البنك أو صاحب الحساب.';
+  static String get payoutDeleteTitle => _en ? 'Delete account?' : 'حذف البطاقة؟';
+  static String get payoutDeleteMessage => _en
+      ? 'This payout account will be removed.'
+      : 'سيتم حذف بيانات السحب هذه.';
+  /// وسيلة الدفع عند دفع شحنة (طلب مقبول): تسمية المحفظة الداخلية.
+  static String get paymentMethodFlyEmWallet =>
+      _en ? 'FlyEm wallet' : 'محفظة فلاي إم';
+  static String get paymentMethodHint => _en
+      ? 'Choose your preferred payment method as a traveler'
+      : 'اختر طريقة الدفع المفضلة لديك كمسافر';
+  static String get chooseMethod => _en ? 'Choose method' : 'اختر طريقة';
+  static String get save => _en ? 'Save' : 'حفظ';
+  static String get currentCode => _en ? 'Current code:' : 'الكود الحالي:';
+  static String get code => _en ? 'Code' : 'الكود';
+  static String get value => _en ? 'Value' : 'القيمة';
+  static String get expiresOn => _en ? 'Expires on' : 'ينتهي في';
+  static String get enterPromoCode => _en ? 'Enter promo code' : 'اكتب الرمز الترويجي';
+  static String get wishlist => _en ? 'Wishlist' : 'قائمة الأمنيات';
+  static String get faq => _en ? 'FAQ' : 'الأسئلة الشائعة';
+  static String get privacyAndTerms => _en ? 'Privacy & terms' : 'الخصوصية وشروط الاستخدام';
+  static String get technicalSupport => _en ? 'Support' : 'الدعم الفني';
+  static String get suggestToUs => _en ? 'Suggest to us' : 'اقترح علينا';
+  static String get suggestToUsIntro => _en
+      ? 'Your feedback inspires us — we’re glad to hear from you.'
+      : 'قد يكون رأيك الشخصي مصدر إلهام لنا، وسعداء بمشاركتنا رأيك.';
+  static String get suggestToUsHint =>
+      _en ? 'Write your suggestion or note here…' : 'اكتب اقتراحك أو ملاحظتك هنا…';
+  static String get suggestToUsSent =>
+      _en ? 'Thanks — we received your message.' : 'شكراً لك، وصلتنا رسالتك.';
+  static String get suggestWriteSomething =>
+      _en ? 'Please enter your suggestion' : 'يرجى كتابة الاقتراح';
+  static String get loginToViewProfile => _en
+      ? 'Sign in to view this user’s public profile'
+      : 'سجّل الدخول لعرض الملف العام للمستخدم';
+  static String get publicProfileTitle => _en ? 'Public profile' : 'الملف العام';
+  static String get homeCountryLabel => _en ? 'Country (home)' : 'البلد (المنزل)';
+  static String get travelCountryLabel => _en ? 'Country (travel)' : 'البلد (السفر)';
+  static String get lastNameHidden => _en ? 'Last name' : 'اسم العائلة';
+  static String get supportSubjectLabel => _en ? 'Subject' : 'النص';
+  static String get supportDetailsHint =>
+      _en ? 'Please describe the issue' : 'يرجى كتابة التفاصيل';
+  static String get send => _en ? 'Send' : 'إرسال';
+  static String get shareApp => _en ? 'Share the app with friends' : 'شارك التطبيق مع أصدقائك';
+  static String get aboutApp => _en ? 'About' : 'حول التطبيق';
 
-  // Personal profile screen
-  static const String pendingVerification = 'في انتظار التوثيق';
-  static const String pendingPhoneVerification = 'في انتظار التحقق من الهاتف';
-  static const String documentsVerified = 'تم التحقق من الوثائق';
-  static const String phoneVerified = 'تم التحقق من الهاتف';
-  static const String dealsCount = 'الصفقات';
-  static const String shipmentsCount = 'شحنة';
-  static const String tripsCount = 'الرحلات';
-  static const String basicInfo = 'المعلومات الأساسية';
-  static const String emailLabel = 'البريد الإلكتروني';
-  static const String phoneLabel = 'رقم الهاتف';
-  static const String noPhoneEntered = 'No phone entered';
-  static const String phoneNumbersLabel = 'أرقام الهواتف (مرتبطة بالحساب والملف الشخصي)';
-  static const String phoneForHomeland = 'رقم الهاتف (الدولة الأم)';
-  static const String phoneForTravel = 'رقم الهاتف (الدولة السفر)';
-  static const String ratingsSection = 'تقييم';
-  static const String myRatingLabel = 'تقييمي';
-  static const String travelerRating = 'تقييم المسافر';
-  static const String shipperRating = 'تقييم الشاحن';
-  static const String noRatings = 'لا يوجد تقييمات';
-  static const String rateUser = 'قيّم';
-  static const String rateUserTitle = 'تقييم الطرف الآخر';
-  static const String rateCommentHint = 'تعليق (اختياري)';
-  static const String submitRating = 'إرسال التقييم';
-  static const String ratingSent = 'تم إرسال التقييم';
+  // Personal profile
+  static String get pendingVerification =>
+      _en ? 'Verification pending' : 'في انتظار التوثيق';
+  static String get pendingPhoneVerification =>
+      _en ? 'Phone verification pending' : 'في انتظار التحقق من الهاتف';
+  static String get documentsVerified =>
+      _en ? 'Documents verified' : 'تم التحقق من الوثائق';
+  static String get phoneVerified => _en ? 'Phone verified' : 'تم التحقق من الهاتف';
+  static String get dealsCount => _en ? 'Deals' : 'الصفقات';
+  static String get shipmentsCount => _en ? 'Shipments' : 'شحنة';
+  static String get tripsCount => _en ? 'Trips' : 'الرحلات';
+  static String get basicInfo => _en ? 'Basic info' : 'المعلومات الأساسية';
+  static String get walletProfileTitle => _en ? 'Wallet' : 'المحفظة';
+  static String get walletProfileHint =>
+      _en ? 'Your balance in the app' : 'رصيدك داخل التطبيق';
+  static String get walletWithdrawMyMoney => _en ? 'Withdraw my money' : 'سحب أموالي';
+  static String get emailLabel => _en ? 'Email' : 'البريد الإلكتروني';
+  static String get phoneLabel => _en ? 'Phone' : 'رقم الهاتف';
+  static String get noPhoneEntered => _en ? 'No phone entered' : 'No phone entered';
+  static String get phoneNumbersLabel => _en
+      ? 'Phone numbers (account & profile)'
+      : 'أرقام الهواتف (مرتبطة بالحساب والملف الشخصي)';
+  static String get phoneForHomeland =>
+      _en ? 'Phone (home country)' : 'رقم الهاتف (الدولة الأم)';
+  static String get phoneForTravel =>
+      _en ? 'Phone (travel country)' : 'رقم الهاتف (الدولة السفر)';
+  static String get ratingsSection => _en ? 'Ratings' : 'تقييم';
+  static String get myRatingLabel => _en ? 'My rating' : 'تقييمي';
+  static String get travelerRating => _en ? 'Traveler rating' : 'تقييم المسافر';
+  static String get shipperRating => _en ? 'Shipper rating' : 'تقييم الشاحن';
+  static String get noRatings => _en ? 'No ratings yet' : 'لا يوجد تقييمات';
+  static String get rateUser => _en ? 'Rate' : 'قيّم';
+  static String get rateUserTitle => _en ? 'Rate the other party' : 'تقييم الطرف الآخر';
+  static String get rateCommentHint => _en ? 'Comment (optional)' : 'تعليق (اختياري)';
+  static String get submitRating => _en ? 'Submit rating' : 'إرسال التقييم';
+  static String get ratingSent => _en ? 'Rating submitted' : 'تم إرسال التقييم';
 
-  // Local notifications (أحداث التطبيق)
-  static const String notificationShipmentAdded = 'تمت إضافة الشحنة';
-  static const String notificationShipmentUpdated = 'تم تحديث الشحنة';
-  static const String notificationTripAdded = 'تمت إضافة الرحلة';
-  static const String notificationTripUpdated = 'تم حفظ تعديلات الرحلة';
-  static const String notificationRequestSent = 'تم إرسال الطلب';
-  static const String notificationProfileSaved = 'تم حفظ الملف الشخصي';
-  static const String notificationShipmentDeleted = 'تم حذف الشحنة';
-  static const String notificationTripDeleted = 'تم حذف الرحلة';
+  // Local notifications
+  static String get notificationShipmentAdded =>
+      _en ? 'Shipment added' : 'تمت إضافة الشحنة';
+  static String get notificationShipmentUpdated =>
+      _en ? 'Shipment updated' : 'تم تحديث الشحنة';
+  static String get notificationTripAdded => _en ? 'Trip added' : 'تمت إضافة الرحلة';
+  static String get notificationTripUpdated =>
+      _en ? 'Trip changes saved' : 'تم حفظ تعديلات الرحلة';
+  static String get notificationRequestSent =>
+      _en ? 'Request sent' : 'تم إرسال الطلب';
+  static String get notificationProfileSaved =>
+      _en ? 'Profile saved' : 'تم حفظ الملف الشخصي';
+  static String get notificationShipmentDeleted =>
+      _en ? 'Shipment deleted' : 'تم حذف الشحنة';
+  static String get notificationTripDeleted => _en ? 'Trip deleted' : 'تم حذف الرحلة';
+
+  // Common UI (screens with hardcoded Arabic)
+  static String get retry => _en ? 'Retry' : 'إعادة المحاولة';
+  static String get requestAlreadySent => _en ? 'Request already sent' : 'تم إرسال طلب مسبقاً';
+  static String get loadFailedTrip =>
+      _en ? 'Failed to load trip details' : 'فشل تحميل تفاصيل الرحلة';
+  static String get loadFailedChat => _en ? 'Failed to load chat' : 'فشل تحميل المحادثة';
+  static String get messageSendFailed =>
+      _en ? 'Failed to send message' : 'فشل إرسال الرسالة';
+  static String get conversation => _en ? 'Chat' : 'محادثة';
+  static String get noMessagesYet => _en
+      ? 'No messages yet. Start the conversation.'
+      : 'لا توجد رسائل بعد. ابدأ المحادثة.';
+  static String get typeMessageHint => _en ? 'Type a message…' : 'اكتب رسالة...';
+  static String get loadFailedPaymentMethods =>
+      _en ? 'Failed to load payment methods' : 'فشل تحميل وسائل الدفع';
+  static String get selectPaymentMethod =>
+      _en ? 'Select a payment method' : 'اختر وسيلة الدفع';
+  static String get cannotOpenBrowser =>
+      _en ? 'Could not open the browser.' : 'تعذّر فتح المتصفح.';
+  static String get cannotOpenBrowserTryCopy => _en
+      ? 'Could not open the browser. Try copying the link from device settings.'
+      : 'تعذّر فتح المتصفح. جرّب نسخ الرابط من إعدادات الجهاز.';
+  static String get paypalCompleteSnack => _en
+      ? 'Complete payment in PayPal, return to the app and tap “Complete payment” again.'
+      : 'أكمل الدفع في PayPal، ثم ارجع إلى التطبيق واضغط «إتمام الدفع» مرة أخرى.';
+  static String get paymentScreenTitle => _en ? 'Payment' : 'شاشة الدفع';
+  static String get shipmentSummary => _en ? 'Shipment summary' : 'ملخص الشحنة';
+  static String get tripSummary => _en ? 'Trip summary' : 'ملخص الرحلة';
+  static String get paymentMethod => _en ? 'Payment method' : 'وسيلة الدفع';
+  static String get paypalOpenHint => _en
+      ? 'PayPal will open in the browser. After approving, return and tap the button again.'
+      : 'سيتم فتح PayPal في المتصفح. بعد الموافقة على الدفع، ارجع واضغط الزر مرة أخرى.';
+  static String get paypalCompleteHintShipment => _en
+      ? 'If you finished paying in PayPal, tap below to complete.'
+      : 'إذا أكملت الدفع في PayPal، اضغط الزر أدناه لإنهاء الطلب.';
+  static String get paypalCompleteHintTrip => _en
+      ? 'PayPal was opened. If you completed payment, tap below to finish.'
+      : 'تم فتح PayPal. إذا أكملت الدفع، اضغط الزر أدناه لإنهاء الطلب.';
+  static String get continueToPayPal => _en ? 'Continue to PayPal' : 'متابعة إلى PayPal';
+  static String get completePayment => _en ? 'Complete payment' : 'إتمام الدفع';
+  static String paymentApproximateAmount(String currencySymbol, String amount) => _en
+      ? '$currencySymbol$amount — approximate amount'
+      : '$currencySymbol$amount — المبلغ التقريبي';
+  static String paymentShipmentAmountLine(String currencySymbol, String amount) => _en
+      ? '$currencySymbol$amount — amount'
+      : '$currencySymbol$amount — المبلغ';
+  static String get statusInProgress => _en ? 'In progress' : 'قيد التنفيذ';
+  static String get statusDelivered => _en ? 'Delivered' : 'تم التوصيل';
+  static String get requestAccepted => _en ? 'Request accepted' : 'تم قبول الطلب';
+  static String get requestRejected => _en ? 'Request rejected' : 'تم رفض الطلب';
+  static String get shipmentGeneric => _en ? 'Shipment' : 'شحنة';
+  static String get userGeneric => _en ? 'User' : 'مستخدم';
+  static String get loadFailedConversations =>
+      _en ? 'Failed to load conversations' : 'فشل تحميل المحادثات';
+  static String get noData => _en ? 'No data' : 'لا توجد بيانات';
+  static String get fetchDetailsFailed =>
+      _en ? 'Failed to load details' : 'فشل جلب التفاصيل';
+  static String get shipmentDeleted => _en ? 'Shipment deleted' : 'تم حذف الشحنة';
+  static String get shipmentMissingFromTo => _en
+      ? 'Shipment has no from/to'
+      : 'الشحنة لا تحتوي على من/إلى';
+  static String get noShipmentsAddFirst => _en
+      ? 'No shipments. Add one first.'
+      : 'لا توجد شحنات. أضف شحنة أولاً.';
+  static String get selectShipmentLabel => _en ? 'Select shipment' : 'اختر الشحنة';
+  static String suitableTripsHeader(String from, String to) => _en
+      ? 'Trips matching your shipment: $from → $to'
+      : 'رحلات مناسبة لشحنتك: من $from إلى $to';
+  static String tripsLoadError(String err) => _en
+      ? 'Error loading trips: $err'
+      : 'حدث خطأ أثناء جلب الرحلات: $err';
+  static String get noSuitableTrips =>
+      _en ? 'No suitable trips right now' : 'لا توجد رحلات مناسبة في الوقت الحالي';
+  static String get noShipmentsInSearch =>
+      _en ? 'No shipments found' : 'لا توجد شحنات';
+  static String get noTripsInSearch => _en ? 'No trips found' : 'لا توجد رحلات';
+
+  // Trip detail sections (labels in UI)
+  static String get detailTravelMethod => _en ? 'Travel method' : 'وسيلة السفر';
+  static String get detailTripType => _en ? 'Trip type' : 'نوع الرحلة';
+  static String get detailDates => _en ? 'Dates' : 'التواريخ';
+  static String get detailDepartureDate => _en ? 'Departure date' : 'تاريخ المغادرة';
+  static String get detailArrivalDate => _en ? 'Arrival date' : 'تاريخ الوصول';
+  static String get detailDeliveryWindow => _en
+      ? 'Window for shipment delivery'
+      : 'الفترة المتاحة لتسليم الشحنة';
+  static String get unspecified => _en ? 'Not set' : 'غير محدد';
+  static String get detailPickupAreas => _en ? 'Shipment pickup areas' : 'مناطق تسلم الشحنة';
+  static String get labelFrom => _en ? 'From' : 'من';
+  static String get labelTo => _en ? 'To' : 'إلى';
+  static String get detailNotes => _en ? 'Notes' : 'ملاحظات';
+
+  static String get appTitle => _en ? 'FlyEm' : 'فلاي إم';
+
+  /// Android notification channel (system UI; English when app is EN).
+  static String get notificationChannelName =>
+      _en ? 'App events' : 'أحداث التطبيق';
+  static String get notificationChannelDescription => _en
+      ? 'FlyEm event notifications'
+      : 'إشعارات أحداث فلاي إم';
+
+  /// مرجع يظهر للمستخدم (يتطابق مع معرّف السجل في التطبيق).
+  static String appShipmentNumber(int n) =>
+      _en ? 'App shipment no. $n' : 'رقم الشحنة في التطبيق: $n';
+  static String appTripNumber(int n) =>
+      _en ? 'App trip no. $n' : 'رقم الرحلة في التطبيق: $n';
+
+  static String get profileDataSaved => _en ? 'Saved' : 'تم الحفظ';
 }

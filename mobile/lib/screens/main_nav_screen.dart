@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/screens/search_screen.dart';
@@ -32,17 +33,29 @@ class MainNavScreen extends StatefulWidget {
 class _MainNavScreenState extends State<MainNavScreen> {
   late int _currentIndex;
 
-  final List<Widget> _screens = const [
-    SearchScreen(),
-    MyShipmentsScreen(),
-    TripsScreen(),
-    MessagesScreen(),
-    MoreScreen(),
-  ];
+  late List<Widget> _screens;
+
+  void _initScreens() {
+    _screens = [
+      SearchScreen(),
+      MyShipmentsScreen(),
+      TripsScreen(),
+      MessagesScreen(),
+      MoreScreen(),
+    ];
+  }
+
+  void _onAppLocale() {
+    if (!mounted) return;
+    _initScreens();
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    _initScreens();
+    AppLocale.notifier.addListener(_onAppLocale);
     _currentIndex = widget.initialIndex;
     if (widget.openConversationId != null && widget.openConversationName != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,9 +73,15 @@ class _MainNavScreenState extends State<MainNavScreen> {
   }
 
   @override
+  void dispose() {
+    AppLocale.notifier.removeListener(_onAppLocale);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         body: IndexedStack(
           index: _currentIndex,
@@ -94,7 +113,7 @@ class _MainNavScreenState extends State<MainNavScreen> {
                     fallbackIcon: Icons.search,
                   ),
                   RiveNavItem(
-                    label: AppStrings.navShipments,
+                    label: AppStrings.navShipmentsTab,
                     isSelected: _currentIndex == 1,
                     onTap: () => setState(() => _currentIndex = 1),
                     riveAsset: _useRiveIcons ? _riveSingleFile : null,

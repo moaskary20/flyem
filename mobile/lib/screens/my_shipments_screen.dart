@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -84,7 +85,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -117,7 +118,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                       indicatorWeight: 3,
                       labelColor: AppColors.primaryYellow,
                       unselectedLabelColor: Colors.grey[400],
-                      tabs: const [
+                      tabs: [
                         Tab(text: AppStrings.tabSuitableTrips),
                         Tab(text: AppStrings.tabDetails),
                       ],
@@ -237,7 +238,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                   ),
                   elevation: 0,
                 ),
-                child: const Text(AppStrings.addYourShipment),
+                child: Text(AppStrings.addYourShipment),
               ),
             ),
           ],
@@ -328,6 +329,8 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
             imageUrl: item.imageUrl,
             userPhotoUrl: item.user?.profilePhoto,
             shipmentId: item.id,
+            appListingNumber: item.id,
+            publisherUserId: item.user?.id,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -335,8 +338,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                 ),
               );
             },
-            actionButtonText: AppStrings.edit,
-            onActionButtonTap: () async {
+            onMenuEdit: () async {
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -345,7 +347,7 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
               try {
                 final details = await ShipmentsService.getShipment(item.id);
                 if (!context.mounted) return;
-                Navigator.pop(context); // close dialog
+                Navigator.pop(context);
                 final added = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
                     builder: (_) => AddShipmentScreen(
@@ -357,12 +359,48 @@ class _MyShipmentsScreenState extends State<MyShipmentsScreen>
                 if (added == true && context.mounted) {
                   _load();
                 }
-              } catch (e) {
+              } catch (_) {
                 if (!context.mounted) return;
-                Navigator.pop(context); // close dialog
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('فشل جلب التفاصيل')),
                 );
+              }
+            },
+            onMenuDelete: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(AppStrings.deleteShipment),
+                  content: Text(AppStrings.confirmDeleteShipment),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text(AppStrings.cancel),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                      child: Text(AppStrings.delete),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm != true || !context.mounted) return;
+              try {
+                await ShipmentsService.deleteShipment(item.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('تم حذف الشحنة')),
+                  );
+                  _load();
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                  );
+                }
               }
             },
           );

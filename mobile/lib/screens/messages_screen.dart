@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/screens/chat_screen.dart';
@@ -6,6 +7,7 @@ import 'package:flyem_app/screens/shipment_payment_screen.dart';
 import 'package:flyem_app/services/conversations_service.dart';
 import 'package:flyem_app/services/requests_service.dart';
 import 'package:flyem_app/services/shipments_service.dart';
+import 'package:flyem_app/widgets/user_profile_link.dart';
 
 /// شاشة الرسائل: أربعة تبويبات (الاخبار - تطابقات - اتفاقات - المحادثات).
 /// تبويب المحادثات مربوط بالـ API ولوحة التحكم (Conversations / Messages).
@@ -37,7 +39,7 @@ class _MessagesScreenState extends State<MessagesScreen>
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -45,9 +47,9 @@ class _MessagesScreenState extends State<MessagesScreen>
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             AppStrings.navMessages,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -63,11 +65,11 @@ class _MessagesScreenState extends State<MessagesScreen>
                 indicatorWeight: 3,
                 labelColor: AppColors.primaryYellow,
                 unselectedLabelColor: Colors.grey[600],
-                tabs: const [
-                  Tab(icon: Icon(Icons.article_outlined, size: 22), text: AppStrings.tabNews),
-                  Tab(icon: Icon(Icons.check_circle_outline, size: 22), text: AppStrings.tabMatches),
-                  Tab(icon: Icon(Icons.handshake_outlined, size: 22), text: AppStrings.tabAgreements),
-                  Tab(icon: Icon(Icons.chat_bubble_outline, size: 22), text: AppStrings.tabConversations),
+                tabs: [
+                  Tab(icon: const Icon(Icons.article_outlined, size: 22), text: AppStrings.tabNews),
+                  Tab(icon: const Icon(Icons.check_circle_outline, size: 22), text: AppStrings.tabMatches),
+                  Tab(icon: const Icon(Icons.handshake_outlined, size: 22), text: AppStrings.tabAgreements),
+                  Tab(icon: const Icon(Icons.chat_bubble_outline, size: 22), text: AppStrings.tabConversations),
                 ],
               ),
             ),
@@ -102,7 +104,7 @@ void _showRateDialog(
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text(AppStrings.rateUserTitle),
+            title: Text(AppStrings.rateUserTitle),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -133,7 +135,7 @@ void _showRateDialog(
                   const SizedBox(height: 16),
                   TextField(
                     controller: commentController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: AppStrings.rateCommentHint,
                       border: OutlineInputBorder(),
                     ),
@@ -145,7 +147,7 @@ void _showRateDialog(
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(AppStrings.back),
+                child: Text(AppStrings.back),
               ),
               FilledButton(
                 onPressed: selectedRating < 1
@@ -162,7 +164,7 @@ void _showRateDialog(
                           if (ctx.mounted) {
                             Navigator.of(ctx).pop();
                             ScaffoldMessenger.of(ctx).showSnackBar(
-                              const SnackBar(content: Text(AppStrings.ratingSent)),
+                              SnackBar(content: Text(AppStrings.ratingSent)),
                             );
                             onSuccess();
                           }
@@ -176,7 +178,7 @@ void _showRateDialog(
                           }
                         }
                       },
-                child: const Text(AppStrings.submitRating),
+                child: Text(AppStrings.submitRating),
               ),
             ],
           );
@@ -233,9 +235,9 @@ class _MatchesTabContentState extends State<_MatchesTabContent> {
       case 'rejected':
         return AppStrings.requestStatusRejected;
       case 'in_progress':
-        return 'قيد التنفيذ';
+        return AppStrings.statusInProgress;
       case 'delivered':
-        return 'تم التوصيل';
+        return AppStrings.statusDelivered;
       default:
         return status;
     }
@@ -255,7 +257,7 @@ class _MatchesTabContentState extends State<_MatchesTabContent> {
             children: [
               Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              FilledButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+              FilledButton(onPressed: _load, child: Text(AppStrings.retry)),
             ],
           ),
         ),
@@ -301,7 +303,7 @@ class _MatchesTabContentState extends State<_MatchesTabContent> {
                         await RequestsService.acceptRequest(item.id);
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('تم قبول الطلب')),
+                            SnackBar(content: Text(AppStrings.requestAccepted)),
                           );
                           _load();
                         }
@@ -320,7 +322,7 @@ class _MatchesTabContentState extends State<_MatchesTabContent> {
                         await RequestsService.rejectRequest(item.id);
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('تم رفض الطلب')),
+                            SnackBar(content: Text(AppStrings.requestRejected)),
                           );
                           _load();
                         }
@@ -395,7 +397,7 @@ class _RequestTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              item.shipmentTitle.isNotEmpty ? item.shipmentTitle : 'شحنة',
+              item.shipmentTitle.isNotEmpty ? item.shipmentTitle : AppStrings.shipmentGeneric,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -409,9 +411,12 @@ class _RequestTile extends StatelessWidget {
               children: [
                 Icon(Icons.person_outline, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 4),
-                Text(
-                  item.otherUserName.isNotEmpty ? item.otherUserName : '—',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                Expanded(
+                  child: TappableUserName(
+                    userId: item.otherUserId,
+                    displayName: item.otherUserName.isNotEmpty ? item.otherUserName : '—',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
                 ),
               ],
             ),
@@ -464,7 +469,7 @@ class _RequestTile extends StatelessWidget {
                     TextButton.icon(
                       onPressed: onRate,
                       icon: const Icon(Icons.star_border, size: 18),
-                      label: const Text(AppStrings.rateUser),
+                      label: Text(AppStrings.rateUser),
                     ),
                   if (onAccept != null)
                     TextButton(
@@ -483,7 +488,7 @@ class _RequestTile extends StatelessWidget {
                         backgroundColor: AppColors.primaryYellow,
                         foregroundColor: Colors.black87,
                       ),
-                      child: const Text(AppStrings.payNow),
+                      child: Text(AppStrings.payNow),
                     ),
                 ],
               ),
@@ -532,7 +537,7 @@ class _ConversationsTabContentState extends State<_ConversationsTabContent> {
       });
     } catch (_) {
       if (mounted) setState(() {
-        _error = 'فشل تحميل المحادثات';
+        _error = AppStrings.loadFailedConversations;
         _loading = false;
       });
     }
@@ -552,7 +557,7 @@ class _ConversationsTabContentState extends State<_ConversationsTabContent> {
             children: [
               Text(_error!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              FilledButton(onPressed: _load, child: const Text('إعادة المحاولة')),
+              FilledButton(onPressed: _load, child: Text(AppStrings.retry)),
             ],
           ),
         ),
@@ -600,6 +605,7 @@ class _ConversationsTabContentState extends State<_ConversationsTabContent> {
                     builder: (_) => ChatScreen(
                       conversationId: c.id,
                       otherUserName: c.otherUserName,
+                      otherUserId: c.otherUserId,
                     ),
                   ),
                 );
@@ -652,7 +658,7 @@ class _ConversationTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      otherUserName.isNotEmpty ? otherUserName : 'مستخدم',
+                      otherUserName.isNotEmpty ? otherUserName : AppStrings.userGeneric,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

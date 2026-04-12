@@ -116,6 +116,7 @@ class RequestListItem {
   final String createdAt;
   final bool isRequester;
   final String otherUserName;
+  final int? otherUserId;
   final bool canRate;
   final bool alreadyRated;
 
@@ -129,6 +130,7 @@ class RequestListItem {
     required this.createdAt,
     required this.isRequester,
     required this.otherUserName,
+    this.otherUserId,
     this.canRate = false,
     this.alreadyRated = false,
   });
@@ -144,6 +146,7 @@ class RequestListItem {
       createdAt: json['created_at'] as String? ?? '',
       isRequester: json['is_requester'] as bool? ?? false,
       otherUserName: json['other_user_name'] as String? ?? '',
+      otherUserId: (json['other_user_id'] as num?)?.toInt(),
       canRate: json['can_rate'] as bool? ?? false,
       alreadyRated: json['already_rated'] as bool? ?? false,
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/services/auth_service.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -195,87 +196,6 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
     }
   }
 
-  void _onPublishTap() {
-    bool? preferCompanyDelivery;
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    AppStrings.shippingMethodDialogMessage,
-                    style: const TextStyle(fontSize: 15, height: 1.5),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => setDialogState(() => preferCompanyDelivery = false),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            backgroundColor: preferCompanyDelivery == false
-                                ? AppColors.primaryYellow.withValues(alpha: 0.2)
-                                : null,
-                          ),
-                          child: const Text(AppStrings.no),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => setDialogState(() => preferCompanyDelivery = true),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            backgroundColor: preferCompanyDelivery == true
-                                ? AppColors.primaryYellow.withValues(alpha: 0.2)
-                                : null,
-                          ),
-                          child: const Text(AppStrings.yes),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      _submit();
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryYellow,
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(AppStrings.done),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   void _goToReview() {
     if (!_formKey.currentState!.validate()) return;
     if (_fromCountry == null || _fromCity == null) {
@@ -290,7 +210,26 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
       );
       return;
     }
+    final rewardErr = _validateTravelerReward();
+    if (rewardErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(rewardErr)));
+      return;
+    }
     setState(() => _currentStep = 1);
+  }
+
+  /// إن وُجد حد أدنى من لوحة التحكم: يجب إدخال مكافأة لا تقل عنه.
+  String? _validateTravelerReward() {
+    final min = _minTravelerReward;
+    if (min == null || min <= 0) return null;
+    final raw = _rewardController.text.trim();
+    if (raw.isEmpty) {
+      return 'أدخل مكافأة المسافر (الحد الأدنى $min)';
+    }
+    final n = double.tryParse(raw.replaceFirst(',', '.'));
+    if (n == null) return 'أدخل رقماً صحيحاً لمكافأة المسافر';
+    if (n < min) return 'مكافأة المسافر يجب ألا تقل عن $min';
+    return null;
   }
 
   Future<void> _submit() async {
@@ -303,6 +242,14 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
       }
       return;
     }
+    final rewardErr = _validateTravelerReward();
+    if (rewardErr != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(rewardErr)));
+      }
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       final rewardStr = _rewardController.text.trim();
@@ -365,7 +312,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
@@ -421,7 +368,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                                       TextFormField(
                                         controller: _rewardController,
                                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                           labelText: AppStrings.travelerReward,
                                           hintText: '0',
                                           border: OutlineInputBorder(),
@@ -429,6 +376,16 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                                           prefixIcon: Icon(Icons.payments_outlined),
                                         ),
                                         validator: (v) {
+                                          final min = _minTravelerReward;
+                                          if (min != null && min > 0) {
+                                            if (v == null || v.trim().isEmpty) {
+                                              return 'الحد الأدنى للمكافأة $min';
+                                            }
+                                            final n = double.tryParse(v.trim().replaceFirst(',', '.'));
+                                            if (n == null) return 'أدخل رقماً صحيحاً';
+                                            if (n < min) return 'لا يقل عن $min';
+                                            return null;
+                                          }
                                           if (v == null || v.trim().isEmpty) return null;
                                           final n = double.tryParse(v.trim().replaceFirst(',', '.'));
                                           if (n != null && n < 0) return 'أدخل رقماً صحيحاً';
@@ -462,7 +419,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                                       const SizedBox(height: 12),
                                       TextFormField(
                                         controller: _titleController,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                           labelText: AppStrings.shipmentName,
                                           border: OutlineInputBorder(),
                                           filled: true,
@@ -473,7 +430,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                                       const SizedBox(height: 12),
                                       TextFormField(
                                         controller: _notesController,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                           labelText: AppStrings.notes,
                                           border: OutlineInputBorder(),
                                           filled: true,
@@ -626,7 +583,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: _insuranceChecked && !_submitting ? _onPublishTap : null,
+              onPressed: _insuranceChecked && !_submitting ? _submit : null,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primaryYellow,
                 foregroundColor: Colors.black87,
@@ -644,21 +601,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                         color: Colors.black54,
                       ),
                     )
-                  : const Text(AppStrings.publishShipment),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: () {},
-              child: Text(
-                AppStrings.haveQuestions,
-                style: TextStyle(
-                  color: Colors.blue[700],
-                  decoration: TextDecoration.underline,
-                  fontSize: 14,
-                ),
-              ),
+                  : Text(AppStrings.publishShipment),
             ),
           ),
           const SizedBox(height: 24),
@@ -694,7 +637,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(AppStrings.fromCityCountry),
+        Text(AppStrings.fromCityCountry),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -703,12 +646,12 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
             Expanded(
               child: DropdownButtonFormField<Country>(
                 value: _fromCountry,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   filled: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                hint: const Text(AppStrings.cityCountryHint),
+                hint: Text(AppStrings.cityCountryHint),
                 items: _countries
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),
@@ -724,12 +667,12 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
             Expanded(
               child: DropdownButtonFormField<City>(
                 value: _fromCity,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   filled: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                hint: const Text('المدينة'),
+                hint: Text(AppStrings.cityPlaceholder),
                 items: _fromCities
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),
@@ -746,7 +689,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(AppStrings.toCityCountry),
+        Text(AppStrings.toCityCountry),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -755,12 +698,12 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
             Expanded(
               child: DropdownButtonFormField<Country>(
                 value: _toCountry,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: OutlineInputBorder(),
                   filled: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                hint: const Text(AppStrings.cityCountryHint),
+                hint: Text(AppStrings.cityCountryHint),
                 items: _countries
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.displayName)))
                     .toList(),
@@ -779,18 +722,18 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
                     ? null
                     : () => _showCityPicker(
                           cities: _toCities,
-                          title: 'اختر مدينة الوجهة',
+                          title: AppStrings.searchCityHint,
                           onSelected: (c) => setState(() => _toCity = c),
                         ),
                 borderRadius: BorderRadius.circular(4),
                 child: InputDecorator(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     filled: true,
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   child: Text(
-                    _toCity?.displayName ?? 'المدينة',
+                    _toCity?.displayName ?? AppStrings.cityPlaceholder,
                     style: TextStyle(
                       color: _toCity != null ? Colors.black87 : Colors.grey[600],
                       fontSize: 15,
@@ -810,7 +753,7 @@ class _AddShipmentScreenState extends State<AddShipmentScreen> {
       onTap: _pickDate,
       borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: AppStrings.beforeDate,
           border: OutlineInputBorder(),
           filled: true,

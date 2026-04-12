@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
@@ -66,15 +67,15 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: AppColors.scaffoldBg,
         appBar: AppBar(
           backgroundColor: AppColors.scaffoldBg,
           elevation: 0,
-          title: const Text(
+          title: Text(
             AppStrings.addShoppingShipment,
-            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
           ),
         ),
         body: SingleChildScrollView(
@@ -92,7 +93,7 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _productLinkController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: AppStrings.productLinkHint,
                   border: OutlineInputBorder(),
                   filled: true,
@@ -103,7 +104,7 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _productNameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: AppStrings.productNameHint,
                   border: OutlineInputBorder(),
                   filled: true,
@@ -146,7 +147,7 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
                 controller: _unitPriceController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: AppStrings.pricePerItem,
                   border: OutlineInputBorder(),
                   filled: true,
@@ -174,7 +175,7 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: AppStrings.selectCategory,
                   border: OutlineInputBorder(),
                   filled: true,
@@ -262,7 +263,7 @@ class _AddShoppingShipmentScreenState extends State<AddShoppingShipmentScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(AppStrings.done),
+                  child: Text(AppStrings.done),
                 ),
               ),
             ],

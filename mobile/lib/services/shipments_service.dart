@@ -122,11 +122,15 @@ class ShipmentsService {
     required int shipmentId,
     required int paymentMethodId,
     String? message,
+    String? paypalOrderId,
   }) async {
     final token = await AppPreferences.getAuthToken();
     if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
     final bodyMap = <String, dynamic>{'payment_method_id': paymentMethodId};
     if (message != null && message.isNotEmpty) bodyMap['message'] = message;
+    if (paypalOrderId != null && paypalOrderId.isNotEmpty) {
+      bodyMap['paypal_order_id'] = paypalOrderId;
+    }
     final response = await ApiClient.post(
       '/api/shipments/$shipmentId/send-request',
       headers: {
@@ -147,6 +151,31 @@ class ShipmentsService {
       requestId: (data['request_id'] as num).toInt(),
       conversationId: (data['conversation_id'] as num).toInt(),
       otherUserName: data['other_user_name'] as String? ?? '',
+    );
+  }
+
+  static Future<PayPalOrderResult> createPayPalOrderForShipment(int shipmentId) async {
+    final token = await AppPreferences.getAuthToken();
+    if (token == null || token.isEmpty) throw Exception('يجب تسجيل الدخول أولاً');
+    final response = await ApiClient.post(
+      '/api/shipments/$shipmentId/paypal-order',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, dynamic>{}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final map = jsonDecode(response.body) as Map<String, dynamic>?;
+      final msg = map?['message'] as String? ?? response.body;
+      throw Exception(msg);
+    }
+    final map = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = map['data'] as Map<String, dynamic>? ?? map;
+    return PayPalOrderResult(
+      orderId: data['order_id'] as String,
+      approveUrl: data['approve_url'] as String,
     );
   }
 

@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Request extends Model
 {
+    /**
+     * حالات تمنع إرسال طلب جديد لنفس صاحب الإعلان (شحنة أو رحلة) حتى يُغلق الطلب السابق.
+     */
+    public const BLOCKING_COUNTERPARTY_STATUSES = ['pending', 'accepted', 'in_progress', 'disputed'];
+
     protected $fillable = [
         'shipment_id',
         'trip_id',
@@ -61,5 +66,20 @@ class Request extends Model
     public function commission(): HasOne
     {
         return $this->hasOne(Commission::class);
+    }
+
+    /**
+     * هل يوجد طلب نشط من المستخدم كمُرسِل تجاه أي إعلان (شحنة أو رحلة) لصاحب الحساب المحدد؟
+     */
+    public static function hasBlockingRequestWithListingOwner(int $requesterUserId, int $listingOwnerUserId): bool
+    {
+        return static::query()
+            ->where('requester_id', $requesterUserId)
+            ->whereIn('status', self::BLOCKING_COUNTERPARTY_STATUSES)
+            ->where(function ($q) use ($listingOwnerUserId) {
+                $q->whereHas('shipment', fn ($s) => $s->where('user_id', $listingOwnerUserId))
+                    ->orWhereHas('trip', fn ($t) => $t->where('user_id', $listingOwnerUserId));
+            })
+            ->exists();
     }
 }

@@ -117,6 +117,15 @@ class UserForm
                                     ->columnSpanFull(),
                             ]),
                     ]),
+                Section::make('المحفظة (التطبيق)')
+                    ->description('يظهر الرصيد للمستخدم في الملف الشخصي ويمكن سحبه عبر بيانات السحب.')
+                    ->schema([
+                        TextInput::make('wallet_balance')
+                            ->label('رصيد المحفظة')
+                            ->numeric()
+                            ->step(0.01)
+                            ->default(0),
+                    ]),
                 Section::make('الموقع والحالة')
                     ->schema([
                         Grid::make(2)
@@ -163,11 +172,6 @@ class UserForm
                                     ->step(0.01)
                                     ->minValue(0)
                                     ->maxValue(5)
-                                    ->default(0),
-                                TextInput::make('wallet_balance')
-                                    ->label('رصيد المحفظة')
-                                    ->numeric()
-                                    ->step(0.01)
                                     ->default(0),
                             ]),
                     ]),

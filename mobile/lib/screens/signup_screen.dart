@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flyem_app/core/app_preferences.dart';
+import 'package:flyem_app/core/app_locale.dart';
+import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/screens/home_screen.dart';
 import 'package:flyem_app/services/auth_service.dart';
@@ -13,7 +14,6 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  String _locale = 'ar';
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -45,15 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   static const String _submitAr = 'إنشاء الحساب';
   static const String _submitEn = 'Create account';
 
-  bool get _isAr => _locale == 'ar';
-
-  @override
-  void initState() {
-    super.initState();
-    AppPreferences.getAppLocale().then((l) {
-      if (mounted) setState(() => _locale = l);
-    });
-  }
+  bool get _isAr => AppStrings.isArabic;
 
   @override
   void dispose() {
@@ -132,9 +124,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isRtl = _locale == 'ar';
     return Directionality(
-      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -167,7 +158,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
-                  textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                  textAlign: _isAr ? TextAlign.right : TextAlign.left,
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -233,7 +224,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   Text(
                     _error!,
                     style: const TextStyle(color: Colors.red, fontSize: 13),
-                    textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                    textAlign: _isAr ? TextAlign.right : TextAlign.left,
                   ),
                 ],
                 const SizedBox(height: 24),

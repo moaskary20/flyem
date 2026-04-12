@@ -96,7 +96,13 @@ class AuthController extends Controller
         }
 
         $user->loadCount(['shipments', 'trips', 'ratingsReceived']);
-        $user->load(['homeCountry:id,name_ar,name_en', 'homeCity:id,name_ar,name_en', 'travelCountry:id,name_ar,name_en', 'travelCity:id,name_ar,name_en']);
+        $user->load([
+            'homeCountry:id,name_ar,name_en',
+            'homeCity:id,name_ar,name_en',
+            'travelCountry:id,name_ar,name_en',
+            'travelCity:id,name_ar,name_en',
+            'payoutAccounts',
+        ]);
 
         $profilePhotoUrl = null;
         if ($user->profile_photo) {
@@ -118,6 +124,7 @@ class AuthController extends Controller
                 'documents_verified' => ($user->verification_status ?? 'unverified') === 'verified',
                 'phone_verified' => (bool) ($user->phone_verified ?? false),
                 'rating' => $user->rating ? (float) $user->rating : null,
+                'wallet_balance' => round((float) ($user->wallet_balance ?? 0), 2),
                 'ratings_count' => $user->ratings_received_count ?? 0,
                 'shipments_count' => $user->shipments_count ?? 0,
                 'trips_count' => $user->trips_count ?? 0,
@@ -134,6 +141,14 @@ class AuthController extends Controller
                 'bank_account_holder' => $user->bank_account_holder,
                 'home_phone' => $user->home_phone,
                 'travel_phone' => $user->travel_phone,
+                'payout_accounts' => $user->payoutAccounts->sortByDesc('is_primary')->values()->map(fn ($a) => [
+                    'id' => $a->id,
+                    'iban' => $a->iban,
+                    'bank_name' => $a->bank_name,
+                    'account_holder' => $a->account_holder,
+                    'nickname' => $a->nickname,
+                    'is_primary' => (bool) $a->is_primary,
+                ]),
             ],
         ]);
     }
@@ -160,17 +175,19 @@ class AuthController extends Controller
             'travel_phone' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $user->update([
-            'home_country_id' => $validated['home_country_id'] ?? null,
-            'home_city_id' => $validated['home_city_id'] ?? null,
-            'travel_country_id' => $validated['travel_country_id'] ?? null,
-            'travel_city_id' => $validated['travel_city_id'] ?? null,
-            'bank_iban' => $validated['bank_iban'] ?? null,
-            'bank_name' => $validated['bank_name'] ?? null,
-            'bank_account_holder' => $validated['bank_account_holder'] ?? null,
-            'home_phone' => $validated['home_phone'] ?? null,
-            'travel_phone' => $validated['travel_phone'] ?? null,
-        ]);
+        $fillable = [
+            'home_country_id', 'home_city_id', 'travel_country_id', 'travel_city_id',
+            'bank_iban', 'bank_name', 'bank_account_holder', 'home_phone', 'travel_phone',
+        ];
+        $data = [];
+        foreach ($fillable as $field) {
+            if (array_key_exists($field, $validated)) {
+                $data[$field] = $validated[$field];
+            }
+        }
+        if ($data !== []) {
+            $user->update($data);
+        }
 
         return response()->json(['message' => 'updated', 'data' => ['id' => $user->id]]);
     }

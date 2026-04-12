@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/place.dart';
@@ -109,7 +110,7 @@ class _TripsFilterSheetState extends State<_TripsFilterSheet> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Container(
         padding: EdgeInsets.only(
           left: 20,
@@ -238,7 +239,7 @@ class _ShipmentsFilterSheetState extends State<_ShipmentsFilterSheet> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Container(
         padding: EdgeInsets.only(
           left: 20,

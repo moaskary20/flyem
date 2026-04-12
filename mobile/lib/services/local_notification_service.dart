@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flyem_app/core/app_strings.dart';
 
 /// خدمة الإشعارات المحلية — عرض إشعارات في شريط إشعارات أندرويد عند الأحداث داخل التطبيق.
 class LocalNotificationService {
@@ -13,7 +14,6 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
   static const String _channelId = 'flyem_events';
-  static const String _channelName = 'أحداث التطبيق';
 
   bool _initialized = false;
 
@@ -22,17 +22,18 @@ class LocalNotificationService {
     if (_instance._initialized) return;
     try {
       const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const initSettings = InitializationSettings(android: android);
+      const ios = DarwinInitializationSettings();
+      const initSettings = InitializationSettings(android: android, iOS: ios);
       await _instance._plugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
       );
       if (Platform.isAndroid) {
-        const channel = AndroidNotificationChannel(
+        final channel = AndroidNotificationChannel(
           _channelId,
-          _channelName,
-          description: 'إشعارات أحداث فلاي إم',
-          importance: Importance.defaultImportance,
+          AppStrings.notificationChannelName,
+          description: AppStrings.notificationChannelDescription,
+          importance: Importance.high,
         );
         await _instance._plugin
             .resolvePlatformSpecificImplementation<
@@ -63,16 +64,24 @@ class LocalNotificationService {
     required String body,
     Map<String, String>? payload,
   }) async {
+    if (!_instance._initialized) {
+      await initialize();
+    }
     if (!_instance._initialized) return;
     try {
       final androidDetails = AndroidNotificationDetails(
         _channelId,
-        _channelName,
-        channelDescription: 'إشعارات أحداث فلاي إم',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
+        AppStrings.notificationChannelName,
+        channelDescription: AppStrings.notificationChannelDescription,
+        importance: Importance.high,
+        priority: Priority.high,
       );
-      final details = NotificationDetails(android: androidDetails);
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+      final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
       String? payloadStr;
       if (payload != null && payload.isNotEmpty) {
         payloadStr = payload.entries.map((e) => '${e.key}=${e.value}').join('&');
@@ -89,4 +98,7 @@ class LocalNotificationService {
     final h = eventType.hashCode & 0x7FF;
     return t + h;
   }
+
+  /// معرّف فريد لكل إشعار حتى لا يُستبدل إشعارٌ بآخر عند إرسال طلبات متعددة.
+  static int uniqueNotificationId() => DateTime.now().millisecondsSinceEpoch & 0x7FFFFFFF;
 }

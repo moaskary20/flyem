@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
 import 'package:flyem_app/models/shipment_details.dart';
@@ -20,7 +21,7 @@ class MyShipmentTabsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: FutureBuilder<ShipmentDetails>(
         future: ShipmentsService.getShipment(shipmentId),
         builder: (context, snapshot) {
@@ -94,7 +95,7 @@ class _TabsContent extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
-            shipment.title.isEmpty ? 'الشحنة' : shipment.title,
+            shipment.title.isEmpty ? AppStrings.shipmentGeneric : shipment.title,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -125,7 +126,7 @@ class _TabsContent extends StatelessWidget {
                       indicatorWeight: 3,
                       labelColor: AppColors.primaryYellow,
                       unselectedLabelColor: Colors.white70,
-                      tabs: const [
+                      tabs: [
                         Tab(text: AppStrings.tabDeals),
                         Tab(text: AppStrings.tabSuitableTrips),
                         Tab(text: AppStrings.tabDetails),

@@ -86,80 +86,91 @@ class ShipmentDetailContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  fromCity,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.routeLabelFrom,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      fromCity,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      shipment.fromCode,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  shipment.fromCode,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: AppColors.primaryYellow,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Icon(
-                      Icons.flight,
-                      color: AppColors.primaryYellow,
-                      size: 28,
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: AppColors.primaryYellow,
-                    ),
-                  ),
-                ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  toCity,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(top: 14, left: 4, right: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 12, height: 2, color: AppColors.primaryYellow),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Icon(Icons.arrow_forward, color: AppColors.primaryYellow, size: 26),
+                    ),
+                    Container(width: 12, height: 2, color: AppColors.primaryYellow),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  shipment.toCode,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      AppStrings.routeLabelTo,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      toCity,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      textAlign: TextAlign.end,
+                    ),
+                    Text(
+                      shipment.toCode,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.end,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -183,17 +194,17 @@ class ShipmentDetailContent extends StatelessWidget {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text(AppStrings.deleteShipment),
-                      content: const Text(AppStrings.confirmDeleteShipment),
+                      title: Text(AppStrings.deleteShipment),
+                      content: Text(AppStrings.confirmDeleteShipment),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text(AppStrings.cancel),
+                          child: Text(AppStrings.cancel),
                         ),
                         FilledButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                          child: const Text(AppStrings.delete),
+                          child: Text(AppStrings.delete),
                         ),
                       ],
                     ),
@@ -236,9 +247,9 @@ class ShipmentDetailContent extends StatelessWidget {
                   children: [
                     Icon(Icons.local_shipping_outlined, color: AppColors.primaryYellow, size: 22),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       AppStrings.allowShippingCompanies,
-                      style: TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ],
                 ),
@@ -260,30 +271,9 @@ class ShipmentDetailContent extends StatelessWidget {
         color: const Color(0xFFFFF9E6),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  AppStrings.insuranceDisclaimer,
-                  style: const TextStyle(fontSize: 13, height: 1.4),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.primaryYellow, width: 2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
-          ),
-        ],
+      child: Text(
+        AppStrings.insuranceDisclaimer,
+        style: const TextStyle(fontSize: 13, height: 1.4),
       ),
     );
   }

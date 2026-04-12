@@ -73,6 +73,9 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()
                     ->label('الإعدادات')
                     ->collapsed(false),
+                NavigationGroup::make()
+                    ->label('بوابات الدفع')
+                    ->collapsed(false),
             ])
             ->middleware([
                 SetAdminPanelLocale::class,

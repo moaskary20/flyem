@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flyem_app/core/app_locale.dart';
 import 'package:flyem_app/core/app_theme.dart';
 import 'package:flyem_app/core/app_strings.dart';
-import 'package:flyem_app/screens/login_screen.dart';
-import 'package:flyem_app/services/auth_service.dart';
+import 'package:flyem_app/core/app_preferences.dart';
+import 'package:flyem_app/screens/suggest_feedback_screen.dart';
 import 'package:flyem_app/services/currencies_service.dart';
 
 /// شاشة الإعدادات: العملة، التنبيهات، اللغة، تسجيل الخروج.
@@ -30,6 +31,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     CurrenciesService.getSelectedCurrencyId().then((id) {
       if (mounted) setState(() => _selectedCurrencyId = id);
     });
+    AppPreferences.getNotifyShippingTrips().then((v) {
+      if (mounted) setState(() => _shippingNotifications = v);
+    });
+    AppPreferences.getNotifyChat().then((v) {
+      if (mounted) setState(() => _chatNotifications = v);
+    });
   }
 
   Future<void> _loadCurrencies() async {
@@ -48,7 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLocale.textDirection,
       child: Scaffold(
         backgroundColor: _contentBg,
         appBar: AppBar(
@@ -56,9 +63,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             AppStrings.settings,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -79,9 +86,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 28),
                 _buildNotificationsSection(),
                 const SizedBox(height: 28),
+                _buildSuggestSection(),
+                const SizedBox(height: 28),
                 _buildLanguageSection(),
-                const SizedBox(height: 32),
-                _buildLogoutButton(),
               ],
             ),
           ),
@@ -171,8 +178,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           label: AppStrings.shippingOrTripNotifications,
           trailing: Switch(
             value: _shippingNotifications,
-            onChanged: (v) => setState(() => _shippingNotifications = v),
-            activeColor: AppColors.primaryYellow,
+            onChanged: (v) async {
+              setState(() => _shippingNotifications = v);
+              await AppPreferences.setNotifyShippingTrips(v);
+            },
+            activeThumbColor: AppColors.primaryYellow,
           ),
         ),
         const SizedBox(height: 12),
@@ -180,8 +190,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
           label: AppStrings.chatNotifications,
           trailing: Switch(
             value: _chatNotifications,
-            onChanged: (v) => setState(() => _chatNotifications = v),
-            activeColor: AppColors.primaryYellow,
+            onChanged: (v) async {
+              setState(() => _chatNotifications = v);
+              await AppPreferences.setNotifyChat(v);
+            },
+            activeThumbColor: AppColors.primaryYellow,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSuggestSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionTitle(AppStrings.suggestToUs),
+        Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SuggestFeedbackScreen(),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb_outline, color: AppColors.primaryYellow, size: 26),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      AppStrings.suggestToUs,
+                      style: const TextStyle(fontSize: 15, color: Colors.black87),
+                    ),
+                  ),
+                  Icon(
+                    AppStrings.isArabic ? Icons.chevron_left : Icons.chevron_right,
+                    color: Colors.grey[500],
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -189,12 +254,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildLanguageSection() {
+    final currentLabel =
+        AppStrings.isArabic ? AppStrings.languageOptionArabic : AppStrings.languageOptionEnglish;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildSectionTitle(AppStrings.chooseLanguage),
         InkWell(
-          onTap: () {},
+          onTap: () => _showLanguagePicker(),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -213,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  AppStrings.languageArabic,
+                  currentLabel,
                   style: const TextStyle(
                     fontSize: 15,
                     color: Colors.black87,
@@ -234,40 +301,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        onPressed: () async {
-          await AuthService.logout();
-          if (!context.mounted) return;
-          Navigator.of(context).pop();
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم تسجيل الخروج')),
-          );
-        },
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primaryYellow,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+  Future<void> _showLanguagePicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(AppStrings.languageOptionArabic),
+                trailing: AppStrings.isArabic ? Icon(Icons.check, color: AppColors.primaryYellow) : null,
+                onTap: () async {
+                  await AppPreferences.setAppLocale('ar');
+                  AppLocale.setLocale(const Locale('ar'));
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              ),
+              ListTile(
+                title: Text(AppStrings.languageOptionEnglish),
+                trailing: AppStrings.isEnglish ? Icon(Icons.check, color: AppColors.primaryYellow) : null,
+                onTap: () async {
+                  await AppPreferences.setAppLocale('en');
+                  AppLocale.setLocale(const Locale('en'));
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                },
+              ),
+            ],
           ),
-        ),
-        child: const Text(
-          AppStrings.logout,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+        );
+      },
     );
+    if (mounted) setState(() {});
   }
+
 }
 
 class _SettingsRow extends StatelessWidget {
@@ -296,19 +364,33 @@ class _SettingsRow extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          trailing,
-          Expanded(
-            child: Text(
-              label,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ],
+        children: AppStrings.isArabic
+            ? [
+                trailing,
+                Expanded(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ]
+            : [
+                Expanded(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                trailing,
+              ],
       ),
     );
   }
